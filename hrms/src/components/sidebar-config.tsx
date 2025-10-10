@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useMemo, useState } from "react"
 import type { Icon } from "@tabler/icons-react"
 
-export type UserRole = "admin" | "quality" | "users" | "marketing" | "sales" | "hr" | "csm" | "it"
+export type UserRole = "admin" | "user" | "hr"
 
 export type NavMainItem = {
   title: string
@@ -48,7 +48,7 @@ type Ctx = {
 const SidebarConfigContext = createContext<Ctx | null>(null)
 
 export function SidebarConfigProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRole] = useState<UserRole>("users")
+  const [role, setRole] = useState<UserRole>("user")
   const [dataOverrides, setDataOverrides] = useState<Partial<SidebarData> | undefined>(undefined)
 
   const value = useMemo<Ctx>(() => ({

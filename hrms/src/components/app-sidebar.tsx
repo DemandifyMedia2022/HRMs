@@ -6,7 +6,6 @@ import {
   IconChartBar,
   IconDashboard,
   IconDatabase,
-  IconFileAi,
   IconFileDescription,
   IconFileWord,
   IconFolder,
@@ -51,22 +50,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
       { name: "Data Library", url: "#", icon: IconDatabase },
     ],
   },
-  quality: {
-    user: { name: "Quality", email: "quality@example.com", avatar: "/avatars/shadcn.jpg" },
-    navMain: [
-      { title: "Dashboard", url: "#", icon: IconDashboard },
-      { title: "Lifecycle", url: "#", icon: IconListDetails },
-      { title: "Reports", url: "#", icon: IconReport },
-    ],
-    navSecondary: [
-      { title: "Search", url: "#", icon: IconSearch },
-      { title: "Get Help", url: "#", icon: IconHelp },
-    ],
-    documents: [
-      { name: "QA Docs", url: "#", icon: IconFileWord },
-    ],
-  },
-  users: {
+  user: {
     user: { name: "User", email: "user@example.com", avatar: "/avatars/shadcn.jpg" },
     navMain: [
       { title: "Dashboard", url: "#", icon: IconDashboard },
@@ -86,38 +70,6 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
       { name: "Word Assistant", url: "#", icon: IconFileWord },
     ],
   },
-  marketing: {
-    user: { name: "Marketing", email: "mkt@example.com", avatar: "/avatars/shadcn.jpg" },
-    navMain: [
-      { title: "Dashboard", url: "#", icon: IconDashboard },
-      { title: "Campaigns", url: "#", icon: IconFileAi },
-      { title: "Analytics", url: "#", icon: IconChartBar },
-    ],
-    navSecondary: [
-      { title: "Search", url: "#", icon: IconSearch },
-      { title: "Get Help", url: "#", icon: IconHelp },
-    ],
-    documents: [
-      { name: "Assets", url: "#", icon: IconFolder },
-      { name: "Reports", url: "#", icon: IconReport },
-    ],
-  },
-  sales: {
-    user: { name: "Sales", email: "sales@example.com", avatar: "/avatars/shadcn.jpg" },
-    navMain: [
-      { title: "Dashboard", url: "#", icon: IconDashboard },
-      { title: "Leads", url: "#", icon: IconListDetails },
-      { title: "Proposals", url: "#", icon: IconFileDescription },
-    ],
-    navSecondary: [
-      { title: "Search", url: "#", icon: IconSearch },
-      { title: "Get Help", url: "#", icon: IconHelp },
-    ],
-    documents: [
-      { name: "Quotes", url: "#", icon: IconFileWord },
-      { name: "Reports", url: "#", icon: IconReport },
-    ],
-  },
   hr: {
     user: { name: "HR", email: "hr@example.com", avatar: "/avatars/shadcn.jpg" },
     navMain: [
@@ -134,44 +86,6 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
     documents: [
       { name: "HR Policies", url: "#", icon: IconFileWord },
       { name: "Employee Handbook", url: "#", icon: IconFileDescription },
-      { name: "Reports", url: "#", icon: IconReport },
-    ],
-  },
-  csm: {
-    user: { name: "CSM", email: "csm@example.com", avatar: "/avatars/shadcn.jpg" },
-    navMain: [
-      { title: "Dashboard", url: "#", icon: IconDashboard },
-      { title: "Customer Accounts", url: "#", icon: IconUsers },
-      { title: "Support Tickets", url: "#", icon: IconListDetails },
-      { title: "Analytics", url: "#", icon: IconChartBar },
-      { title: "Reports", url: "#", icon: IconReport },
-    ],
-    navSecondary: [
-      { title: "Search", url: "#", icon: IconSearch },
-      { title: "Get Help", url: "#", icon: IconHelp },
-    ],
-    documents: [
-      { name: "Customer Data", url: "#", icon: IconDatabase },
-      { name: "Support Guides", url: "#", icon: IconFileWord },
-      { name: "Reports", url: "#", icon: IconReport },
-    ],
-  },
-  it: {
-    user: { name: "IT", email: "it@example.com", avatar: "/avatars/shadcn.jpg" },
-    navMain: [
-      { title: "Dashboard", url: "#", icon: IconDashboard },
-      { title: "Systems", url: "#", icon: IconSettings },
-      { title: "Network", url: "#", icon: IconDatabase },
-      { title: "Security", url: "#", icon: IconInnerShadowTop },
-      { title: "Tickets", url: "#", icon: IconListDetails },
-    ],
-    navSecondary: [
-      { title: "Search", url: "#", icon: IconSearch },
-      { title: "Get Help", url: "#", icon: IconHelp },
-    ],
-    documents: [
-      { name: "IT Policies", url: "#", icon: IconFileWord },
-      { name: "System Docs", url: "#", icon: IconFileDescription },
       { name: "Reports", url: "#", icon: IconReport },
     ],
   },

@@ -3,18 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  IconUsers,
-  IconUserShield,
-  IconBuilding,
-  IconChartBar,
-  IconCash,
-  IconHeadset,
-  IconSettings,
-  IconUser
-} from "@tabler/icons-react"
+import { IconUsers, IconUserShield, IconUser } from "@tabler/icons-react"
 
 const roles = [
   {
@@ -23,7 +13,7 @@ const roles = [
     description: "System administration and management",
     icon: IconUserShield,
     color: "bg-red-100 text-red-800",
-    path: "/pages/admin"
+    path: "/pages/admin",
   },
   {
     id: "hr",
@@ -31,56 +21,16 @@ const roles = [
     description: "Human resources and employee management",
     icon: IconUsers,
     color: "bg-blue-100 text-blue-800",
-    path: "/pages/hr"
+    path: "/pages/hr",
   },
   {
-    id: "csm",
-    title: "CSM",
-    description: "Customer success management",
-    icon: IconHeadset,
-    color: "bg-green-100 text-green-800",
-    path: "/pages/csm"
-  },
-  {
-    id: "it",
-    title: "IT",
-    description: "Information technology and systems",
-    icon: IconSettings,
-    color: "bg-purple-100 text-purple-800",
-    path: "/pages/it"
-  },
-  {
-    id: "quality",
-    title: "Quality",
-    description: "Quality assurance and testing",
-    icon: IconChartBar,
-    color: "bg-orange-100 text-orange-800",
-    path: "/pages/quality"
-  },
-  {
-    id: "users",
+    id: "user",
     title: "User",
-    description: "General user access",
+    description: "General user access (CSM, Quality, Sales, IT, Marketing, etc.)",
     icon: IconUser,
     color: "bg-gray-100 text-gray-800",
-    path: "/pages/user"
+    path: "/pages/user",
   },
-  {
-    id: "marketing",
-    title: "Marketing",
-    description: "Marketing campaigns and analytics",
-    icon: IconBuilding,
-    color: "bg-pink-100 text-pink-800",
-    path: "/pages/marketing"
-  },
-  {
-    id: "sales",
-    title: "Sales",
-    description: "Sales management and leads",
-    icon: IconCash,
-    color: "bg-yellow-100 text-yellow-800",
-    path: "/pages/sales"
-  }
 ]
 
 export default function HomePage() {
