@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  position  String?
+  salary    Float?
+  createdAt DateTime @default(now())
+}
+
+model NpAttendance {
+  id         Int      @id @default(autoincrement())
+  employeeId String   @map("employee_id") @db.VarChar(50)
+  empName    String   @map("emp_name") @db.VarChar(255)
+  date       DateTime @db.Date
+  inTime     DateTime @map("in_time") @db.DateTime
+  outTime    DateTime @map("out_time") @db.DateTime
+  clockTimes String   @map("clock_times") @db.Text
+  totalHours String   @map("total_hours") @db.VarChar(20)
+  loginHours String   @map("login_hours") @db.VarChar(20)
+  breakHours String   @map("break_hours") @db.VarChar(20)
+  status     String   @db.VarChar(50)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([employeeId, date])
+  @@index([employeeId])
+  @@index([date])
+  @@map("npattendance")
+}
