@@ -38,7 +38,7 @@ type UserEvents = {
   leaves?: { date: string; leave_type: string; user: string }[];
 };
 
-export default function AdminAttendancePage() {
+export default function HRAttendancePage() {
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [month, setMonth] = useState<number>(new Date().getMonth());
   const [query, setQuery] = useState<string>("");
@@ -119,9 +119,11 @@ export default function AdminAttendancePage() {
     };
   }, [year]);
 
+  const todayStr = new Date().toISOString().split('T')[0];
+
   return (
     <div className="p-4 space-y-6">
-      <SidebarConfig role="admin" />
+      <SidebarConfig role="hr" />
       <Card className="border-muted/40 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -227,7 +229,6 @@ export default function AdminAttendancePage() {
               const firstWeekday = monthStart.getUTCDay();
               const daysInMonth = monthEnd.getUTCDate();
               const headers = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-              const todayStr = new Date().toISOString().split('T')[0];
               const eventsMap = new Map<string, EventItem>();
               for (const ev of u.events) {
                 if (ev.extendedProps?.date?.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)) {
@@ -493,4 +494,3 @@ export default function AdminAttendancePage() {
     </div>
   );
 }
-

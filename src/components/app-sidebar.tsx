@@ -37,13 +37,13 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
   admin: {
     user: { name: "Admin", email: "admin@example.com", avatar: "/avatars/shadcn.jpg" },
     navMain: [
-      { title: "Dashboard", url: "#", icon: IconDashboard },
+      { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
       {
         title: "Attendance",
         url: "#",
         icon: IconUsers,
         children: [
-          { title: "Attendance", url: "#", icon: IconUsers },
+          { title: "Monthly Attendance", url: "/pages/admin/attendance", icon: IconUsers },
           { title: "Update Attendance", url: "#", icon: IconListDetails },
         ],
       },
@@ -119,13 +119,13 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
   hr: {
     user: { name: "HR", email: "hr@example.com", avatar: "/avatars/shadcn.jpg" },
     navMain: [
-      { title: "Dashboard", url: "#", icon: IconDashboard },
+      { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
       {
         title: "Attendance",
         url: "#",
         icon: IconUsers,
         children: [
-          { title: "Monthly Attendance", url: "#", icon: IconReport },
+          { title: "Monthly Attendance", url: "/pages/hr/attendance", icon: IconReport },
           { title: "Update Attendance", url: "#", icon: IconListDetails },
           { title: "Assign Shift", url: "#", icon: IconUsers },
           { title: "Request Attendance Update", url: "#", icon: IconListDetails },

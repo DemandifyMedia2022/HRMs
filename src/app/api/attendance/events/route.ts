@@ -29,11 +29,9 @@ export async function GET(req: NextRequest) {
         a.login_hours AS loginHours,
         a.break_hours AS breakHours,
         a.status      AS status,
-        u.Full_name   AS fullName,
-        s.shift_time  AS shiftTime
+        u.Full_name   AS fullName
       FROM npattendance a
       LEFT JOIN users u ON u.emp_code = a.employee_id
-      LEFT JOIN shift_time s ON s.biomatric_id = a.employee_id
       WHERE a.date BETWEEN ${startOfYear} AND ${endOfYear}
       ORDER BY a.employee_id ASC, a.date ASC
     `;
@@ -71,20 +69,28 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch approved leaves overlapping the year window
-    const leavesRaw: Array<any> = await prisma.$queryRaw`
-      SELECT 
-        l.emp_code    AS empCode,
-        l.leave_type  AS leaveType,
-        l.start_date  AS startDate,
-        l.end_date    AS endDate,
-        u.Full_name   AS fullName
-      FROM leavedata l
-      JOIN users u ON u.emp_code = l.emp_code
-      WHERE DATE(l.start_date) <= ${endOfYear}
-        AND DATE(l.end_date)   >= ${startOfYear}
-        AND l.HRApproval = 'Approved'
-        AND l.ManagerApproval = 'Approved'
-    `;
+    let leavesRaw: Array<any> = [];
+    try {
+      leavesRaw = await prisma.$queryRaw`
+        SELECT 
+          l.emp_code    AS empCode,
+          l.leave_type  AS leaveType,
+          l.start_date  AS startDate,
+          l.end_date    AS endDate,
+          u.Full_name   AS fullName
+        FROM leavedata l
+        JOIN users u ON u.emp_code = l.emp_code
+        WHERE DATE(l.start_date) <= ${endOfYear}
+          AND DATE(l.end_date)   >= ${startOfYear}
+          AND l.HRApproval = 'Approved'
+          AND l.ManagerApproval = 'Approved'
+      `;
+    } catch (err: any) {
+      const msg = typeof err?.message === 'string' ? err.message : '';
+      if (!msg.includes('leavedata')) {
+        throw err;
+      }
+    }
 
     // Expand leaves to per-day entries within the year window
     const leavesByUser: Record<string, { date: string; leave_type: string; user: string }[]> = {};
@@ -112,16 +118,24 @@ export async function GET(req: NextRequest) {
     }));
 
     // Fetch holidays/events from crud_events within the year window
-    const holidaysRaw: Array<any> = await prisma.$queryRaw`
-      SELECT 
-        event_name   AS eventName,
-        event_date   AS eventDate,
-        event_end    AS eventEnd,
-        event_start  AS eventStart
-      FROM crud_events
-      WHERE DATE(event_date) <= ${endOfYear}
-        AND DATE(COALESCE(event_end, event_date)) >= ${startOfYear}
-    `;
+    let holidaysRaw: Array<any> = [];
+    try {
+      holidaysRaw = await prisma.$queryRaw`
+        SELECT 
+          event_name   AS eventName,
+          event_date   AS eventDate,
+          event_end    AS eventEnd,
+          event_start  AS eventStart
+        FROM crud_events
+        WHERE DATE(event_date) <= ${endOfYear}
+          AND DATE(COALESCE(event_end, event_date)) >= ${startOfYear}
+      `;
+    } catch (err: any) {
+      const msg = typeof err?.message === 'string' ? err.message : '';
+      if (!msg.includes('crud_events')) {
+        throw err;
+      }
+    }
 
     // Expand holidays to per-day entries
     const holidays: { date: string; event_name: string; event_start: string | null; event_end: string | null }[] = [];
