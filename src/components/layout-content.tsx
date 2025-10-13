@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { usePathname } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
@@ -12,8 +12,16 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
   const isHomePage = pathname === "/"
   const [user, setUser] = useState<{ name: string; email: string; role: UserRole } | null>(null)
 
+  const roleFromPath = useMemo<UserRole | undefined>(() => {
+    if (pathname.startsWith("/pages/admin")) return "admin"
+    if (pathname.startsWith("/pages/hr")) return "hr"
+    if (pathname.startsWith("/pages/user")) return "user"
+    return undefined
+  }, [pathname])
+
   useEffect(() => {
-    // Load current user to populate sidebar (name/email/role)
+    if (roleFromPath) return // Do not override explicit department pages
+    // Load current user to populate sidebar (name/email/role) on non-department pages
     fetch("/api/auth/me", { credentials: "include" })
       .then(async (res) => {
         if (!res.ok) return null
@@ -24,7 +32,7 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
         return null
       })
       .catch(() => null)
-  }, [pathname])
+  }, [pathname, roleFromPath])
 
   if (isHomePage) {
     return (
@@ -36,10 +44,10 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarConfigProvider>
-      {user && (
+      {(roleFromPath || user) && (
         <SidebarConfig
-          role={user.role}
-          data={{ user: { name: user.name, email: user.email, avatar: "/avatars/shadcn.jpg" } }}
+          role={(roleFromPath ?? user?.role) as UserRole}
+          data={{ user: { name: user?.name || "User", email: user?.email || "", avatar: "/avatars/shadcn.jpg" } }}
         />
       )}
       <SidebarProvider

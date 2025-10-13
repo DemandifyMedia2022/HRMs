@@ -3,6 +3,7 @@
 import {
   type Icon,
 } from "@tabler/icons-react"
+import { usePathname } from "next/navigation"
 
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ export function NavDocuments({
   }[]
 }) {
   const { isMobile } = useSidebar()
+  const pathname = usePathname()
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -40,7 +42,10 @@ export function NavDocuments({
             {item.children && item.children.length > 0 ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton>
+                  <SidebarMenuButton
+                    isActive={item.children.some((c) => c.url !== "#" && pathname.startsWith(c.url))}
+                    className={item.children.some((c) => c.url !== "#" && pathname.startsWith(c.url)) ? "rounded-md bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary data-[active=true]:!bg-sidebar-primary data-[active=true]:!text-sidebar-primary-foreground" : "rounded-md"}
+                  >
                     <item.icon />
                     <span>{item.name}</span>
                   </SidebarMenuButton>
@@ -52,7 +57,7 @@ export function NavDocuments({
                 >
                   {item.children.map((child) => (
                     <DropdownMenuItem key={child.name}>
-                      <a href={child.url} className="flex items-center gap-2">
+                      <a href={child.url} className={`flex items-center gap-2 ${child.url !== "#" && pathname.startsWith(child.url) ? "font-medium" : ""}`}>
                         {child.icon && <child.icon />}
                         <span>{child.name}</span>
                       </a>
@@ -61,7 +66,11 @@ export function NavDocuments({
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <SidebarMenuButton asChild>
+              <SidebarMenuButton
+                asChild
+                isActive={item.url !== "#" && pathname === item.url}
+                className={item.url !== "#" && pathname === item.url ? "rounded-md bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary data-[active=true]:!bg-sidebar-primary data-[active=true]:!text-sidebar-primary-foreground" : "rounded-md"}
+              >
                 <a href={item.url}>
                   <item.icon />
                   <span>{item.name}</span>

@@ -37,33 +37,33 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
   admin: {
     user: { name: "Admin", email: "admin@example.com", avatar: "/avatars/shadcn.jpg" },
     navMain: [
-      { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
+      { title: "Dashboard", url: "/pages/admin", icon: IconDashboard },
       {
         title: "Attendance",
         url: "#",
         icon: IconUsers,
         children: [
           { title: "Monthly Attendance", url: "/pages/admin/attendance", icon: IconUsers },
-          { title: "Update Attendance", url: "#", icon: IconListDetails },
+          { title: "Update Attendance", url: "/pages/admin/attendance/update", icon: IconListDetails },
         ],
       },
-      { title: "Leaves", url: "#", icon: IconChartBar },
+      { title: "Leaves", url: "/pages/admin/leaves", icon: IconChartBar },
       {
         title: "Payroll",
         url: "#",
         icon: IconSettings,
         children: [
-          { title: "Paylip", url: "#", icon: IconReport },
-          { title: "My Salary Structure", url: "#", icon: IconFileDescription },
-          { title: "Employee Salary Structure", url: "#", icon: IconFileDescription },
-          { title: "Tax", url: "#", icon: IconReport },
+          { title: "Paylip", url: "/pages/admin/payroll/payslip", icon: IconReport },
+          { title: "My Salary Structure", url: "/pages/admin/payroll/my-salary-structure", icon: IconFileDescription },
+          { title: "Employee Salary Structure", url: "/pages/admin/payroll/employee-salary-structure", icon: IconFileDescription },
+          { title: "Tax", url: "/pages/admin/payroll/tax", icon: IconReport },
         ],
       },
        
     ],
     navSecondary: [
       
-      { title: "Settings", url: "#", icon: IconSettings },
+      { title: "Settings", url: "/pages/admin/settings", icon: IconSettings },
     ],
     documents: [
       {
@@ -71,43 +71,43 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: "#",
         icon: IconReport,
         children: [
-          { name: "All Campaigns", url: "#", icon: IconReport },
-          { name: "All Leads", url: "#", icon: IconDatabase },
-          { name: "Add Campaigns", url: "#", icon: IconReport },
+          { name: "All Campaigns", url: "/pages/admin/campaigns", icon: IconReport },
+          { name: "All Leads", url: "/pages/admin/leads", icon: IconDatabase },
+          { name: "Add Campaigns", url: "/pages/admin/campaigns/add", icon: IconReport },
         ],
       },
-      { name: "Events", url: "#", icon: IconDatabase },
-      { name: "Requests", url: "#", icon: IconSettings },
+      { name: "Events", url: "/pages/admin/events", icon: IconDatabase },
+      { name: "Requests", url: "/pages/admin/requests", icon: IconSettings },
     ],
   },
   user: {
     user: { name: "User", email: "user@example.com", avatar: "/avatars/shadcn.jpg" },
     navMain: [
-      { title: "Dashboard", url: "#", icon: IconDashboard },
+      { title: "Dashboard", url: "/pages/user", icon: IconDashboard },
       {
         title: "Attendance",
         url: "#",
         icon: IconListDetails,
         children: [
-          { title: "Monthly Attendance", url: "#", icon: IconReport },
-          { title: "Request Attendance Update", url: "#", icon: IconListDetails },
-          { title: "Attendance update status", url: "#", icon: IconReport },
+          { title: "Monthly Attendance", url: "/pages/user/attendance", icon: IconReport },
+          { title: "Request Attendance Update", url: "/pages/user/attendance/request-update", icon: IconListDetails },
+          { title: "Attendance update status", url: "/pages/user/attendance/status", icon: IconReport },
         ],
       },
-      { title: "Leaves", url: "#", icon: IconChartBar },
+      { title: "Leaves", url: "/pages/user/leaves", icon: IconChartBar },
       {
         title: "Payroll",
         url: "#",
         icon: IconFolder,
         children: [
-          { title: "Payslip", url: "#", icon: IconReport },
-          { title: "Salary structure", url: "#", icon: IconFileDescription },
+          { title: "Payslip", url: "/pages/user/payroll/payslip", icon: IconReport },
+          { title: "Salary structure", url: "/pages/user/payroll/salary-structure", icon: IconFileDescription },
         ],
       },
-      { title: "Raise Ticket", url: "#", icon: IconTicket },
+      { title: "Raise Ticket", url: "/pages/user/tickets/raise", icon: IconTicket },
     ],
     navSecondary: [
-      { title: "Settings", url: "#", icon: IconSettings },
+      { title: "Settings", url: "/pages/user/settings", icon: IconSettings },
      
     ],
     documents: [
@@ -119,50 +119,50 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
   hr: {
     user: { name: "HR", email: "hr@example.com", avatar: "/avatars/shadcn.jpg" },
     navMain: [
-      { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
+      { title: "Dashboard", url: "/pages/hr", icon: IconDashboard },
       {
         title: "Attendance",
         url: "#",
         icon: IconUsers,
         children: [
           { title: "Monthly Attendance", url: "/pages/hr/attendance", icon: IconReport },
-          { title: "Update Attendance", url: "#", icon: IconListDetails },
-          { title: "Assign Shift", url: "#", icon: IconUsers },
-          { title: "Request Attendance Update", url: "#", icon: IconListDetails },
-          { title: "Attendance Update Status", url: "#", icon: IconReport },
+          { title: "Update Attendance", url: "/pages/hr/attendance/update", icon: IconListDetails },
+          { title: "Assign Shift", url: "/pages/hr/attendance/assign-shift", icon: IconUsers },
+          { title: "Request Attendance Update", url: "/pages/hr/attendance/request-update", icon: IconListDetails },
+          { title: "Attendance Update Status", url: "/pages/hr/attendance/status", icon: IconReport },
         ],
       },
-      { title: "Leaves", url: "#", icon: IconListDetails },
+      { title: "Leaves", url: "/pages/hr/leaves", icon: IconListDetails },
       {
         title: "Payroll",
         url: "#",
         icon: IconReport,
         children: [
-          { title: "Paylip", url: "#", icon: IconReport },
-          { title: "My Salary Structure", url: "#", icon: IconFileDescription },
-          { title: "Employee Salary Structure", url: "#", icon: IconFileDescription },
-          { title: "Tax", url: "#", icon: IconReport },
+          { title: "Paylip", url: "/pages/hr/payroll/payslip", icon: IconReport },
+          { title: "My Salary Structure", url: "/pages/hr/payroll/my-salary-structure", icon: IconFileDescription },
+          { title: "Employee Salary Structure", url: "/pages/hr/payroll/employee-salary-structure", icon: IconFileDescription },
+          { title: "Tax", url: "/pages/hr/payroll/tax", icon: IconReport },
         ],
       },
-      { title: "Bank Challan", url: "#", icon: IconFileDescription },
+      { title: "Bank Challan", url: "/pages/hr/bank-challan", icon: IconFileDescription },
       {
         title: "Employee Details",
         url: "#",
         icon: IconFileDescription,
         children: [
-          { title: "Employee Settlement", url: "#", icon: IconFileDescription },
-          { title: "Employement Settlement Data", url: "#", icon: IconFileDescription },
+          { title: "Employee Settlement", url: "/pages/hr/employees/settlement", icon: IconFileDescription },
+          { title: "Employement Settlement Data", url: "/pages/hr/employees/settlement-data", icon: IconFileDescription },
         ],
       },
     ],
     navSecondary: [
-      { title: "Settings", url: "#", icon: IconSettings },
+      { title: "Settings", url: "/pages/hr/settings", icon: IconSettings },
       
     ],
     documents: [
-      { name: "Letter Generation", url: "#", icon: IconFileWord },
-      { name: "Employee Handbook", url: "#", icon: IconFileDescription },
-      { name: "Reports", url: "#", icon: IconReport },
+      { name: "Letter Generation", url: "/pages/hr/letters", icon: IconFileWord },
+      { name: "Employee Handbook", url: "/pages/hr/handbook", icon: IconFileDescription },
+      { name: "Reports", url: "/pages/hr/reports", icon: IconReport },
     ],
   },
 }
