@@ -39,6 +39,13 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" })
+    } catch {}
+    // Always navigate to login/home after attempting logout
+    window.location.href = "/"
+  }
 
   return (
     <SidebarMenu>
@@ -98,7 +105,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <IconLogout />
               Log out
             </DropdownMenuItem>

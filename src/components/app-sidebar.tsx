@@ -103,7 +103,8 @@ function mergeData(base: SidebarData, overrides?: Partial<SidebarData>): Sidebar
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { role, dataOverrides } = useSidebarConfig()
-  const data = mergeData(baseDataByRole[role], dataOverrides)
+  const base = baseDataByRole[role as keyof typeof baseDataByRole] ?? baseDataByRole.user
+  const data = mergeData(base, dataOverrides)
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
