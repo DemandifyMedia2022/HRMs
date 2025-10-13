@@ -9,6 +9,7 @@ export type NavMainItem = {
   title: string
   url: string
   icon?: Icon
+  children?: { title: string; url: string; icon?: Icon }[]
 }
 
 export type NavSecondaryItem = {
@@ -21,6 +22,7 @@ export type DocumentItem = {
   name: string
   url: string
   icon: Icon
+  children?: { name: string; url: string; icon?: Icon }[]
 }
 
 export type SidebarData = {

@@ -3,92 +3,85 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { IconUsers, IconUserShield, IconUser } from "@tabler/icons-react"
-
-const roles = [
-  {
-    id: "admin",
-    title: "Admin",
-    description: "System administration and management",
-    icon: IconUserShield,
-    color: "bg-red-100 text-red-800",
-    path: "/pages/admin",
-  },
-  {
-    id: "hr",
-    title: "HR",
-    description: "Human resources and employee management",
-    icon: IconUsers,
-    color: "bg-blue-100 text-blue-800",
-    path: "/pages/hr",
-  },
-  {
-    id: "user",
-    title: "User",
-    description: "General user access (CSM, Quality, Sales, IT, Marketing, etc.)",
-    icon: IconUser,
-    color: "bg-gray-100 text-gray-800",
-    path: "/pages/user",
-  },
-]
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 
 export default function HomePage() {
-  const [selectedRole, setSelectedRole] = useState<string | null>(null)
   const router = useRouter()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  const handleRoleSelect = (role: typeof roles[0]) => {
-    setSelectedRole(role.id)
-    router.push(role.path)
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data?.message || "Invalid credentials")
+        return
+      }
+      const data = await res.json()
+      const role = String(data?.role || "user").toLowerCase()
+      if (role === "admin") router.push("/admin")
+      else if (role === "hr") router.push("/hr")
+      else router.push("/user")
+    } catch {
+      setError("Login failed. Please check your credentials.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Welcome to HRMS
-          </h1>
-          <p className="text-xl text-gray-600">
-            Please select your role to access your dashboard
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {roles.map((role) => {
-            const IconComponent = role.icon
-            return (
-              <Card
-                key={role.id}
-                className={`cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${
-                  selectedRole === role.id ? 'ring-2 ring-blue-500 shadow-lg' : ''
-                }`}
-                onClick={() => handleRoleSelect(role)}
-              >
-                <CardHeader className="text-center pb-3">
-                  <div className="mx-auto mb-3 p-3 rounded-full bg-slate-100 w-fit">
-                    <IconComponent className="h-8 w-8 text-slate-600" />
-                  </div>
-                  <CardTitle className="text-lg">{role.title}</CardTitle>
-                  <Badge variant="secondary" className={role.color}>
-                    {role.id.toUpperCase()}
-                  </Badge>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-center text-sm">
-                    {role.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-
-        <div className="mt-12 text-center">
-          <p className="text-sm text-gray-500">
-            Select your role above to continue to your personalized dashboard
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-2xl">Sign in</CardTitle>
+            <CardDescription>Enter your email and password to continue</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+              {error && (
+                <p className="text-sm text-red-600">{error}</p>
+              )}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing in..." : "Sign in"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
