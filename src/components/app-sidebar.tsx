@@ -37,7 +37,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
   admin: {
     user: { name: "Admin", email: "admin@example.com", avatar: "/avatars/shadcn.jpg" },
     navMain: [
-      { title: "Dashboard", url: "#", icon: IconDashboard },
+      { title: "Dashboard", url: "/pages/admin", icon: IconDashboard },
       {
         title: "Attendance",
         url: "#",
@@ -92,15 +92,15 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
   user: {
     user: { name: "User", email: "user@example.com", avatar: "/avatars/shadcn.jpg" },
     navMain: [
-      { title: "Dashboard", url: "#", icon: IconDashboard },
+      { title: "Dashboard", url: "/pages/user", icon: IconDashboard },
       {
         title: "Attendance",
         url: "#",
         icon: IconListDetails,
         children: [
-          { title: "Monthly Attendance", url: "#", icon: IconReport },
-          { title: "Request Attendance Update", url: "#", icon: IconListDetails },
-          { title: "Attendance update status", url: "#", icon: IconReport },
+          { title: "Monthly Attendance", url: "/pages/user/attendance", icon: IconReport },
+          { title: "Request Attendance Update", url: "/pages/user/attendance/request-update", icon: IconListDetails },
+          { title: "Attendance update status", url: "/pages/user/attendance/status", icon: IconReport },
         ],
       },
       {
@@ -136,7 +136,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
   hr: {
     user: { name: "HR", email: "hr@example.com", avatar: "/avatars/shadcn.jpg" },
     navMain: [
-      { title: "Dashboard", url: "#", icon: IconDashboard },
+      { title: "Dashboard", url: "/pages/hr", icon: IconDashboard },
       {
         title: "Attendance",
         url: "#",
@@ -177,8 +177,8 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconFileDescription,
         children: [
           { title: "Add Employee", url: "/pages/hr/employees/new", icon: IconFileDescription },
-          { title: "Employee Settlement", url: "#", icon: IconFileDescription },
-          { title: "Employement Settlement Data", url: "#", icon: IconFileDescription },
+          { title: "Employee Settlement", url: "/pages/hr/employees/settlement", icon: IconFileDescription },
+          { title: "Settlement History", url: "/pages/hr/employees/history", icon: IconFileDescription },
         ],
       },
     ],
