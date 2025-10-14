@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import Link from "next/link";
 
 type EventItem = {
   title: string;
@@ -154,6 +155,9 @@ export default function AdminAttendancePage() {
             >
               Export User (CSV)
             </Button>
+            <Link href="/pages/admin/attendance-bulk">
+              <Button variant="secondary">Bulk Update</Button>
+            </Link>
           </div>
         </div>
       </div>
