@@ -108,9 +108,8 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: "#",
         icon: IconChartBar,
         children: [
-          { title: "New Leave", url: "/pages/hr/leaves/new", icon: IconListDetails },
-          { title: "Available Leaves", url: "/pages/hr/leaves/available", icon: IconReport },
-          { title: "All Leaves", url: "/pages/hr/leaves", icon: IconListDetails },
+          { title: "New Leave", url: "/pages/users/leaves/new", icon: IconListDetails },
+          { title: "Available Leaves", url: "/pages/users/leaves/available", icon: IconReport },
         ],
       },
       {
@@ -143,7 +142,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: "#",
         icon: IconUsers,
         children: [
-          { title: "Monthly Attendance", url: "#", icon: IconReport },
+          { title: "Monthly Attendance", url: "/pages/hr/attendance", icon: IconReport },
           { title: "Update Attendance", url: "#", icon: IconListDetails },
           { title: "Assign Shift", url: "#", icon: IconUsers },
           { title: "Request Attendance Update", url: "#", icon: IconListDetails },
