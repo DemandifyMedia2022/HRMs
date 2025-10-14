@@ -166,7 +166,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         children: [
           { title: "Paylip", url: "#", icon: IconReport },
           { title: "My Salary Structure", url: "#", icon: IconFileDescription },
-          { title: "Employee Salary Structure", url: "#", icon: IconFileDescription },
+          { title: "Employee Salary Structure", url: "/pages/hr/payroll/employee-salary-structure", icon: IconFileDescription },
           { title: "Tax", url: "#", icon: IconReport },
         ],
       },
