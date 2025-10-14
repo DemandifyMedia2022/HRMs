@@ -2,6 +2,7 @@
 
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
 import { usePathname } from "next/navigation"
+import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -58,8 +59,8 @@ export function NavMain({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" sideOffset={8}>
                       {item.children!.map((child) => (
-                        <DropdownMenuItem key={child.title}>
-                          <a
+                        <DropdownMenuItem asChild key={child.title}>
+                          <Link
                             href={child.url}
                             className={`flex items-center gap-2 ${
                               child.url !== "#" && pathname.startsWith(child.url) ? "font-medium" : ""
@@ -67,17 +68,17 @@ export function NavMain({
                           >
                             {child.icon && <child.icon />}
                             <span>{child.title}</span>
-                          </a>
+                          </Link>
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
                   <SidebarMenuButton tooltip={item.title} asChild isActive={isActive} className={activeCls}>
-                    <a href={item.url}>
+                    <Link href={item.url}>
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 )}
               </SidebarMenuItem>

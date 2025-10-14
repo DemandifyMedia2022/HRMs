@@ -8,33 +8,21 @@ datasource db {
 }
 
 model NpAttendance {
-  id         Int      @id @default(autoincrement())
-  employeeId String   @map("employee_id") @db.VarChar(50)
-  empName    String   @map("emp_name") @db.VarChar(255)
-  date       DateTime @db.Date
-  inTime     DateTime @map("in_time") @db.DateTime(0)
-  outTime    DateTime @map("out_time") @db.DateTime(0)
-  clockTimes String   @map("clock_times") @db.Text
-  totalHours String   @map("total_hours") @db.VarChar(20)
-  loginHours String   @map("login_hours") @db.VarChar(20)
-  breakHours String   @map("break_hours") @db.VarChar(20)
-  status     String   @db.VarChar(50)
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id         Int       @id @default(autoincrement())
+  employeeId Int       @map("employee_id")
+  empName    String?   @map("emp_name") @db.VarChar(255)
+  date       DateTime  @db.Date
+  inTime     DateTime? @map("in_time") @db.Time(0)
+  outTime    DateTime? @map("out_time") @db.Time(0)
+  loginHours DateTime? @map("login_hours") @db.Time(0)
+  status     String?   @db.VarChar(255)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  totalHours DateTime? @map("total_hours") @db.Time(0)
+  breakHours DateTime? @map("break_hours") @db.Time(0)
+  clockTimes String?   @map("clock_times") @db.Text
 
-  @@unique([employeeId, date])
-  @@index([employeeId])
-  @@index([date])
   @@map("npattendance")
-}
-
-model employee {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique(map: "Employee_email_key")
-  position  String?
-  salary    Float?
-  createdAt DateTime @default(now())
 }
 
 model users {
@@ -152,4 +140,629 @@ model users {
   Reimbursement_amount                      Int?
   months                                    Int?
   status                                    Int?      @db.TinyInt
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model attendance {
+  id                     Int       @id @default(autoincrement())
+  name                   String?   @db.VarChar(255)
+  username               String?   @db.VarChar(255)
+  email                  String    @db.VarChar(255)
+  date                   DateTime  @db.Date
+  shift_time             String    @db.VarChar(55)
+  new_shift_time         String?   @db.VarChar(255)
+  login_time             String    @db.VarChar(255)
+  added_by_user          String?   @db.VarChar(255)
+  logout_time            String    @db.VarChar(255)
+  logout_reason          String    @db.VarChar(11)
+  login_hours            String    @db.VarChar(55)
+  login_status           String?   @db.VarChar(255)
+  status                 String    @db.VarChar(11)
+  morning_break_start    DateTime? @db.Time(0)
+  morning_break_end      DateTime? @db.Time(0)
+  morning_break_duration String?   @db.VarChar(255)
+  lunch_break_start      DateTime? @db.Time(0)
+  lunch_break_end        DateTime? @db.Time(0)
+  lunch_break_duration   String?   @db.VarChar(255)
+  evening_break_start    DateTime? @db.Time(0)
+  evening_break_end      DateTime? @db.Time(0)
+  evening_break_duration String?   @db.VarChar(255)
+  idle_time              DateTime? @db.Time(0)
+  created_at             DateTime? @db.Timestamp(0)
+  updated_at             DateTime? @db.Timestamp(0)
+  password               String    @db.VarChar(255)
+  type                   String    @db.VarChar(255)
+  start_time             DateTime? @db.Time(0)
+  end_time               DateTime? @db.Time(0)
+  working_hours          DateTime? @db.Time(0)
+  short_break_duration   DateTime? @default(dbgenerated("('00:00:00')")) @db.Time(0)
+}
+
+model birthday_wishes {
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id    BigInt    @db.UnsignedBigInt
+  wished_by  BigInt    @db.UnsignedBigInt
+  message    String    @db.Text
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+}
+
+model bonus {
+  id      Int     @id @default(autoincrement())
+  user_id Int?
+  bonus   String? @db.VarChar(255)
+}
+
+model crud_events {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  event_name  String    @db.VarChar(255)
+  event_date  DateTime? @default(now()) @db.DateTime(0)
+  event_start DateTime  @db.Date
+  event_end   DateTime  @db.Date
+  description String    @db.Text
+  created_at  DateTime? @db.Timestamp(0)
+  updated_at  DateTime? @db.Timestamp(0)
+}
+
+model deleted_user_informations {
+  Deleted_User_ID                           Int       @id @default(autoincrement())
+  prefix                                    String?   @db.VarChar(50)
+  full_name                                 String?   @db.VarChar(255)
+  gender                                    String?   @db.VarChar(10)
+  emp_code                                  String?   @db.VarChar(50)
+  blood_group                               String?   @db.VarChar(10)
+  nationality                               String?   @db.VarChar(100)
+  joining_date                              String?   @db.VarChar(255)
+  retirement_date                           String?   @db.VarChar(255)
+  employment_type                           String?   @db.VarChar(100)
+  employment_status                         String?   @db.VarChar(100)
+  company_name                              String?   @db.VarChar(255)
+  business_unit                             String?   @db.VarChar(255)
+  reporting_manager                         String?   @db.VarChar(255)
+  functional_manager                        String?   @db.VarChar(255)
+  team                                      String?   @db.VarChar(255)
+  dob                                       DateTime? @db.Date
+  name                                      String?   @db.VarChar(255)
+  email                                     String?   @db.VarChar(255)
+  personal_email                            String?   @db.VarChar(255)
+  contact_no                                String?   @db.VarChar(20)
+  job_role                                  String?   @db.VarChar(255)
+  department                                String?   @db.VarChar(255)
+  emp_address                               String?   @db.Text
+  email_verified_at                         DateTime? @db.DateTime(0)
+  password                                  String?   @db.VarChar(255)
+  type                                      String?   @db.VarChar(50)
+  shift_time                                String?   @db.VarChar(100)
+  remember_token                            String?   @db.VarChar(100)
+  aadhaar_card                              String?   @db.VarChar(100)
+  pan_card                                  String?   @db.VarChar(100)
+  marksheet                                 String?   @db.VarChar(255)
+  certifications                            String?   @db.Text
+  pay_slips                                 String?   @db.Text
+  bank_statement                            String?   @db.Text
+  bankpassbook                              String?   @db.Text
+  relieving_letter                          String?   @db.Text
+  created_at                                DateTime? @db.DateTime(0)
+  updated_at                                DateTime? @db.DateTime(0)
+  biometric_id                              String?   @db.VarChar(100)
+  bank_name                                 String?   @db.VarChar(100)
+  ifsc_code                                 String?   @db.VarChar(50)
+  account_no                                String?   @db.VarChar(100)
+  salary_pay_mode                           String?   @db.VarChar(50)
+  reimbursement_pay_mode                    String?   @db.VarChar(50)
+  reimbursement_bank_name                   String?   @db.VarChar(100)
+  reimbursement_branch                      String?   @db.VarChar(100)
+  reimbursement_ifsc_code                   String?   @db.VarChar(50)
+  reimbursement_account_no                  String?   @db.VarChar(100)
+  branch                                    String?   @db.VarChar(100)
+  father_name                               String?   @db.VarChar(255)
+  father_dob                                DateTime? @db.Date
+  mother_name                               String?   @db.VarChar(255)
+  mother_dob                                DateTime? @db.Date
+  marital_status                            String?   @db.VarChar(50)
+  child_name                                String?   @db.VarChar(255)
+  child_dob                                 DateTime? @db.Date
+  child_gender                              String?   @db.VarChar(10)
+  adhar_card_no                             String?   @db.VarChar(100)
+  pan_card_no                               String?   @db.VarChar(100)
+  insuree_name                              String?   @db.VarChar(255)
+  relationship                              String?   @db.VarChar(100)
+  insuree_dob                               DateTime? @db.Date
+  insuree_gender                            String?   @db.VarChar(10)
+  insuree_code                              String?   @db.VarChar(100)
+  assured_sum                               Decimal?  @db.Decimal(15, 2)
+  insurance_company                         String?   @db.VarChar(255)
+  company_code                              String?   @db.VarChar(100)
+  issue_date                                DateTime? @db.Date
+  dependent_name                            String?   @db.VarChar(255)
+  dependent_relation                        String?   @db.VarChar(100)
+  dependent_dob                             DateTime? @db.Date
+  dependent_gender                          String?   @db.VarChar(10)
+  nominee_name                              String?   @db.VarChar(255)
+  nominee_relation                          String?   @db.VarChar(100)
+  nominee_dob                               DateTime? @db.Date
+  nominee_gender                            String?   @db.VarChar(10)
+  passport_no                               String?   @db.VarChar(100)
+  passport_expiry_date                      DateTime? @db.Date
+  emergency_contact                         String?   @db.VarChar(20)
+  emergency_contact_name                    String?   @db.VarChar(255)
+  emergency_relation                        String?   @db.VarChar(100)
+  tax_regime                                String?   @db.VarChar(100)
+  is_employees_aadhar_and_pan_number_linked Boolean?
+  pf_number                                 String?   @db.VarChar(100)
+  uan                                       String?   @db.VarChar(100)
+  employee_pf_contribution_limit            Decimal?  @db.Decimal(10, 2)
+  salary_revision_month                     String?   @db.VarChar(20)
+  Arrear_with_effect_from                   DateTime? @db.Date
+  ctc                                       Decimal?  @db.Decimal(15, 2)
+  basic_monthly_remuneration                Decimal?  @db.Decimal(15, 2)
+  basic_annual_remuneration                 Decimal?  @db.Decimal(15, 2)
+  hra_monthly_remuneration                  Decimal?  @db.Decimal(15, 2)
+  hra_annual_remuneration                   Decimal?  @db.Decimal(15, 2)
+  other_allowance_monthly_remuneration      Decimal?  @db.Decimal(15, 2)
+  other_allowance_annual_remuneration       Decimal?  @db.Decimal(15, 2)
+  pf_monthly_contribution                   Decimal?  @db.Decimal(15, 2)
+  pf_annual_contribution                    Decimal?  @db.Decimal(15, 2)
+  Employee_Esic_Monthly                     String?   @db.VarChar(300)
+  Employee_Esic_Annual                      String?   @db.VarChar(300)
+  Employer_Esic_Monthly                     String?   @db.VarChar(300)
+  Employer_Esic_Annual                      String?   @db.VarChar(300)
+  gross_salary                              Decimal?  @db.Decimal(15, 2)
+  netSalary                                 Decimal?  @db.Decimal(15, 2)
+  paygroup                                  String?   @db.VarChar(100)
+  remaining_leave                           Int?
+  last_leave_update                         DateTime? @db.Date
+  paid_leave                                Int?
+  sick_leave                                Int?
+  advanced_salary                           Decimal?  @db.Decimal(15, 2)
+  advanced_salary_date                      DateTime? @db.Date
+  reimbursement_amount                      Decimal?  @db.Decimal(15, 2)
+  months                                    String?   @db.VarChar(100)
+  status                                    String?   @db.VarChar(50)
+  date_of_resignation                       DateTime? @db.Date
+  expected_last_working_day                 DateTime? @db.Date
+  date_of_relieving                         DateTime? @db.Date
+  resignation_reason_employee               String?   @db.VarChar(255)
+  resignation_reason_approver               String?   @db.VarChar(255)
+  settelment_employee_other_status          String?   @db.VarChar(255)
+  employee_other_status_remarks             String?   @db.VarChar(255)
+}
+
+model dispositions {
+  id           Int     @id @default(autoincrement())
+  dispositions String? @db.VarChar(255)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model dm_form {
+  f_id              Int      @id @default(autoincrement())
+  f_campaign_name   String?  @db.VarChar(255)
+  f_lead            String?  @db.VarChar(255)
+  f_resource_name   String?  @db.VarChar(255)
+  f_data_source     String?  @db.VarChar(255)
+  f_salutation      String?  @db.VarChar(255)
+  f_first_name      String?  @db.Text
+  f_last_name       String?  @db.Text
+  f_job_title       String?  @db.VarChar(255)
+  f_department      String?  @db.VarChar(255)
+  f_job_level       String?  @db.VarChar(255)
+  f_email_add       String?  @db.VarChar(255)
+  Secondary_Email   String?  @db.VarChar(255)
+  f_conatct_no      String?  @db.VarChar(50)
+  f_company_name    String?  @db.VarChar(255)
+  f_website         String?  @db.VarChar(1000)
+  f_address1        String?  @db.VarChar(1000)
+  f_city            String?  @db.VarChar(255)
+  f_state           String?  @db.VarChar(255)
+  f_zip_code        String?  @db.VarChar(255)
+  f_country         String?  @db.VarChar(255)
+  f_emp_size        String?  @db.VarChar(255)
+  f_industry        String?  @db.VarChar(255)
+  f_sub_industry    String?  @db.VarChar(255)
+  f_revenue         String?  @db.VarChar(255)
+  f_revenue_link    String?  @db.VarChar(1000)
+  f_profile_link    String?  @db.Text
+  f_company_link    String?  @db.Text
+  f_address_link    String?  @db.Text
+  f_cq1             String?  @db.VarChar(255)
+  f_cq2             String?  @db.Text
+  f_cq3             String?  @db.VarChar(255)
+  f_cq4             String?  @db.VarChar(255)
+  f_cq5             String?  @db.VarChar(255)
+  f_cq6             String?  @db.VarChar(255)
+  f_cq7             String?  @db.VarChar(255)
+  f_cq8             String?  @db.VarChar(255)
+  f_cq9             String?  @db.VarChar(255)
+  f_cq10            String?  @db.VarChar(255)
+  f_asset_name1     String?  @db.VarChar(255)
+  f_asset_name2     String?  @db.VarChar(255)
+  f_call_recording  String?  @db.VarChar(255)
+  f_email_status    String?  @db.VarChar(255)
+  f_qa_status       String?  @db.VarChar(255)
+  f_dq_reason1      String?  @db.VarChar(255)
+  f_dq_reason2      String?  @db.VarChar(255)
+  f_dq_reason3      String?  @db.VarChar(255)
+  f_dq_reason4      String?  @db.VarChar(255)
+  f_qa_comments     String?  @db.Text
+  f_call_rating     String?  @db.VarChar(255)
+  f_call_notes      String?  @db.Text
+  feedback          String?  @db.Text
+  f_call_links      String?  @db.VarChar(255)
+  f_qa_name         String?  @db.VarChar(255)
+  f_audit_date      String?  @db.VarChar(55)
+  f_delivary_status String?  @db.VarChar(11)
+  f_delivary_date   String?  @db.VarChar(11)
+  f_delivary_by     String?  @db.VarChar(11)
+  f_reject_reason   String?  @db.VarChar(255)
+  added_by_user_id  String?  @db.VarChar(55)
+  qualifyleads_by   String?  @db.VarChar(255)
+  f_date            DateTime @default(now()) @db.Timestamp(0)
+  form_status       Int
+}
+
+model dm_task {
+  c_id            Int      @id @default(autoincrement())
+  f_campaign_name String   @db.VarChar(50)
+  f_start_date    DateTime @db.Date
+  f_end_date      DateTime @db.Date
+  f_assignto      String   @db.VarChar(25)
+  f_allocation    String   @db.VarChar(255)
+  f_method        String   @db.VarChar(255)
+  f_script        Bytes    @db.Blob
+  f_status        String   @db.VarChar(11)
+}
+
+model employee_insurance {
+  id           Int     @id @default(autoincrement())
+  user_id      Int?
+  esi          String? @db.VarChar(255)
+  wage         String? @db.VarChar(255)
+  esi_limit    String? @db.VarChar(255)
+  employer_esi String? @db.VarChar(255)
+  employee_esi String? @db.VarChar(255)
+  negative     String? @db.VarChar(255)
+  physical     String? @db.VarChar(255)
+}
+
+model failed_jobs {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid       String   @unique(map: "failed_jobs_uuid_unique") @db.VarChar(255)
+  connection String   @db.Text
+  queue      String   @db.Text
+  payload    String   @db.LongText
+  exception  String   @db.LongText
+  failed_at  DateTime @default(now()) @db.Timestamp(0)
+}
+
+model gratuity {
+  id       Int     @id @default(autoincrement())
+  user_id  Int?
+  Gratuity String? @db.VarChar(255)
+}
+
+model internal_suppression1 {
+  id            Int     @id @default(autoincrement())
+  date          String? @db.VarChar(9)
+  method        String? @db.VarChar(6)
+  internal_id   String? @db.VarChar(11)
+  sponsor       String? @db.VarChar(14)
+  campaign_name String? @db.VarChar(77)
+  first_name    String? @db.VarChar(21)
+  last_name     String? @db.VarChar(35)
+  email_id      String? @db.VarChar(62)
+  company_name  String? @db.VarChar(81)
+}
+
+model investment_declaration {
+  id                    Int     @id @default(autoincrement())
+  user_id               Int?
+  Full_name             String? @db.VarChar(255)
+  emp_code              String? @db.VarChar(100)
+  Gross_salary          String? @db.VarChar(20)
+  salary_head           String? @db.VarChar(20)
+  variable_amount       String? @db.VarChar(20)
+  employer_details      String? @db.VarChar(20)
+  Income_from_other     String? @db.VarChar(20)
+  HRA_80GG              String? @db.VarChar(20)
+  HRA_Exempted          String? @db.VarChar(20)
+  A_80C                 String? @db.VarChar(20)
+  A_Others              String? @db.VarChar(20)
+  Standard_Deduction    String? @db.VarChar(20)
+  Net_taxable_income    String? @db.VarChar(20)
+  Annual_Projected_TDS  String? @db.VarChar(20)
+  TDS_deducted          String? @db.VarChar(20)
+  Remaining_Tax         String? @db.VarChar(20)
+  TDS_subsequent_month  String? @db.VarChar(20)
+  TDS_this_month        String? @db.VarChar(20)
+  Total_Tax             String? @db.VarChar(20)
+  Gross_salary1         String? @db.VarChar(20)
+  salary_head1          String? @db.VarChar(20)
+  variable_amount1      String? @db.VarChar(20)
+  employer_details1     String? @db.VarChar(20)
+  Income_from_other1    String? @db.VarChar(20)
+  A_Others1             String? @db.VarChar(20)
+  Standard_Deduction1   String? @db.VarChar(20)
+  Net_taxable_income1   String? @db.VarChar(20)
+  Annual_Projected_TDS1 String? @db.VarChar(20)
+  TDS_deducted1         String? @db.VarChar(20)
+  Remaining_Tax1        String? @db.VarChar(20)
+  TDS_subsequent_month1 String? @db.VarChar(20)
+  TDS_this_month1       String? @db.VarChar(20)
+  Total_Tax1            String? @db.VarChar(20)
+
+  @@map("investment declaration")
+}
+
+model issuedata {
+  id                     Int       @id @default(autoincrement())
+  name                   String    @db.VarChar(55)
+  department             String    @db.VarChar(55)
+  issuse_type            String    @db.VarChar(55)
+  reason                 String    @db.VarChar(2000)
+  added_by_user          String    @db.VarChar(55)
+  status                 String?   @db.VarChar(11)
+  Date_Attendance_Update DateTime? @db.Date
+  Attendance_status      String?   @db.VarChar(255)
+  Attendance_Approval    String?   @db.VarChar(255)
+  Attendance_feedback    String?   @db.VarChar(255)
+  raisedate              DateTime  @db.DateTime(0)
+  resolved_date          DateTime? @db.DateTime(0)
+  resolution_comment     String?   @db.Text
+  acknowledgement_status String?   @db.VarChar(55)
+  acknowledgement_date   DateTime? @db.DateTime(0)
+  resolved_by            String?   @db.VarChar(255)
+  acknowledgement_by     String?   @db.VarChar(255)
+}
+
+model labour {
+  id      Int     @id @default(autoincrement())
+  User_id Int?
+  LWF     String? @db.VarChar(255)
+}
+
+model leavedata {
+  l_id                  Int      @id @default(autoincrement())
+  leave_type            String   @db.VarChar(55)
+  start_date            DateTime @db.Date
+  end_date              DateTime @db.Date
+  reason                String   @db.VarChar(1000)
+  HRapproval            String   @db.VarChar(255)
+  HRrejectReason        String?  @db.VarChar(255)
+  Managerapproval       String   @db.VarChar(255)
+  ManagerRejecjetReason String?  @db.VarChar(255)
+  leaveregdate          DateTime @db.Date
+  added_by_user         String?  @db.VarChar(255)
+  emp_code              String?  @db.VarChar(255)
+  Team                  String?  @db.VarChar(55)
+  status                String?  @db.VarChar(20)
+}
+
+model migrations {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  migration String @db.VarChar(255)
+  batch     Int
+}
+
+model password_reset_tokens {
+  email      String    @id @db.VarChar(255)
+  token      String    @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+}
+
+model personal_access_tokens {
+  id             BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  tokenable_type String    @db.VarChar(255)
+  tokenable_id   BigInt    @db.UnsignedBigInt
+  name           String    @db.VarChar(255)
+  token          String    @unique(map: "personal_access_tokens_token_unique") @db.VarChar(64)
+  abilities      String?   @db.Text
+  last_used_at   DateTime? @db.Timestamp(0)
+  expires_at     DateTime? @db.Timestamp(0)
+  created_at     DateTime? @db.Timestamp(0)
+  updated_at     DateTime? @db.Timestamp(0)
+
+  @@index([tokenable_type, tokenable_id], map: "personal_access_tokens_tokenable_type_tokenable_id_index")
+}
+
+model professionaltax {
+  id               Int     @id @default(autoincrement())
+  user_id          Int?
+  professional_tax String? @db.VarChar(255)
+  separate         String? @db.VarChar(255)
+  disabled         String? @db.VarChar(255)
+  exemption        String? @db.VarChar(255)
+  exemption_limit  String? @db.VarChar(255)
+}
+
+model provident_fund {
+  id                    Int      @id @default(autoincrement())
+  user_id               Int?
+  pf_contribution       String?  @db.VarChar(255)
+  employee_contribution String?  @db.VarChar(255)
+  pension               Decimal? @db.Decimal(10, 2)
+  wage_limit            String?  @db.VarChar(255)
+  contribution_limit    String?  @db.VarChar(255)
+  charges_rate          Decimal? @db.Decimal(10, 1)
+  admin_charge          String?  @db.VarChar(20)
+  edli_contribution     Decimal? @db.Decimal(10, 1)
+  edli_rate             String?  @db.VarChar(255)
+  edli_charge           String?  @db.VarChar(255)
+  perquisite_rate       Decimal? @db.Decimal(10, 1)
+  exemption_limit       String?  @db.VarChar(255)
+  hra_calc              String?  @db.VarChar(255)
+  pf                    String?  @db.VarChar(255)
+  admin_charge_basis    String?  @db.VarChar(255)
+  admin                 String?  @db.VarChar(255)
+  gross                 String?  @db.VarChar(255)
+  process               String?  @db.VarChar(255)
+  fund                  String?  @db.VarChar(255)
+  vpf                   String?  @db.VarChar(255)
+}
+
+model shift_time {
+  Id           Int    @id @default(autoincrement())
+  Full_name    String @db.VarChar(255)
+  biomatric_id Int
+  shift_time   String @db.VarChar(255)
+  group_name   String @db.VarChar(255)
+}
+
+model slabs {
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  state      String?   @db.VarChar(255)
+  branch     String?   @db.VarChar(255)
+  gender1    String?   @db.VarChar(10)
+  min_limit1 Int?
+  max_limit1 Int?
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+  jan1       String?   @db.VarChar(255)
+  feb1       String?   @db.VarChar(255)
+  mar1       String?   @db.VarChar(255)
+  apr1       String?   @db.VarChar(255)
+  may1       String?   @db.VarChar(255)
+  jun1       String?   @db.VarChar(255)
+  jul1       String?   @db.VarChar(255)
+  aug1       String?   @db.VarChar(255)
+  sep1       String?   @db.VarChar(255)
+  oct1       String?   @db.VarChar(255)
+  nov1       String?   @db.VarChar(255)
+  dec1       String?   @db.VarChar(255)
+  gender2    String?   @db.VarChar(10)
+  min_limit2 Int?
+  max_limit2 Int?
+  jan2       String?   @db.VarChar(255)
+  feb2       String?   @db.VarChar(255)
+  mar2       String?   @db.VarChar(255)
+  apr2       String?   @db.VarChar(255)
+  may2       String?   @db.VarChar(255)
+  jun2       String?   @db.VarChar(255)
+  jul2       String?   @db.VarChar(255)
+  aug2       String?   @db.VarChar(255)
+  sep2       String?   @db.VarChar(255)
+  oct2       String?   @db.VarChar(255)
+  nov2       String?   @db.VarChar(255)
+  dec2       String?   @db.VarChar(255)
+  gender3    String?   @db.VarChar(10)
+  min_limit3 Int?
+  max_limit3 Int?
+  jan3       String?   @db.VarChar(255)
+  feb3       String?   @db.VarChar(255)
+  mar3       String?   @db.VarChar(255)
+  apr3       String?   @db.VarChar(255)
+  may3       String?   @db.VarChar(255)
+  jun3       String?   @db.VarChar(255)
+  jul3       String?   @db.VarChar(255)
+  aug3       String?   @db.VarChar(255)
+  sep3       String?   @db.VarChar(255)
+  oct3       String?   @db.VarChar(255)
+  nov3       String?   @db.VarChar(255)
+  dec3       String?   @db.VarChar(255)
+  gender4    String?   @db.VarChar(10)
+  min_limit4 Int?
+  max_limit4 Int?
+  jan4       String?   @db.VarChar(255)
+  feb4       String?   @db.VarChar(255)
+  mar4       String?   @db.VarChar(255)
+  apr4       String?   @db.VarChar(255)
+  may4       String?   @db.VarChar(255)
+  jun4       String?   @db.VarChar(255)
+  jul4       String?   @db.VarChar(255)
+  aug4       String?   @db.VarChar(255)
+  sep4       String?   @db.VarChar(255)
+  oct4       String?   @db.VarChar(255)
+  nov4       String?   @db.VarChar(255)
+  dec4       String?   @db.VarChar(255)
+  gender5    String?   @db.VarChar(10)
+  min_limit5 Int?
+  max_limit5 Int?
+  jan5       String?   @db.VarChar(255)
+  feb5       String?   @db.VarChar(255)
+  mar5       String?   @db.VarChar(255)
+  apr5       String?   @db.VarChar(255)
+  may5       String?   @db.VarChar(255)
+  jun5       String?   @db.VarChar(255)
+  jul5       String?   @db.VarChar(255)
+  aug5       String?   @db.VarChar(255)
+  sep5       String?   @db.VarChar(255)
+  oct5       String?   @db.VarChar(255)
+  nov5       String?   @db.VarChar(255)
+  dec5       String?   @db.VarChar(255)
+}
+
+model tax {
+  user_id                           Int     @id @default(autoincrement())
+  Full_name                         String? @db.VarChar(255)
+  emp_code                          String? @db.VarChar(55)
+  income_salary                     Int?
+  Basic_salary                      Int?
+  Gross_salary                      Int?
+  Perquisites_under_section         Int?
+  Exempted_allowances_under_section Int?
+  Standard_deduction                Int?
+  Profession_Tax                    Int?
+  Total_Taxable_income              Int?
+  House_Property                    Int?
+  Self_Occupied                     Int?
+  Rent_Received                     Int?
+  Taxes_paid                        Int?
+  Repairs                           Int?
+  Net_Rent                          Int?
+  Interest_payable                  Int?
+  Income_Loss_House_Property        Int?
+  total_Income                      Int?
+  Deductions_80C                    Int?
+  Deductions_80CCD                  Int?
+  Deductions_80CCD2                 Int?
+  Deductions_80D                    Int?
+  Deductions_80DD                   Int?
+  Deductions_80DDB                  Int?
+  Deductions_80E                    Int?
+  Deductions_80EE                   Int?
+  Deductions_80EEA                  Int?
+  Deductions_80EEB                  Int?
+  Deductions_80U                    Int?
+  Total_Deductions                  Int?
+  Total_Taxable                     Int?
+  Tax_on_the_above                  Int?
+  Rebate_uder_Sec                   Int?
+  Surcharge                         Int?
+  Cess                              Int?
+  Total_Tax_liability               Int?
+  Tax_Advantage                     Int?
+}
+
+model tax_setting {
+  user_id                Int?
+  id                     Int     @id @default(autoincrement())
+  children_no            Int?
+  tution_fees            String? @db.VarChar(20)
+  hostel_fees            String? @db.VarChar(20)
+  net_taxable_old        String? @db.VarChar(20)
+  net_taxable_new        String? @db.VarChar(28)
+  tax_rebate_old         String? @db.VarChar(20)
+  tax_rebate_new         String? @db.VarChar(50)
+  standard_deduction_old String? @db.VarChar(20)
+  standard_deduction_new String? @db.VarChar(20)
+  propose_investment     String? @db.VarChar(20)
+  confirm_investment     String? @db.VarChar(20)
+  month                  String? @db.VarChar(50)
+  rent_paid              String? @db.VarChar(20)
+  house_property         String? @db.VarChar(20)
+  housing_loan           String? @db.VarChar(20)
+  cess_charge            String? @db.VarChar(20)
+  Senior_citizen_age     Int?
+  super_citizen_age      Int?
+  lta_block_start        Int?    @db.Year
+  lta_block_end          Int?    @db.Year
+  annuation_exemption    String? @db.VarChar(255)
+  hra_calc               String? @db.VarChar(255)
+  tdspan                 String? @db.VarChar(255)
+  tdsadhar               String? @db.VarChar(255)
+  adhar                  String? @db.VarChar(255)
+  tds                    String? @db.VarChar(255)
+  income                 String? @db.VarChar(255)
+  challantax             String? @db.VarChar(255)
+  taxable                String? @db.VarChar(255)
+  component              String? @db.VarChar(255)
 }

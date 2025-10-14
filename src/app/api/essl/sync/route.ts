@@ -85,6 +85,10 @@ export async function POST(request: NextRequest) {
           continue;
         }
         const sortedTimestamps = timestamps.sort((a, b) => a - b);
+        const employeeIdNum = Number(employeeID);
+        if (Number.isNaN(employeeIdNum)) {
+          continue;
+        }
 
         // Extract first and last clock-in/out times
         const inTime = new Date(sortedTimestamps[0] * 1000);
@@ -111,6 +115,9 @@ export async function POST(request: NextRequest) {
         const totalHours = formatSeconds(totalSeconds);
         const workingHours = formatSeconds(workingSeconds);
         const breakHours = formatSeconds(breakSeconds);
+        const totalHoursTime = secondsToTimeDate(totalSeconds);
+        const workingHoursTime = secondsToTimeDate(workingSeconds);
+        const breakHoursTime = secondsToTimeDate(breakSeconds);
 
         const status = workingSeconds >= 8 * 3600 
           ? 'Present' 
@@ -120,7 +127,7 @@ export async function POST(request: NextRequest) {
 
         // Fetch employee name if exists
         const existingEmployee = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeID },
+          where: { employeeId: employeeIdNum },
           select: { empName: true },
         });
 
@@ -129,7 +136,7 @@ export async function POST(request: NextRequest) {
         // Check if record exists
         const existingRecord = await prisma.npAttendance.findFirst({
           where: {
-            employeeId: employeeID,
+            employeeId: employeeIdNum,
             date: new Date(cycleDate),
           },
         });
@@ -138,15 +145,15 @@ export async function POST(request: NextRequest) {
           // Insert new record
           await prisma.npAttendance.create({
             data: {
-              employeeId: employeeID,
+              employeeId: employeeIdNum,
               empName: employeeName,
               date: new Date(cycleDate),
               inTime,
               outTime,
               clockTimes: JSON.stringify(clockTimes),
-              totalHours,
-              loginHours: workingHours,
-              breakHours,
+              totalHours: totalHoursTime,
+              loginHours: workingHoursTime,
+              breakHours: breakHoursTime,
               status,
             },
           });
@@ -159,9 +166,9 @@ export async function POST(request: NextRequest) {
               inTime,
               outTime,
               clockTimes: JSON.stringify(clockTimes),
-              totalHours,
-              loginHours: workingHours,
-              breakHours,
+              totalHours: totalHoursTime,
+              loginHours: workingHoursTime,
+              breakHours: breakHoursTime,
               status,
             },
           });
@@ -250,6 +257,17 @@ function formatSeconds(seconds: number): string {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
+// Convert duration in seconds to a Date object representing that time of day (UTC)
+function secondsToTimeDate(seconds: number): Date {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  const hh = String(hours).padStart(2, '0');
+  const mm = String(minutes).padStart(2, '0');
+  const ss = String(secs).padStart(2, '0');
+  return new Date(`1970-01-01T${hh}:${mm}:${ss}.000Z`);
+}
+
 // GET endpoint to trigger sync (for testing)
 export async function GET(request: NextRequest) {
   return POST(request);
@@ -301,6 +319,8 @@ async function handleJsonAttendance(url: string) {
         const employeeID: string = String(log['employee_id'] ?? '').trim();
         const logDate: string = (log['date'] ?? '').toString().substring(0, 10); // YYYY-MM-DD
         if (!employeeID || !logDate) continue;
+        const employeeIdNum = Number(employeeID);
+        if (Number.isNaN(employeeIdNum)) continue;
 
         const cycleDate = logDate; // In this mode, use plain date (no 7AM cycle)
         const cycleDateObj = new Date(`${cycleDate}T00:00:00`);
@@ -308,7 +328,7 @@ async function handleJsonAttendance(url: string) {
 
         // Existing employee name from prior entries if available
         const existingEmployee = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeID },
+          where: { employeeId: employeeIdNum },
           select: { empName: true },
         });
         const employeeName: string = existingEmployee?.empName || log['employee_name'] || 'Unknown';
@@ -318,6 +338,9 @@ async function handleJsonAttendance(url: string) {
         const workingSeconds = parseHmsToSeconds(loginHoursStr);
         const totalHours: string | undefined = log['total_hours'] || undefined;
         const breakHours: string | undefined = log['break_hours'] || undefined;
+        const loginHoursTime = secondsToTimeDate(workingSeconds);
+        const totalHoursTime = secondsToTimeDate(parseHmsToSeconds(totalHours || '00:00:00'));
+        const breakHoursTime = secondsToTimeDate(parseHmsToSeconds(breakHours || '00:00:00'));
 
         // Clock times array (HH:mm)
         let clockTimes: string[] = Array.isArray(log['clock_times']) ? (log['clock_times'] as string[]) : [];
@@ -340,7 +363,7 @@ async function handleJsonAttendance(url: string) {
 
         // Check if record exists
         const existingRecord = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeID, date: new Date(cycleDate) },
+          where: { employeeId: employeeIdNum, date: new Date(cycleDate) },
         });
 
         if (existingRecord) {
@@ -354,9 +377,9 @@ async function handleJsonAttendance(url: string) {
             where: { id: existingRecord.id },
             data: {
               outTime,
-              loginHours: loginHoursStr ?? existingRecord.loginHours,
-              totalHours: totalHours ?? existingRecord.totalHours,
-              breakHours: breakHours ?? existingRecord.breakHours,
+              loginHours: loginHoursTime ?? existingRecord.loginHours,
+              totalHours: totalHoursTime ?? existingRecord.totalHours,
+              breakHours: breakHoursTime ?? existingRecord.breakHours,
               clockTimes: JSON.stringify(mergedClockTimes),
               status,
             },
@@ -365,14 +388,14 @@ async function handleJsonAttendance(url: string) {
         } else {
           await prisma.npAttendance.create({
             data: {
-              employeeId: employeeID,
+              employeeId: employeeIdNum,
               empName: employeeName,
               date: new Date(cycleDate),
               inTime,
               outTime,
-              loginHours: loginHoursStr || '00:00:00',
-              totalHours: totalHours || '00:00:00',
-              breakHours: breakHours || '00:00:00',
+              loginHours: loginHoursTime,
+              totalHours: totalHoursTime,
+              breakHours: breakHoursTime,
               clockTimes: JSON.stringify(clockTimes),
               status,
             },
