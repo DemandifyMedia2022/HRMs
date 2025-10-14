@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
     }
-
     const dbHash: string = user.password || "";
     const normalizedHash = dbHash.startsWith("$2y$") ? "$2a$" + dbHash.slice(4) : dbHash;
     const valid = comparePassword(password, normalizedHash);
