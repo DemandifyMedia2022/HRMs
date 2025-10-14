@@ -31,9 +31,9 @@ export default function HomePage() {
       }
       const data = await res.json()
       const role = String(data?.role || "user").toLowerCase()
-      if (role === "admin") router.push("/admin")
-      else if (role === "hr") router.push("/hr")
-      else router.push("/user")
+      if (role === "admin") router.push("/pages/admin")
+      else if (role === "hr") router.push("/pages/hr")
+      else router.push("/pages/user")
     } catch {
       setError("Login failed. Please check your credentials.")
     } finally {
