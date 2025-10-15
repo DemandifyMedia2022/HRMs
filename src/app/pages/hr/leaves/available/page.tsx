@@ -1,6 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { Card } from "@/components/ui/card"
 
 type Leave = {
   l_id: number
@@ -23,23 +25,27 @@ type AvailableResponse = {
   user: string
 }
 
-export default function HRAvailableLeavePage() {
-  const [userName, setUserName] = useState("")
+export default function UserAvailableLeavePage() {
+  const searchParams = useSearchParams()
+  const userFromQuery = useMemo(() => searchParams.get("user_name") || searchParams.get("added_by_user") || "", [searchParams])
+
+  const [userName, setUserName] = useState<string>("")
   const [data, setData] = useState<AvailableResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function load() {
-    if (!userName) return
+  async function load(targetUser?: string) {
+    const u = (targetUser ?? userName).trim()
+    if (!u) return
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/leaves/available?user_name=${encodeURIComponent(userName)}`, { cache: "no-store" })
+      const res = await fetch(`/api/leaves/available?user_name=${encodeURIComponent(u)}`, { cache: "no-store" })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         throw new Error(body?.error || "Failed to load available leaves")
       }
-      const json = await res.json()
+      const json = (await res.json()) as AvailableResponse
       setData(json)
     } catch (e: any) {
       setError(e?.message || "Failed to load available leaves")
@@ -49,22 +55,34 @@ export default function HRAvailableLeavePage() {
   }
 
   useEffect(() => {
-    // noop: wait for user input
-  }, [])
+    if (userFromQuery) {
+      setUserName(userFromQuery)
+      // auto-load when query param is present
+      load(userFromQuery)
+    }
+    else {
+      ;(async () => {
+        try {
+          const meRes = await fetch("/api/auth/me", { cache: "no-store" })
+          if (meRes.ok) {
+            const me = await meRes.json()
+            const candidate: string = me?.name || me?.email || ""
+            if (candidate) {
+              setUserName(candidate)
+              load(candidate)
+            }
+          }
+        } catch (e) {
+        }
+      })()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userFromQuery])
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold">Available Leave Details</h1>
+      <h1 className="text-2xl font-bold">My Available Leave</h1>
 
-      <div className="border rounded p-4">
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
-            <label className="block text-sm mb-1">User Name</label>
-            <input className="w-full border rounded px-3 py-2" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Enter user (added_by_user)" />
-          </div>
-          <button onClick={load} className="rounded border px-4 py-2">Load</button>
-        </div>
-      </div>
 
       {error && <div className="text-sm text-red-600">{error}</div>}
 
@@ -73,50 +91,26 @@ export default function HRAvailableLeavePage() {
       {data && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border rounded p-4">
-              <h2 className="font-semibold mb-2">Summary</h2>
+            <Card className="p-4">
+              <h2 className="font-semibold mb-2">Paid Leave</h2>
               <div className="text-sm space-y-1">
-                <div>Total Paid Leave: {data.totals.totalPaidLeave}</div>
-                <div>Used Paid Leave: {data.usedPaidLeave}</div>
-                <div>Remaining Paid Leave: {data.remainingPaidLeave}</div>
+                <div>Total: {data.totals.totalPaidLeave}</div>
+                <div>Used: {data.usedPaidLeave}</div>
+                <div>Remaining: {data.remainingPaidLeave}</div>
               </div>
-            </div>
-            <div className="border rounded p-4">
+            </Card>
+            <Card className="p-4">
               <h2 className="font-semibold mb-2">Sick Leave</h2>
               <div className="text-sm space-y-1">
-                <div>Total Sick Leave: {data.totals.totalSickLeave}</div>
-                <div>Used Sick Leave: {data.usedSickLeave}</div>
-                <div>Remaining Sick Leave: {data.remainingSickLeave}</div>
+                <div>Total: {data.totals.totalSickLeave}</div>
+                <div>Used: {data.usedSickLeave}</div>
+                <div>Remaining: {data.remainingSickLeave}</div>
               </div>
-            </div>
+            </Card>
           </div>
 
-          <div className="border rounded p-4">
-            <h2 className="font-semibold mb-2">Approved Leaves</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="text-left">
-                  <tr>
-                    <th className="py-2 pr-4">Type</th>
-                    <th className="py-2 pr-4">Start</th>
-                    <th className="py-2 pr-4">End</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.approvedLeaves.map((l) => (
-                    <tr key={l.l_id} className="border-t">
-                      <td className="py-2 pr-4">{l.leave_type}</td>
-                      <td className="py-2 pr-4">{new Date(l.start_date).toLocaleDateString()}</td>
-                      <td className="py-2 pr-4">{new Date(l.end_date).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="border rounded p-4">
-            <h2 className="font-semibold mb-2">All Leaves (User)</h2>
+          <Card className="p-4">
+            <h2 className="font-semibold mb-2">All My Leaves</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead className="text-left">
@@ -141,9 +135,10 @@ export default function HRAvailableLeavePage() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>
   )
 }
+
