@@ -44,7 +44,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconUsers,
         children: [
           { title: "Attendance", url: "/pages/admin/attendance", icon: IconUsers },
-          { title: "Update Attendance", url: "#", icon: IconListDetails },
+          { title: "Update Attendance", url: "/pages/admin/attendance/update", icon: IconListDetails },
         ],
       },
       {
@@ -143,7 +143,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconUsers,
         children: [
           { title: "Monthly Attendance", url: "/pages/hr/attendance", icon: IconReport },
-          { title: "Update Attendance", url: "#", icon: IconListDetails },
+          { title: "Update Attendance", url: "/pages/hr/attendance/update", icon: IconListDetails },
           { title: "Assign Shift", url: "#", icon: IconUsers },
           { title: "Request Attendance Update", url: "#", icon: IconListDetails },
           { title: "Attendance Update Status", url: "#", icon: IconReport },
