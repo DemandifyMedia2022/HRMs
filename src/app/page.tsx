@@ -1,19 +1,40 @@
 "use client"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+ 
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-
+ 
 export default function HomePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-
+ 
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" })
+        if (res.ok) {
+          const data = await res.json()
+          const role = String(data?.role || "user").toLowerCase()
+          // User is already logged in, redirect to their dashboard
+          if (role === "admin") router.push("/pages/admin")
+          else if (role === "hr") router.push("/pages/hr")
+          else router.push("/pages/user")
+        }
+      } catch {
+        // Not logged in, stay on login page
+      }
+    }
+    checkAuth()
+  }, [router])
+ 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError("")
@@ -23,24 +44,33 @@ export default function HomePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+        credentials: "include",
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         setError(data?.message || "Invalid credentials")
+        setLoading(false)
         return
       }
       const data = await res.json()
       const role = String(data?.role || "user").toLowerCase()
-      if (role === "admin") router.push("/pages/admin")
-      else if (role === "hr") router.push("/pages/hr")
-      else router.push("/pages/user")
+     
+      // Get redirect URL from query params or use default based on role
+      const redirect = searchParams.get("redirect")
+      if (redirect && redirect.startsWith("/pages/")) {
+        router.push(redirect)
+      } else {
+        // Redirect based on role
+        if (role === "admin") router.push("/pages/admin")
+        else if (role === "hr") router.push("/pages/hr")
+        else router.push("/pages/user")
+      }
     } catch {
       setError("Login failed. Please check your credentials.")
-    } finally {
       setLoading(false)
     }
   }
-
+ 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-6">
       <div className="w-full max-w-md">

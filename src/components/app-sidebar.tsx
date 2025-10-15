@@ -35,7 +35,7 @@ import {
 
 const baseDataByRole: Record<UserRole, SidebarData> = {
   admin: {
-    user: { name: "Admin", email: "admin@example.com", avatar: "/avatars/shadcn.jpg" },
+    user: { name: "Loading...", email: "loading@example.com", avatar: "" },
     navMain: [
       { title: "Dashboard", url: "/pages/admin", icon: IconDashboard },
       {
@@ -44,7 +44,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconUsers,
         children: [
           { title: "Attendance", url: "/pages/admin/attendance", icon: IconUsers },
-          { title: "Update Attendance", url: "/pages/admin/attendance/update", icon: IconListDetails },
+          { title: "Update Attendance", url: "#", icon: IconListDetails },
         ],
       },
       {
@@ -90,7 +90,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
     ],
   },
   user: {
-    user: { name: "User", email: "user@example.com", avatar: "/avatars/shadcn.jpg" },
+    user: { name: "Loading...", email: "loading@example.com", avatar: "" },
     navMain: [
       { title: "Dashboard", url: "/pages/user", icon: IconDashboard },
       {
@@ -134,7 +134,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
     ],
   },
   hr: {
-    user: { name: "HR", email: "hr@example.com", avatar: "/avatars/shadcn.jpg" },
+    user: { name: "Loading...", email: "loading@example.com", avatar: "" },
     navMain: [
       { title: "Dashboard", url: "/pages/hr", icon: IconDashboard },
       {
@@ -143,7 +143,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconUsers,
         children: [
           { title: "Monthly Attendance", url: "/pages/hr/attendance", icon: IconReport },
-          { title: "Update Attendance", url: "/pages/hr/attendance/update", icon: IconListDetails },
+          { title: "Update Attendance", url: "#", icon: IconListDetails },
           { title: "Assign Shift", url: "#", icon: IconUsers },
           { title: "Request Attendance Update", url: "#", icon: IconListDetails },
           { title: "Attendance Update Status", url: "#", icon: IconReport },
@@ -195,9 +195,30 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
 }
 
 function mergeData(base: SidebarData, overrides?: Partial<SidebarData>): SidebarData {
-  if (!overrides) return base
+  console.log("🔀 mergeData called with:", { 
+    hasOverrides: !!overrides, 
+    overridesUser: overrides?.user,
+    baseUser: base.user 
+  })
+  
+  if (!overrides) {
+    console.log("⚠️ No overrides provided, using base data with:", base.user)
+    return base
+  }
+  
+  // If user override is provided, use it with fallback to base for missing fields
+  const userData = overrides.user 
+    ? {
+        name: overrides.user.name ?? base.user.name,
+        email: overrides.user.email ?? base.user.email,
+        avatar: overrides.user.avatar ?? base.user.avatar
+      }
+    : base.user
+  
+  console.log("✅ Merged sidebar data - Final user:", userData)
+  
   return {
-    user: { ...base.user, ...(overrides.user ?? {}) },
+    user: userData,
     navMain: overrides.navMain ?? base.navMain,
     navSecondary: overrides.navSecondary ?? base.navSecondary,
     documents: overrides.documents ?? base.documents,
@@ -208,6 +229,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { role, dataOverrides } = useSidebarConfig()
   const base = baseDataByRole[role as keyof typeof baseDataByRole] ?? baseDataByRole.user
   const data = mergeData(base, dataOverrides)
+  
+  // Debug log to see what data is being used
+  console.log("🎨 AppSidebar rendering with:", { 
+    role, 
+    dataOverrides, 
+    finalUserData: data.user,
+    hasOverrides: !!dataOverrides,
+    overridesUser: dataOverrides?.user
+  })
+  
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
