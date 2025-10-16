@@ -2,6 +2,7 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { LayoutContent } from "@/components/layout-content";
+import SipKeeper from "@/components/dialer/SipKeeper";
 import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +29,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {/* Keeps SIP registered across routes until explicit SIP logout */}
+        <SipKeeper />
         <LayoutContent>{children}</LayoutContent>
       </body>
     </html>

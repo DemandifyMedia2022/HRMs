@@ -1,6 +1,7 @@
 "use client"
 
-import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
+import React from "react"
+import { IconCirclePlusFilled, IconMail, IconChevronDown, IconChevronRight, type Icon } from "@tabler/icons-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,8 +19,11 @@ export function NavMain({
     title: string
     url: string
     icon?: Icon
+    children?: { title: string; url: string; icon?: Icon }[]
   }[]
 }) {
+  const [openMap, setOpenMap] = React.useState<Record<string, boolean>>({})
+  const toggle = (key: string) => setOpenMap((s) => ({ ...s, [key]: !s[key] }))
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -45,10 +49,55 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
+              {item.children && item.children.length ? (
+                <>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    onClick={() => toggle(item.title)}
+                  >
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                    {openMap[item.title] ? <IconChevronDown className="ml-auto" /> : <IconChevronRight className="ml-auto" />}
+                  </SidebarMenuButton>
+                  {openMap[item.title] && (
+                    <SidebarMenu className="ml-6 mt-1">
+                      {item.children.map((ch) => (
+                        <SidebarMenuItem key={`${item.title}_${ch.title}`}>
+                          <SidebarMenuButton
+                            tooltip={ch.title}
+                            onClick={() => {
+                              try { window.location.href = ch.url } catch {}
+                            }}
+                          >
+                            {ch.icon && <ch.icon />}
+                            <span>{ch.title}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  )}
+                </>
+              ) : item.url ? (
+                // Keep a button element to avoid SSR/CSR mismatches; navigate on click
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  onClick={() => {
+                    try {
+                      window.location.href = item.url
+                    } catch (e) {
+                      // noop
+                    }
+                  }}
+                >
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              ) : (
+                <SidebarMenuButton tooltip={item.title}>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              )}
             </SidebarMenuItem>
           ))}
         </SidebarMenu>

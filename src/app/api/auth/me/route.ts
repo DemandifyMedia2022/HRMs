@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
       email: user.email,
       name: user.name,
       role: String((user as any).type || payload.role || "user").toLowerCase(),
+      job_role: (user as any).job_role ?? null,
       department: (user as any).department ?? null,
     });
   } catch (e: any) {

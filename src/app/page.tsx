@@ -29,11 +29,23 @@ export default function HomePage() {
         setError(data?.message || "Invalid credentials")
         return
       }
-      const data = await res.json()
-      const role = String(data?.role || "user").toLowerCase()
-      if (role === "admin") router.push("/admin")
-      else if (role === "hr") router.push("/hr")
-      else router.push("/user")
+      // On success, always send every user to the Analytics dashboard (SIP stays independent)
+      await res.json().catch(() => ({}))
+      // Kick off SIP auto-assign now that auth is valid
+      try {
+        if (typeof window !== 'undefined') {
+          const ar = await fetch('/api/sip-auto', { credentials: 'include' })
+          if (ar.ok) {
+            const j = await ar.json().catch(()=>({}))
+            if (j && j.extension && j.password) {
+              localStorage.setItem('extension', String(j.extension))
+              localStorage.setItem('sip_password', String(j.password))
+              window.dispatchEvent(new Event('sip-credentials-updated'))
+            }
+          }
+        }
+      } catch {}
+      router.push('/pages/crms/analytics')
     } catch {
       setError("Login failed. Please check your credentials.")
     } finally {
