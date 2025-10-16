@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   Select,
   SelectContent,
@@ -372,19 +373,31 @@ export default function EmployeeSalaryStructurePage() {
                   <div className="flex gap-4">
                     <div className="flex-1">
                       <Label className="text-xs">Salary Revision Month</Label>
-                      <Input
-                        type="date"
-                        value={formData.Salary_revision_month}
-                        onChange={(e) => handleInputChange('Salary_revision_month', e.target.value)}
-                      />
+                      {(() => {
+                        const toYMD = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : '';
+                        return (
+                          <DatePicker
+                            id="salary_revision_month"
+                            value={formData.Salary_revision_month ? new Date(formData.Salary_revision_month) : undefined}
+                            onChange={(d) => handleInputChange('Salary_revision_month', toYMD(d))}
+                          />
+                        )
+                      })()}
+
                     </div>
                     <div className="flex-1">
                       <Label className="text-xs">Arrear with effect from</Label>
-                      <Input
-                        type="date"
-                        value={formData.Arrear_with_effect_from}
-                        onChange={(e) => handleInputChange('Arrear_with_effect_from', e.target.value)}
-                      />
+                      {(() => {
+                        const toYMD = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : '';
+                        return (
+                          <DatePicker
+                            id="arrear_effect_from"
+                            value={formData.Arrear_with_effect_from ? new Date(formData.Arrear_with_effect_from) : undefined}
+                            onChange={(d) => handleInputChange('Arrear_with_effect_from', toYMD(d))}
+                          />
+                        )
+                      })()}
+
                     </div>
                     <div className="flex-1">
                       <Label className="text-xs">Pay Group</Label>
@@ -432,11 +445,17 @@ export default function EmployeeSalaryStructurePage() {
                   <div className="flex gap-4">
                     <div className="flex-1">
                       <Label className="text-xs">Advanced Salary Date</Label>
-                      <Input
-                        type="date"
-                        value={formData.advanced_salary_date}
-                        onChange={(e) => handleInputChange('advanced_salary_date', e.target.value)}
-                      />
+                      {(() => {
+                        const toYMD = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : '';
+                        return (
+                          <DatePicker
+                            id="advanced_salary_date"
+                            value={formData.advanced_salary_date ? new Date(formData.advanced_salary_date) : undefined}
+                            onChange={(d) => handleInputChange('advanced_salary_date', toYMD(d))}
+                          />
+                        )
+                      })()}
+
                     </div>
                     <div className="flex-1">
                       <Label className="text-xs">Advanced Salary Amount</Label>

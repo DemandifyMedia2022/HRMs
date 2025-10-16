@@ -8,20 +8,23 @@ datasource db {
 }
 
 model NpAttendance {
-  id         Int       @id @default(autoincrement())
-  employeeId Int       @map("employee_id")
-  empName    String?   @map("emp_name") @db.VarChar(255)
-  date       DateTime  @db.Date
-  inTime     DateTime? @map("in_time") @db.Time(0)
-  outTime    DateTime? @map("out_time") @db.Time(0)
-  loginHours DateTime? @map("login_hours") @db.Time(0)
-  status     String?   @db.VarChar(255)
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
-  totalHours DateTime? @map("total_hours") @db.Time(0)
-  breakHours DateTime? @map("break_hours") @db.Time(0)
-  clockTimes String?   @map("clock_times") @db.Text
-
+  id          Int      @id @default(autoincrement())
+  employeeId  String   @map("employee_id") @db.VarChar(50)
+  empName     String   @map("emp_name") @db.VarChar(255)
+  date        DateTime @db.Date
+  inTime      DateTime @map("in_time") @db.DateTime
+  outTime     DateTime @map("out_time") @db.DateTime
+  clockTimes  String   @map("clock_times") @db.Text
+  totalHours  String   @map("total_hours") @db.VarChar(20)
+  loginHours  String   @map("login_hours") @db.VarChar(20)
+  breakHours  String   @map("break_hours") @db.VarChar(20)
+  status      String   @db.VarChar(50)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+ 
+  @@unique([employeeId, date])
+  @@index([employeeId])
+  @@index([date])
   @@map("npattendance")
 }
 
@@ -142,6 +145,42 @@ model users {
   status                                    Int?      @db.TinyInt
 }
 
+model crud_events {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  event_name  String    @db.VarChar(255)
+  event_date  DateTime? @default(now()) @db.DateTime(0)
+  event_start DateTime  @db.Date
+  event_end   DateTime  @db.Date
+  description String    @db.Text
+  created_at  DateTime? @db.Timestamp(0)
+  updated_at  DateTime? @db.Timestamp(0)
+}
+
+model leavedata {
+  l_id                  Int      @id @default(autoincrement())
+  leave_type            String   @db.VarChar(55)
+  start_date            DateTime @db.Date
+  end_date              DateTime @db.Date
+  reason                String   @db.VarChar(1000)
+  HRapproval            String   @db.VarChar(255)
+  HRrejectReason        String?  @db.VarChar(255)
+  Managerapproval       String   @db.VarChar(255)
+  ManagerRejecjetReason String?  @db.VarChar(255)
+  leaveregdate          DateTime @db.Date
+  added_by_user         String?  @db.VarChar(255)
+  emp_code              String?  @db.VarChar(255)
+  Team                  String?  @db.VarChar(55)
+  status                String?  @db.VarChar(20)
+}
+
+model shift_time {
+  Id           Int    @id @default(autoincrement())
+  Full_name    String @db.VarChar(255)
+  biomatric_id Int
+  shift_time   String @db.VarChar(255)
+  group_name   String @db.VarChar(255)
+}
+
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model attendance {
   id                     Int       @id @default(autoincrement())
@@ -191,17 +230,6 @@ model bonus {
   id      Int     @id @default(autoincrement())
   user_id Int?
   bonus   String? @db.VarChar(255)
-}
-
-model crud_events {
-  id          Int       @id @default(autoincrement()) @db.UnsignedInt
-  event_name  String    @db.VarChar(255)
-  event_date  DateTime? @default(now()) @db.DateTime(0)
-  event_start DateTime  @db.Date
-  event_end   DateTime  @db.Date
-  description String    @db.Text
-  created_at  DateTime? @db.Timestamp(0)
-  updated_at  DateTime? @db.Timestamp(0)
 }
 
 model deleted_user_informations {
@@ -520,23 +548,6 @@ model labour {
   LWF     String? @db.VarChar(255)
 }
 
-model leavedata {
-  l_id                  Int      @id @default(autoincrement())
-  leave_type            String   @db.VarChar(55)
-  start_date            DateTime @db.Date
-  end_date              DateTime @db.Date
-  reason                String   @db.VarChar(1000)
-  HRapproval            String   @db.VarChar(255)
-  HRrejectReason        String?  @db.VarChar(255)
-  Managerapproval       String   @db.VarChar(255)
-  ManagerRejecjetReason String?  @db.VarChar(255)
-  leaveregdate          DateTime @db.Date
-  added_by_user         String?  @db.VarChar(255)
-  emp_code              String?  @db.VarChar(255)
-  Team                  String?  @db.VarChar(55)
-  status                String?  @db.VarChar(20)
-}
-
 model migrations {
   id        Int    @id @default(autoincrement()) @db.UnsignedInt
   migration String @db.VarChar(255)
@@ -597,14 +608,6 @@ model provident_fund {
   process               String?  @db.VarChar(255)
   fund                  String?  @db.VarChar(255)
   vpf                   String?  @db.VarChar(255)
-}
-
-model shift_time {
-  Id           Int    @id @default(autoincrement())
-  Full_name    String @db.VarChar(255)
-  biomatric_id Int
-  shift_time   String @db.VarChar(255)
-  group_name   String @db.VarChar(255)
 }
 
 model slabs {

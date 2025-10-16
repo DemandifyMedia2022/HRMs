@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
+import { sendMail } from "@/lib/mailer";
 
 function toUtcMidnight(dateStr: string): Date {
   const [y, m, d] = dateStr.split("-").map((n) => Number(n));
@@ -99,6 +100,43 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Email notify HR users (best-effort)
+    try {
+      const hrs = await prisma.$queryRaw<Array<{ email: string | null }>>`
+        SELECT email FROM users 
+        WHERE email IS NOT NULL AND (
+          LOWER(department) = 'hr' OR UPPER(type) = 'HR'
+        )
+      `;
+      const to = (hrs || []).map((r) => String(r.email)).filter(Boolean);
+      if (to.length > 0) {
+        const dateDisp = new Date(created.Date_Attendance_Update as any).toISOString().split('T')[0];
+        const subject = `📅 Attendance Update Request Submitted by ${me.name}`;
+        const link = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/pages/hr/attendance/request-update`;
+        const html = `
+          <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #eee;'>
+            <h2 style='color: #1a73e8; text-align: center;'>📋 Attendance Update Request</h2>
+            <p>Dear HR Team,</p>
+            <p>I hope this message finds you well. A new attendance update request has been submitted. Please find the details below:</p>
+            <p><strong>👤 User:</strong> ${me.name}</p>
+            <p><strong>📧 Email:</strong> ${me.email}</p>
+            <p><strong>🏢 Department:</strong> ${me.department ?? ''}</p>
+            <p><strong>📅 Requested Date:</strong> ${dateDisp}</p>
+            <p><strong>✅ Status:</strong> ${desired_status}</p>
+            <p><strong>📝 Reason:</strong><br>${String(reason)}</p>
+            <div style='text-align:center;margin-top:20px'>
+              <a href='${link}' style='background-color:#007bff;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;'>Review Request</a>
+            </div>
+            <hr style='margin: 30px 0;'>
+            <p style='font-size: 13px; color: #888; text-align: center;'>
+              This email was generated automatically by HRMS (Demandify Media). Please do not reply.
+            </p>
+          </div>
+        `;
+        await sendMail({ to, subject, html, replyTo: me.email, text: `New attendance update request by ${me.name} (${me.email}) on ${dateDisp} -> ${desired_status}. Reason: ${String(reason)}. Review: ${link}` });
+      }
+    } catch {}
+
     return NextResponse.json({ id: created.id }, { status: 201 });
   } catch (e: any) {
     return NextResponse.json({ message: e?.message || "Failed" }, { status: 500 });
@@ -143,6 +181,34 @@ export async function PATCH(req: NextRequest) {
         acknowledgement_by: me.name,
       },
     });
+
+    // Notify requester via email (best-effort)
+    try {
+      const userRow = await prisma.$queryRaw<Array<{ email: string | null }>>`
+        SELECT email FROM users WHERE Full_name = ${issue.added_by_user} OR name = ${issue.added_by_user} LIMIT 1
+      `;
+      const toEmail = userRow?.[0]?.email ? String(userRow[0].email) : null;
+      if (toEmail) {
+        const dateDisp = issue.Date_Attendance_Update
+          ? new Date(issue.Date_Attendance_Update as any).toISOString().split('T')[0]
+          : '';
+        const subject = `[HRMS] Your attendance request has been ${approval}`;
+        const link = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/pages/hr/attendance/request-update`;
+        const html = `
+          <div>
+            <p>Hello ${issue.added_by_user || ''},</p>
+            <p>Your attendance update request has been <strong>${approval}</strong>.</p>
+            <ul>
+              <li><strong>Date:</strong> ${dateDisp}</li>
+              <li><strong>Status requested:</strong> ${issue.Attendance_status || ''}</li>
+              ${feedback ? `<li><strong>Feedback:</strong> ${feedback}</li>` : ''}
+            </ul>
+            <p>You can view request status here: <a href="${link}">${link}</a></p>
+          </div>
+        `;
+        await sendMail({ to: [toEmail], subject, html, text: `Your attendance request (${dateDisp}) is ${approval}. ${feedback ? 'Feedback: ' + feedback : ''} Review: ${link}` });
+      }
+    } catch {}
 
     if (approval === "approved") {
       // Apply to NpAttendance

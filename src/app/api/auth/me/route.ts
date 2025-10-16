@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
       name: user.name,
       role,
       department: deptLower,
+      emp_code: (user as any).emp_code ?? null,
     });
    
     // Refresh the token cookie to keep session alive

@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarConfig } from "@/components/sidebar-config";
-
 type EventItem = {
   title: string;
   start: string;
@@ -38,7 +37,7 @@ type UserEvents = {
   leaves?: { date: string; leave_type: string; user: string }[];
 };
 
-export default function HRAttendancePage() {
+export default function AdminAttendancePage() {
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [month, setMonth] = useState<number>(new Date().getMonth());
   const [query, setQuery] = useState<string>("");
@@ -58,6 +57,52 @@ export default function HRAttendancePage() {
     holidayStart?: string | null;
     holidayEnd?: string | null;
   }>({});
+
+  // Format a duration-like value into HH:MM:SS (handles ISO strings like 1970-01-01T08:24:21.000Z)
+  const formatDuration = (value?: string | null) => {
+    if (!value || value === "N/A") return "N/A";
+    const v = String(value).trim();
+    // If already looks like HH:MM or HH:MM:SS, keep as is
+    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(v)) return v.length === 5 ? v : v;
+    // Try parse as date/ISO
+    const d = new Date(v);
+    if (!isNaN(d.getTime())) {
+      const hh = String(d.getUTCHours()).padStart(2, "0");
+      const mm = String(d.getUTCMinutes()).padStart(2, "0");
+      const ss = String(d.getUTCSeconds()).padStart(2, "0");
+      return `${hh}:${mm}:${ss}`;
+    }
+    // If it's a numeric total seconds value
+    const n = Number(v);
+    if (!Number.isNaN(n)) {
+      const total = Math.max(0, Math.floor(n));
+      const hh = String(Math.floor(total / 3600)).padStart(2, "0");
+      const mm = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+      const ss = String(total % 60).padStart(2, "0");
+      return `${hh}:${mm}:${ss}`;
+    }
+    return v;
+  };
+
+  // Format a clock time into 12-hour format like 10:00 AM
+  const formatTime = (value?: string | null) => {
+    if (!value || value === "N/A") return "N/A";
+    const v = String(value).trim();
+    const m = v.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (m) {
+      let h = Number(m[1]);
+      const min = m[2];
+      const ampm = h >= 12 ? "PM" : "AM";
+      h = h % 12;
+      if (h === 0) h = 12;
+      return `${String(h).padStart(2, "0")}:${min} ${ampm}`;
+    }
+    const d2 = new Date(v);
+    if (!isNaN(d2.getTime())) {
+      return d2.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+    return v;
+  };
 
   const years = useMemo(() => {
     const y = new Date().getFullYear();
@@ -118,12 +163,10 @@ export default function HRAttendancePage() {
       ignore = true;
     };
   }, [year]);
-
-  const todayStr = new Date().toISOString().split('T')[0];
-
+  
   return (
     <div className="p-4 space-y-6">
-      <SidebarConfig role="hr" />
+      <SidebarConfig role="admin" />
       <Card className="border-muted/40 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -229,6 +272,7 @@ export default function HRAttendancePage() {
               const firstWeekday = monthStart.getUTCDay();
               const daysInMonth = monthEnd.getUTCDate();
               const headers = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+              const todayStr = new Date().toISOString().split('T')[0];
               const eventsMap = new Map<string, EventItem>();
               for (const ev of u.events) {
                 if (ev.extendedProps?.date?.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)) {
@@ -391,7 +435,7 @@ export default function HRAttendancePage() {
                                   ) : (
                                     <div className="text-[11px] text-muted-foreground">{c.ev.extendedProps.in_time} - {c.ev.extendedProps.out_time}</div>
                                   )}
-                                  <div className="text-[11px] text-muted-foreground">Work {c.ev.extendedProps.login_hours}</div>
+                                  <div className="text-[11px] text-muted-foreground">Work {formatDuration(c.ev.extendedProps.login_hours)}</div>
                                 </div>
                               ) : isWeekend ? (
                                 <div className="mt-auto text-[11px] text-muted-foreground">Week Off</div>
@@ -456,14 +500,14 @@ export default function HRAttendancePage() {
                   <div><span className="text-muted-foreground">Shift:</span> {selected.event.extendedProps.shift_time}</div>
                 ) : null}
                 {selected.event.extendedProps.in_time && selected.event.extendedProps.in_time !== 'N/A' ? (
-                  <div><span className="text-muted-foreground">In:</span> {selected.event.extendedProps.in_time}</div>
+                  <div><span className="text-muted-foreground">In:</span> {formatTime(selected.event.extendedProps.in_time)}</div>
                 ) : null}
                 {selected.event.extendedProps.out_time && selected.event.extendedProps.out_time !== 'N/A' ? (
-                  <div><span className="text-muted-foreground">Out:</span> {selected.event.extendedProps.out_time}</div>
+                  <div><span className="text-muted-foreground">Out:</span> {formatTime(selected.event.extendedProps.out_time)}</div>
                 ) : null}
-                <div><span className="text-muted-foreground">Login:</span> {selected.event.extendedProps.login_hours}</div>
-                <div><span className="text-muted-foreground">Break:</span> {selected.event.extendedProps.break_hours}</div>
-                <div><span className="text-muted-foreground">Total:</span> {selected.event.extendedProps.total_hours}</div>
+                <div><span className="text-muted-foreground">Login:</span> {formatDuration(selected.event.extendedProps.login_hours)}</div>
+                <div><span className="text-muted-foreground">Break:</span> {formatDuration(selected.event.extendedProps.break_hours)}</div>
+                <div><span className="text-muted-foreground">Total:</span> {formatDuration(selected.event.extendedProps.total_hours)}</div>
               </div>
               {(() => {
                 const raw = selected.event?.extendedProps.clock_times;
@@ -494,3 +538,4 @@ export default function HRAttendancePage() {
     </div>
   );
 }
+

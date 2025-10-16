@@ -2,6 +2,7 @@
  
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { DatePicker } from "@/components/ui/date-picker"
  
 export default function NewLeavePage() {
   const router = useRouter()
@@ -62,23 +63,41 @@ export default function NewLeavePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm mb-1">Start Date</label>
-            <input
-              type="date"
-              className="w-full border rounded px-3 py-2"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              required
-            />
+            {(() => {
+              const toYMD = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : "";
+              const fromYMD = (s: string) => {
+                if (!s) return undefined as unknown as Date | undefined;
+                const [y,m,dd] = s.split('-').map((n) => parseInt(n,10));
+                return new Date(y, (m||1)-1, dd||1);
+              };
+              return (
+                <DatePicker
+                  id="leave_start"
+                  placeholder="dd-mm-yyyy"
+                  value={fromYMD(startDate)}
+                  onChange={(d) => setStartDate(toYMD(d))}
+                />
+              )
+            })()}
           </div>
           <div>
             <label className="block text-sm mb-1">End Date</label>
-            <input
-              type="date"
-              className="w-full border rounded px-3 py-2"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              required
-            />
+            {(() => {
+              const toYMD = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : "";
+              const fromYMD = (s: string) => {
+                if (!s) return undefined as unknown as Date | undefined;
+                const [y,m,dd] = s.split('-').map((n) => parseInt(n,10));
+                return new Date(y, (m||1)-1, dd||1);
+              };
+              return (
+                <DatePicker
+                  id="leave_end"
+                  placeholder="dd-mm-yyyy"
+                  value={fromYMD(endDate)}
+                  onChange={(d) => setEndDate(toYMD(d))}
+                />
+              )
+            })()}
           </div>
         </div>
         <div>

@@ -143,10 +143,10 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconUsers,
         children: [
           { title: "Monthly Attendance", url: "/pages/hr/attendance", icon: IconReport },
-          { title: "Update Attendance", url: "#", icon: IconListDetails },
-          { title: "Assign Shift", url: "#", icon: IconUsers },
-          { title: "Request Attendance Update", url: "#", icon: IconListDetails },
-          { title: "Attendance Update Status", url: "#", icon: IconReport },
+          { title: "Update Attendance", url: "/pages/hr/attendance/update", icon: IconListDetails },
+          { title: "Assign Shift", url: "/pages/hr/attendance/assign-shift", icon: IconUsers },
+          { title: "Request Attendance Update", url: "/pages/hr/attendance/request-update", icon: IconListDetails },
+          { title: "Attendance Update Status", url: "/pages/hr/attendance/status", icon: IconReport },
         ],
       },
       {
@@ -164,10 +164,10 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: "#",
         icon: IconReport,
         children: [
-          { title: "Paylip", url: "#", icon: IconReport },
-          { title: "My Salary Structure", url: "#", icon: IconFileDescription },
+          { title: "Paylip", url: "/pages/hr/payslip", icon: IconReport },
+          { title: "My Salary Structure", url: "/pages/hr/payroll/my-salary-structure", icon: IconFileDescription },
           { title: "Employee Salary Structure", url: "/pages/hr/payroll/employee-salary-structure", icon: IconFileDescription },
-          { title: "Tax", url: "#", icon: IconReport },
+          { title: "Tax", url: "/pages/hr/payroll/tax", icon: IconReport },
         ],
       },
       { title: "Bank Challan", url: "#", icon: IconFileDescription },

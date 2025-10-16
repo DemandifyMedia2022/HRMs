@@ -52,6 +52,20 @@ export async function POST(req: NextRequest) {
       path: "/",
       maxAge: 60 * 60, // 1 hour
     });
+
+    // Fire-and-forget: trigger ESSL attendance sync for realtime data on login
+    try {
+      const syncUrl = process.env.ESSL_SYNC_URL;
+      if (syncUrl) {
+        const emp = (user as any).emp_code ? String((user as any).emp_code) : undefined;
+        const u = emp ? `${syncUrl}${syncUrl.includes("?") ? "&" : "?"}emp_code=${encodeURIComponent(emp)}` : syncUrl;
+        const controller = new AbortController();
+        const timeout = Number(process.env.ESSL_SYNC_TIMEOUT_MS || 5000);
+        const to = setTimeout(() => controller.abort(), timeout);
+        fetch(u, { method: "POST", signal: controller.signal }).catch(() => {} ).finally(() => clearTimeout(to));
+      }
+    } catch {}
+
     return res;
   } catch (e: any) {
     return NextResponse.json({ message: "Login error", details: e.message }, { status: 500 });

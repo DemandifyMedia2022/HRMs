@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -87,7 +88,21 @@ export default function Page() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <div className="text-sm">Date</div>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              {(() => {
+                const toYMD = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : "";
+                const fromYMD = (s: string) => {
+                  if (!s) return undefined as unknown as Date | undefined;
+                  const [y,m,dd] = s.split('-').map((n) => parseInt(n,10));
+                  return new Date(y, (m||1)-1, dd||1);
+                };
+                return (
+                  <DatePicker
+                    id="attendance_update_date"
+                    value={fromYMD(date)}
+                    onChange={(d) => setDate(toYMD(d))}
+                  />
+                )
+              })()}
             </div>
             <div className="space-y-1">
               <div className="text-sm">Desired Status</div>

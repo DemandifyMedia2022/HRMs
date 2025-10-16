@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-
+ 
 function csvEscape(val: any): string {
   if (val === null || val === undefined) return "";
   const s = String(val);
@@ -9,7 +9,7 @@ function csvEscape(val: any): string {
   }
   return s;
 }
-
+ 
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
@@ -22,12 +22,12 @@ export async function GET(req: NextRequest) {
     if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
       return new Response(JSON.stringify({ error: "Invalid year/month" }), { status: 400 });
     }
-
+ 
     const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
     const end = new Date(Date.UTC(year, month, 0, 23, 59, 59));
-
+ 
     const rows: Array<any> = await prisma.$queryRaw`
-      SELECT 
+      SELECT
         a.employee_id        AS employeeId,
         COALESCE(u.Full_name, a.emp_name) AS employeeName,
         a.date               AS date,
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
         AND a.employee_id = ${employeeId}
       ORDER BY a.date ASC
     `;
-
+ 
     const header = [
       "employee_id",
       "employee_name",
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
       "total_hours",
       "break_hours",
     ];
-
+ 
     const lines: string[] = [];
     lines.push(header.join(","));
     for (const r of rows) {
@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
         csvEscape(r.breakHours || ""),
       ].join(","));
     }
-
+ 
     const body = lines.join("\n");
     const filename = `Monthly-Attendance-${employeeId}-${year}-${String(month).padStart(2, "0")}.csv`;
     return new Response(body, {
