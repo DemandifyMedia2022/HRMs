@@ -176,6 +176,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: "#",
         icon: IconFileDescription,
         children: [
+          { title: "Employee Details", url: "/pages/hr/employees/employee-details", icon: IconFileDescription },
           { title: "Add Employee", url: "/pages/hr/employees/new", icon: IconFileDescription },
           { title: "Employee Settlement", url: "/pages/hr/employees/settlement", icon: IconFileDescription },
           { title: "Settlement History", url: "/pages/hr/employees/history", icon: IconFileDescription },

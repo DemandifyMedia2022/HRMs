@@ -35,6 +35,7 @@ export default function Page() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<Row | null>(null)
+  const [reinstateLoading, setReinstateLoading] = useState(false)
 
   const qs = useMemo(() => {
     const p = new URLSearchParams()
@@ -87,6 +88,32 @@ export default function Page() {
     const first = parts[0]?.[0] || ""
     const last = parts.length > 1 ? parts[parts.length - 1][0] : ""
     return (first + last).toUpperCase()
+  }
+
+  async function reinstateEmployee() {
+    if (!selected) return
+    try {
+      setReinstateLoading(true)
+      const res = await fetch("/api/hr/settlement/reinstate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: selected.id }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json?.error || "Failed to reinstate")
+      setSelected(null)
+      // refresh list
+      const res2 = await fetch(`/api/hr/settlement/history?${qs}`)
+      const json2 = await res2.json()
+      if (res2.ok) {
+        setRows(json2.data || [])
+        setTotalPages(json2.pagination?.totalPages || 1)
+      }
+    } catch (e: any) {
+      setError(typeof e?.message === "string" ? e.message : "Failed to reinstate")
+    } finally {
+      setReinstateLoading(false)
+    }
   }
 
   return (
@@ -211,8 +238,9 @@ export default function Page() {
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setSelected(null)}>Close</Button>
+                <Button onClick={reinstateEmployee} disabled={reinstateLoading}>{reinstateLoading ? "Reinstating..." : "Reinstate Employee"}</Button>
               </div>
             </div>
           )}
