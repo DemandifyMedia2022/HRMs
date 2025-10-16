@@ -44,7 +44,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconUsers,
         children: [
           { title: "Attendance", url: "/pages/admin/attendance", icon: IconUsers },
-          { title: "Update Attendance", url: "#", icon: IconListDetails },
+          { title: "Update Attendance", url: "/pages/admin/attendance/update", icon: IconListDetails },
         ],
       },
       {
