@@ -769,3 +769,70 @@ model tax_setting {
   taxable                String? @db.VarChar(255)
   component              String? @db.VarChar(255)
 }
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model dm_form {
+  f_id              Int      @id @default(autoincrement())
+  f_campaign_name   String?  @db.VarChar(255)
+  f_lead            String?  @db.VarChar(255)
+  f_resource_name   String?  @db.VarChar(255)
+  f_data_source     String?  @db.VarChar(255)
+  f_salutation      String?  @db.VarChar(255)
+  f_first_name      String?  @db.Text
+  f_last_name       String?  @db.Text
+  f_job_title       String?  @db.VarChar(255)
+  f_department      String?  @db.VarChar(255)
+  f_job_level       String?  @db.VarChar(255)
+  f_email_add       String?  @db.VarChar(255)
+  Secondary_Email   String?  @db.VarChar(255)
+  f_conatct_no      String?  @db.VarChar(50)
+  f_company_name    String?  @db.VarChar(255)
+  f_website         String?  @db.VarChar(1000)
+  f_address1        String?  @db.VarChar(1000)
+  f_city            String?  @db.VarChar(255)
+  f_state           String?  @db.VarChar(255)
+  f_zip_code        String?  @db.VarChar(255)
+  f_country         String?  @db.VarChar(255)
+  f_emp_size        String?  @db.VarChar(255)
+  f_industry        String?  @db.VarChar(255)
+  f_sub_industry    String?  @db.VarChar(255)
+  f_revenue         String?  @db.VarChar(255)
+  f_revenue_link    String?  @db.VarChar(1000)
+  f_profile_link    String?  @db.Text
+  f_company_link    String?  @db.Text
+  f_address_link    String?  @db.Text
+  f_cq1             String?  @db.VarChar(255)
+  f_cq2             String?  @db.Text
+  f_cq3             String?  @db.VarChar(255)
+  f_cq4             String?  @db.VarChar(255)
+  f_cq5             String?  @db.VarChar(255)
+  f_cq6             String?  @db.VarChar(255)
+  f_cq7             String?  @db.VarChar(255)
+  f_cq8             String?  @db.VarChar(255)
+  f_cq9             String?  @db.VarChar(255)
+  f_cq10            String?  @db.VarChar(255)
+  f_asset_name1     String?  @db.VarChar(255)
+  f_asset_name2     String?  @db.VarChar(255)
+  f_call_recording  String?  @db.VarChar(255)
+  f_email_status    String?  @db.VarChar(255)
+  f_qa_status       String?  @db.VarChar(255)
+  f_dq_reason1      String?  @db.VarChar(255)
+  f_dq_reason2      String?  @db.VarChar(255)
+  f_dq_reason3      String?  @db.VarChar(255)
+  f_dq_reason4      String?  @db.VarChar(255)
+  f_qa_comments     String?  @db.Text
+  f_call_rating     String?  @db.VarChar(255)
+  f_call_notes      String?  @db.Text
+  feedback          String?  @db.Text
+  f_call_links      String?  @db.VarChar(255)
+  f_qa_name         String?  @db.VarChar(255)
+  f_audit_date      String?  @db.VarChar(55)
+  f_delivary_status String?  @db.VarChar(11)
+  f_delivary_date   String?  @db.VarChar(11)
+  f_delivary_by     String?  @db.VarChar(11)
+  f_reject_reason   String?  @db.VarChar(255)
+  added_by_user_id  String?  @db.VarChar(55)
+  qualifyleads_by   String?  @db.VarChar(255)
+  f_date            DateTime @default(now()) @db.Timestamp(0)
+  form_status       Int
+}

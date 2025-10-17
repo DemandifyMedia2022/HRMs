@@ -123,21 +123,29 @@ export async function GET(req: NextRequest) {
         AND DATE(COALESCE(event_end, event_date)) >= ${startOfYear}
     `;
 
-    // Expand holidays to per-day entries
+    // Expand holidays to per-day entries (UTC date-only to avoid local tz shifts)
     const holidays: { date: string; event_name: string; event_start: string | null; event_end: string | null }[] = [];
     for (const h of holidaysRaw) {
-      const start = new Date(h.eventDate);
-      const end = new Date(h.eventEnd ?? h.eventDate);
-      let cur = new Date(Math.max(start.getTime(), startOfYear.getTime()));
-      const endClamp = new Date(Math.min(end.getTime(), endOfYear.getTime()));
+      const s = new Date(h.eventDate);
+      const e = new Date(h.eventEnd ?? h.eventDate);
+
+      // Normalize to UTC midnight for start/end
+      const startUTC = new Date(Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate()));
+      const endUTC = new Date(Date.UTC(e.getUTCFullYear(), e.getUTCMonth(), e.getUTCDate()));
+
+      // Clamp within the year window (already UTC)
+      let cur = new Date(Math.max(startUTC.getTime(), startOfYear.getTime()));
+      const endClamp = new Date(Math.min(endUTC.getTime(), endOfYear.getTime()));
+
       while (cur.getTime() <= endClamp.getTime()) {
-        const iso = new Date(Date.UTC(cur.getUTCFullYear(), cur.getUTCMonth(), cur.getUTCDate())).toISOString().split('T')[0];
+        const iso = cur.toISOString().split('T')[0];
         holidays.push({
           date: iso,
           event_name: h.eventName ?? 'Holiday',
           event_start: h.eventStart ?? null,
           event_end: h.eventEnd ?? null,
         });
+        // add 1 day in UTC
         cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000);
       }
     }

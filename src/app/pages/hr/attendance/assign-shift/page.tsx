@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type UserItem = { Full_name: string | null; emp_code: string | null }
@@ -113,31 +114,31 @@ export default function Page() {
         </CardHeader>
         <CardContent className="space-y-2">
           {groups.length === 0 ? (
-            <div className="text-sm text-muted-foreground">Fetching....</div>
+            <div className="text-xl text-muted-foreground">Fetching....</div>
           ) : (
-            groups.map((g) => (
-              <div key={g.group_name} className="rounded border">
-                <button
-                  type="button"
-                  className="w-full text-left font-medium flex items-center justify-between px-3 py-2"
-                  onClick={() => setExpanded((prev) => ({ ...prev, [g.group_name]: !prev[g.group_name] }))}
-                >
-                  <span>+{g.group_name}</span>
-                  <span className="text-xs text-muted-foreground">{g.members.length} member(s)</span>
-                </button>
-                {expanded[g.group_name] && (
-                  <div className="mt-2 ml-4 space-y-1 pb-3 pr-3">
-                    {g.members.map((m, i) => (
-                      <div key={i} className="text-sm flex items-center gap-2">
-                        <span>{m.Full_name}</span>
-                        <span className="text-muted-foreground">({m.biomatric_id})</span>
-                        <span className="text-muted-foreground">— {m.shift_time}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))
+            <Accordion type="single" collapsible className="w-full">
+              {groups.map((g) => (
+                <AccordionItem key={g.group_name} value={g.group_name}>
+                  <AccordionTrigger className="px-3 py-2">
+                    <div className="w-full flex items-center justify-between">
+                      <span>+{g.group_name}</span>
+                      <span className="text-md text-muted-foreground">{g.members.length} member(s)</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="mt-2 ml-1 space-y-1 pb-3 pr-3">
+                      {g.members.map((m, i) => (
+                        <div key={i} className="text-md flex items-center gap-2">
+                          <span>{m.Full_name}</span>
+                          <span className="text-muted-foreground">({m.biomatric_id})</span>
+                          <span className="text-muted-foreground">— {m.shift_time}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           )}
         </CardContent>
       </Card>

@@ -6,17 +6,23 @@ import {
   IconChartBar,
   IconDashboard,
   IconDatabase,
+  IconDialpad,
   IconFileDescription,
   IconFileWord,
   IconFolder,
   IconHelp,
   IconInnerShadowTop,
   IconListDetails,
+  IconPhone,
   IconReport,
   IconSearch,
+  IconCalendar,
   IconSettings,
+  IconSpeakerphone,
   IconTicket,
   IconUsers,
+  IconPlus,
+  IconCash,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -32,6 +38,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/hooks/useAuth"
 
 const baseDataByRole: Record<UserRole, SidebarData> = {
   admin: {
@@ -41,7 +48,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
       {
         title: "Attendance",
         url: "#",
-        icon: IconUsers,
+        icon: IconCalendar,
         children: [
           { title: "Attendance", url: "/pages/admin/attendance", icon: IconUsers },
           { title: "Update Attendance", url: "/pages/admin/attendance/update", icon: IconListDetails },
@@ -72,20 +79,21 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
     ],
     navSecondary: [
       
-      { title: "Settings", url: "#", icon: IconSettings },
+      { title: "Settings", url: "/pages/settings", icon: IconSettings },
     ],
     documents: [
       {
         name: "Campaigns",
         url: "#",
-        icon: IconReport,
+        icon: IconSpeakerphone,
         children: [
-          { name: "All Campaigns", url: "#", icon: IconReport },
-          { name: "All Leads", url: "#", icon: IconDatabase },
-          { name: "Add Campaigns", url: "#", icon: IconReport },
+          { name: "Campaign list", url: "/pages/admin/campaigns", icon: IconReport },
+          { name: "Add Campaigns", url: "/pages/admin/campaigns/add", icon: IconReport },
+          { name: "Call Data", url: "/pages/admin/call-data", icon: IconDatabase },
+          { name: "Paste Call Data", url: "/pages/admin/paste-call-data", icon: IconDatabase },
         ],
       },
-      { name: "Events", url: "#", icon: IconDatabase },
+      { name: "Team", url: "/pages/admin/team", icon: IconUsers },
       
     ],
   },
@@ -117,20 +125,58 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: "#",
         icon: IconFolder,
         children: [
-          { title: "Payslip", url: "#", icon: IconReport },
-          { title: "Salary structure", url: "#", icon: IconFileDescription },
+          { title: "Payslip", url: "/pages/user/payroll/payslip", icon: IconReport },
+          { title: "Salary structure", url: "/pages/user/payroll/salary-structure", icon: IconFileDescription },
         ],
       },
       { title: "Raise Ticket", url: "#", icon: IconTicket },
     ],
     navSecondary: [
-      { title: "Settings", url: "#", icon: IconSettings },
+      { title: "Settings", url: "/pages/settings", icon: IconSettings },
      
     ],
     documents: [
-      { name: "Data Library", url: "#", icon: IconDatabase },
-      { name: "Reports", url: "#", icon: IconReport },
-      { name: "Word Assistant", url: "#", icon: IconFileWord },
+      {
+        name: "Operation",
+        url: "#",
+        icon: IconPhone,
+        children: [
+          { name: "Extensions", url: "/pages/user/operations/extensions", icon: IconReport },
+          { name: "Paste Call Data", url: "/pages/user/operations/paste-call-data", icon: IconReport },
+          { name: "Calls", url: "/pages/user/operations/calls", icon: IconFileWord },
+          { name: "Call Analytics", url: "/pages/user/operations/call-analytics", icon: IconChartBar },
+          { name: "Campaigns", url: "/pages/user/operations/campaigns", icon: IconDatabase },
+        ],
+      },
+      {
+        name: "Quality",
+        url: "#",
+        icon: IconReport,
+        children: [
+          { name: "Quality Audit", url: "/pages/user/quality", icon: IconReport },
+          { name: "Campaign List", url: "/pages/user/quality/campaigns", icon: IconSpeakerphone },
+          { name: "Analytics", url: "/pages/user/quality/analytics", icon: IconReport },
+          
+          
+        ],
+      },
+      {
+        name: "Team Lead",
+        url: "#",
+        icon: IconUsers,
+        children: [
+          { name: "Campaign List", url: "/pages/user/team-lead/campaigns", icon: IconSpeakerphone },
+          { name: "Add Campaign", url: "/pages/user/team-lead/add", icon: IconPlus  },
+          { name: "Analytics", url: "/pages/user/team-lead/analytics", icon: IconReport },
+          { name: "Team", url: "/pages/user/team-lead/team", icon: IconUsers },
+          { name: "Paste Call Data", url: "/pages/user/team-lead/paste-call-data", icon: IconReport },
+          { name: "Call Data", url: "/pages/user/team-lead/call-data", icon: IconDatabase },
+          
+        ],
+      },
+      // { name: "Team", url: "/pages/user/team", icon: IconUsers },
+      // { name: "Campaigns", url: "/pages/user/campaigns", icon: IconSpeakerphone },
+   
     ],
   },
   hr: {
@@ -170,7 +216,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
           { title: "Tax", url: "/pages/hr/payroll/tax", icon: IconReport },
         ],
       },
-      { title: "Bank Challan", url: "#", icon: IconFileDescription },
+      { title: "Bank Challan", url: "/pages/hr/bank-challan", icon: IconCash },
       {
         title: "Employee Details",
         url: "#",
@@ -183,26 +229,28 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
       },
     ],
     navSecondary: [
-      { title: "Settings", url: "#", icon: IconSettings },
+      { title: "Settings", url: "/pages/settings", icon: IconSettings },
       
     ],
     documents: [
-      { name: "Letter Generation", url: "#", icon: IconFileWord },
-      { name: "Employee Handbook", url: "#", icon: IconFileDescription },
-      { name: "Reports", url: "#", icon: IconReport },
+      
+      
+      { name: "Letter Generation", url: "/pages/hr/letter-generation", icon: IconFileWord },
+      { name: "Events", url: "/pages/hr/events", icon: IconCalendar },
+      
     ],
   },
 }
 
 function mergeData(base: SidebarData, overrides?: Partial<SidebarData>): SidebarData {
-  console.log("🔀 mergeData called with:", { 
-    hasOverrides: !!overrides, 
-    overridesUser: overrides?.user,
-    baseUser: base.user 
-  })
+  // console.log("🔀 mergeData called with:", { 
+  //   hasOverrides: !!overrides, 
+  //   overridesUser: overrides?.user,
+  //   baseUser: base.user 
+  // })
   
   if (!overrides) {
-    console.log("⚠️ No overrides provided, using base data with:", base.user)
+    // console.log("⚠️ No overrides provided, using base data with:", base.user)
     return base
   }
   
@@ -215,7 +263,7 @@ function mergeData(base: SidebarData, overrides?: Partial<SidebarData>): Sidebar
       }
     : base.user
   
-  console.log("✅ Merged sidebar data - Final user:", userData)
+  // console.log("✅ Merged sidebar data - Final user:", userData)
   
   return {
     user: userData,
@@ -229,15 +277,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { role, dataOverrides } = useSidebarConfig()
   const base = baseDataByRole[role as keyof typeof baseDataByRole] ?? baseDataByRole.user
   const data = mergeData(base, dataOverrides)
+  const { user } = useAuth()
+
+  const allowedTeamLeadEmails = React.useMemo(() => new Set([
+    "asfiya.pathan@demandifymedia.com",
+    "tejal.kamble@demandifymedia.com",
+  ]), [])
+
+  const filteredDocuments = React.useMemo(() => {
+    const dept = (user?.department || "").toLowerCase()
+    const email = (user?.email || "").toLowerCase()
+
+    return (data.documents || []).filter((section) => {
+      const name = section.name.toLowerCase()
+      if (name === "operation") {
+        return dept === "operation"
+      }
+      if (name === "quality") {
+        return dept === "quality" || dept === "quality analyst"
+      }
+      if (name === "team lead") {
+        return allowedTeamLeadEmails.has(email)
+      }
+      return true
+    })
+  }, [data.documents, user?.department, user?.email, allowedTeamLeadEmails])
   
   // Debug log to see what data is being used
-  console.log("🎨 AppSidebar rendering with:", { 
-    role, 
-    dataOverrides, 
-    finalUserData: data.user,
-    hasOverrides: !!dataOverrides,
-    overridesUser: dataOverrides?.user
-  })
+  // console.log("🎨 AppSidebar rendering with:", { 
+  //   role, 
+  //   dataOverrides, 
+  //   finalUserData: data.user,
+  //   hasOverrides: !!dataOverrides,
+  //   overridesUser: dataOverrides?.user
+  // })
   
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -258,7 +331,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
+        <NavDocuments items={filteredDocuments} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

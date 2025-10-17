@@ -7,6 +7,7 @@ export type AuthUser = {
   name: string
   email: string
   role: UserRole
+  department: string | null
 }
 
 export function useAuth() {
@@ -25,7 +26,7 @@ export function useAuth() {
         const data = await res.json().catch(() => null)
         if (data) {
           const role = String(data.role || "user").toLowerCase() as UserRole
-          setUser({ name: data.name || "User", email: data.email || "", role })
+          setUser({ name: data.name || "User", email: data.email || "", role, department: (data.department ?? null) as string | null })
         } else {
           setUser(null)
         }

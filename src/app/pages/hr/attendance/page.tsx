@@ -136,31 +136,41 @@ export default function AdminAttendancePage() {
     );
   }, [query, data]);
 
-  useEffect(() => {
-    let ignore = false;
-    async function run() {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await fetch(`/api/attendance/events?year=${year}`, { cache: "no-store" });
-        if (!res.ok) {
-          const t = await res.text();
-          throw new Error(t || `Failed: ${res.status}`);
-        }
-        const json = await res.json();
-        if (!ignore) {
-          setData(json.result || []);
-          setHolidays(json.holidays || []);
-        }
-      } catch (e: any) {
-        if (!ignore) setError(e?.message || "Failed to load");
-      } finally {
-        if (!ignore) setLoading(false);
+  // Centralized load function so we can call it on mount, year change and event changes
+  const loadForYear = async (y: number) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/attendance/events?year=${y}`, { cache: "no-store" });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `Failed: ${res.status}`);
       }
+      const json = await res.json();
+      setData(json.result || []);
+      setHolidays(json.holidays || []);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load");
+    } finally {
+      setLoading(false);
     }
-    run();
+  };
+
+  // Load on mount and when year changes
+  useEffect(() => {
+    loadForYear(year);
+  }, [year]);
+
+  // Refresh when events/holidays change (after creating/updating events)
+  useEffect(() => {
+    const handler = () => loadForYear(year);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('events:changed', handler);
+    }
     return () => {
-      ignore = true;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('events:changed', handler);
+      }
     };
   }, [year]);
   

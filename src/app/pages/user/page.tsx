@@ -21,8 +21,7 @@ export default function UserPage() {
       <SidebarConfig role="user" />
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">User Dashboard</h1>
-        <p className="text-muted-foreground">Welcome to the User portal, {user.name}.</p>
-        <p className="text-sm text-muted-foreground mt-2">Department: {user.role === 'user' ? 'User Department' : user.role}</p>
+        <p className="text-muted-foreground">Welcome Back, {user.name}.</p>
       </div>
     </>
   )

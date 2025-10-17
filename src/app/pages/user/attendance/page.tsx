@@ -126,31 +126,43 @@ export default function Page() {
     return () => { ignore = true };
   }, []);
 
-  useEffect(() => {
-    let ignore = false;
-    async function run() {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await fetch(`/api/attendance/events?year=${year}`, { cache: "no-store" });
-        if (!res.ok) {
-          const t = await res.text();
-          throw new Error(t || `Failed: ${res.status}`);
-        }
-        const json = await res.json();
-        if (!ignore) {
-          setData(json.result || []);
-          setHolidays(json.holidays || []);
-        }
-      } catch (e: any) {
-        if (!ignore) setError(e?.message || "Failed to load");
-      } finally {
-        if (!ignore) setLoading(false);
+  // Consolidated loader so we can call on year change and event changes
+  const loadForYear = async (y: number) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/attendance/events?year=${y}`, { cache: "no-store" });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `Failed: ${res.status}`);
       }
+      const json = await res.json();
+      setData(json.result || []);
+      setHolidays(json.holidays || []);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load");
+    } finally {
+      setLoading(false);
     }
-    run();
-    return () => { ignore = true };
+  };
+
+  // Load on year or tick
+  useEffect(() => {
+    loadForYear(year);
   }, [year, refreshTick]);
+
+  // Listen for events created/updated elsewhere and refresh
+  useEffect(() => {
+    const handler = () => setRefreshTick((t) => t + 1);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('events:changed', handler);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('events:changed', handler);
+      }
+    };
+  }, []);
 
   const months = useMemo(
     () => [

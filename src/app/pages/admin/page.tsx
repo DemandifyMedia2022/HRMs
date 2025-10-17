@@ -21,7 +21,7 @@ export default function AdminPage() {
       <SidebarConfig role="admin" />
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Welcome to the Admin portal, {user.name}.</p>
+        <p className="text-muted-foreground">Welcome Back, {user.name}.</p>
       </div>
     </>
   )
