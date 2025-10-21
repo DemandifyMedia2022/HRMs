@@ -47,9 +47,6 @@ export function AddEventModal({ isOpen, onClose, selectedDate, onEventAdded }: P
       const json = await res.json()
       if (res.ok && json.success) {
         onEventAdded?.()
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('events:changed'))
-        }
         onClose()
       }
     } finally {

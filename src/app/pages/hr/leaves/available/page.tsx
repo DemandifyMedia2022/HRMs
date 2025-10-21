@@ -1,6 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { SidebarConfig } from "@/components/sidebar-config"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
 
 type Leave = {
   l_id: number
@@ -53,97 +60,170 @@ export default function HRAvailableLeavePage() {
   }, [])
 
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold">Available Leave Details</h1>
-
-      <div className="border rounded p-4">
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
-            <label className="block text-sm mb-1">User Name</label>
-            <input className="w-full border rounded px-3 py-2" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Enter user (added_by_user)" />
-          </div>
-          <button onClick={load} className="rounded border px-4 py-2">Load</button>
+    <div className="p-6">
+      <SidebarConfig role="hr" />
+      <div className="mx-auto max-w-5xl space-y-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold tracking-tight">Available Leave Details</h1>
+          <p className="text-sm text-muted-foreground">Lookup an employee to review their leave utilisation and balance.</p>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Search Employee</CardTitle>
+            <CardDescription>Use the user name as recorded in leave requests (`added_by_user`).</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              className="flex flex-col gap-4 sm:flex-row sm:items-end"
+              onSubmit={(e) => {
+                e.preventDefault()
+                load()
+              }}
+            >
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="user_name">User Name</Label>
+                <Input
+                  id="user_name"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="e.g. Jane Doe"
+                />
+              </div>
+              <Button type="submit" disabled={!userName || loading} className="sm:w-auto">
+                {loading ? "Loading..." : "View"}
+              </Button>
+            </form>
+            {error ? (
+              <div className="mt-4 rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        {loading ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-32 w-full rounded-md" />
+            ))}
+          </div>
+        ) : null}
+
+        {!loading && data ? (
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Paid Leave Summary</CardTitle>
+                  <CardDescription>{data.user}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span>Total</span>
+                    <span className="font-semibold">{data.totals.totalPaidLeave}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Used</span>
+                    <span className="font-semibold text-amber-600">{data.usedPaidLeave}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Remaining</span>
+                    <span className="font-semibold text-emerald-600">{data.remainingPaidLeave}</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Sick Leave Summary</CardTitle>
+                  <CardDescription>{data.user}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span>Total</span>
+                    <span className="font-semibold">{data.totals.totalSickLeave}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Used</span>
+                    <span className="font-semibold text-amber-600">{data.usedSickLeave}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Remaining</span>
+                    <span className="font-semibold text-emerald-600">{data.remainingSickLeave}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Approved Leaves</CardTitle>
+                <CardDescription>Leaves that were granted for the employee.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {data.approvedLeaves.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">No approved leaves recorded.</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Start</TableHead>
+                        <TableHead>End</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.approvedLeaves.map((l) => (
+                        <TableRow key={l.l_id}>
+                          <TableCell>{l.leave_type}</TableCell>
+                          <TableCell>{new Date(l.start_date).toLocaleDateString()}</TableCell>
+                          <TableCell>{new Date(l.end_date).toLocaleDateString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">All Leave Requests</CardTitle>
+                <CardDescription>Comprehensive history of leave requests and approvals.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {data.LeaveApprovalData.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">No leave requests found.</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Start</TableHead>
+                        <TableHead>End</TableHead>
+                        <TableHead>HR</TableHead>
+                        <TableHead>Manager</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.LeaveApprovalData.map((l) => (
+                        <TableRow key={l.l_id}>
+                          <TableCell>{l.leave_type}</TableCell>
+                          <TableCell>{new Date(l.start_date).toLocaleDateString()}</TableCell>
+                          <TableCell>{new Date(l.end_date).toLocaleDateString()}</TableCell>
+                          <TableCell>{l.HRapproval}</TableCell>
+                          <TableCell>{l.Managerapproval}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
       </div>
-
-      {error && <div className="text-sm text-red-600">{error}</div>}
-
-      {loading && <div>Loading...</div>}
-
-      {data && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border rounded p-4">
-              <h2 className="font-semibold mb-2">Summary</h2>
-              <div className="text-sm space-y-1">
-                <div>Total Paid Leave: {data.totals.totalPaidLeave}</div>
-                <div>Used Paid Leave: {data.usedPaidLeave}</div>
-                <div>Remaining Paid Leave: {data.remainingPaidLeave}</div>
-              </div>
-            </div>
-            <div className="border rounded p-4">
-              <h2 className="font-semibold mb-2">Sick Leave</h2>
-              <div className="text-sm space-y-1">
-                <div>Total Sick Leave: {data.totals.totalSickLeave}</div>
-                <div>Used Sick Leave: {data.usedSickLeave}</div>
-                <div>Remaining Sick Leave: {data.remainingSickLeave}</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border rounded p-4">
-            <h2 className="font-semibold mb-2">Approved Leaves</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="text-left">
-                  <tr>
-                    <th className="py-2 pr-4">Type</th>
-                    <th className="py-2 pr-4">Start</th>
-                    <th className="py-2 pr-4">End</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.approvedLeaves.map((l) => (
-                    <tr key={l.l_id} className="border-t">
-                      <td className="py-2 pr-4">{l.leave_type}</td>
-                      <td className="py-2 pr-4">{new Date(l.start_date).toLocaleDateString()}</td>
-                      <td className="py-2 pr-4">{new Date(l.end_date).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="border rounded p-4">
-            <h2 className="font-semibold mb-2">All Leaves (User)</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="text-left">
-                  <tr>
-                    <th className="py-2 pr-4">Type</th>
-                    <th className="py-2 pr-4">Start</th>
-                    <th className="py-2 pr-4">End</th>
-                    <th className="py-2 pr-4">HR</th>
-                    <th className="py-2 pr-4">Mgr</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.LeaveApprovalData.map((l) => (
-                    <tr key={l.l_id} className="border-t">
-                      <td className="py-2 pr-4">{l.leave_type}</td>
-                      <td className="py-2 pr-4">{new Date(l.start_date).toLocaleDateString()}</td>
-                      <td className="py-2 pr-4">{new Date(l.end_date).toLocaleDateString()}</td>
-                      <td className="py-2 pr-4">{l.HRapproval}</td>
-                      <td className="py-2 pr-4">{l.Managerapproval}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

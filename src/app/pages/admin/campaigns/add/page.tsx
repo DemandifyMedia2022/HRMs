@@ -2,6 +2,11 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { SidebarConfig } from "@/components/sidebar-config";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export default function AddCampaignPage() {
   const [editId, setEditId] = useState<string | null>(null)
@@ -20,12 +25,21 @@ export default function AddCampaignPage() {
     f_method: "",
     f_script: "",
     f_status: true,
+    f_script_url: "",
   })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
 
   const onChange = (k: string, v: string | boolean) => setForm((s: any) => ({ ...s, [k]: v }))
+
+  const toYMD = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : ""
+  const fromYMD = (s?: string): Date | undefined => {
+    if (!s) return undefined
+    const [y,m,dd] = s.split('-').map((n) => parseInt(n,10))
+    if (!y || !m || !dd) return undefined
+    return new Date(y, (m||1)-1, dd||1)
+  }
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
@@ -123,77 +137,107 @@ export default function AddCampaignPage() {
 
   return (
     <>
-      <SidebarConfig role="user" />
+      <SidebarConfig role="admin" />
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">{editId ? 'Edit Camagin' : 'Add Campaign'}</h1>
-        <p className="text-muted-foreground mb-6">Only "Head Of Operation" and "Assistant Team Lead" can add campaigns.</p>
+        <div className="mx-auto max-w-4xl space-y-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight">{editId ? 'Edit Campaign' : 'Add Campaign'}</h1>
+            <p className="text-sm text-muted-foreground"></p>
+          </div>
 
-        {authLoading && (
-          <div className="text-sm text-gray-600 mb-4">Checking permissions...</div>
-        )}
-        {!authLoading && !allowed && (
-          <div className="p-3 mb-4 rounded-md bg-yellow-50 text-yellow-800 text-sm">Forbidden: You do not have permission to add campaigns.</div>
-        )}
+          {authLoading ? (
+            <div className="rounded border border-muted/50 bg-muted/20 px-3 py-2 text-sm text-muted-foreground">Checking permissions...</div>
+          ) : null}
+          {!authLoading && !allowed ? (
+            <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Forbidden: You do not have permission to add campaigns.</div>
+          ) : null}
 
-        <div className="bg-white border rounded-lg p-6 max-w-3xl">
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Campaign ID</label>
-              <input className="w-full rounded-md border px-3 py-1.5 text-sm" value={form.c_id} onChange={(e) => onChange('c_id', e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Campaign Name</label>
-              <input className="w-full rounded-md border px-3 py-1.5 text-sm" value={form.f_campaign_name} onChange={(e) => onChange('f_campaign_name', e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-              <input type="date" className="w-full rounded-md border px-3 py-1.5 text-sm" value={form.f_start_date} onChange={(e) => onChange('f_start_date', e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-              <input type="date" className="w-full rounded-md border px-3 py-1.5 text-sm" value={form.f_end_date} onChange={(e) => onChange('f_end_date', e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
-              <input className="w-full rounded-md border px-3 py-1.5 text-sm" value={form.f_assignto} onChange={(e) => onChange('f_assignto', e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Allocation</label>
-              <input type="number" className="w-full rounded-md border px-3 py-1.5 text-sm" value={form.f_allocation} onChange={(e) => onChange('f_allocation', e.target.value)} />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Method</label>
-              <input className="w-full rounded-md border px-3 py-1.5 text-sm" value={form.f_method} onChange={(e) => onChange('f_method', e.target.value)} placeholder="Email/Call/Mixed..." />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Script</label>
-              <textarea className="w-full rounded-md border px-3 py-1.5 text-sm" rows={4} value={form.f_script} onChange={(e) => onChange('f_script', e.target.value)} />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Script Document (upload)</label>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.txt,.rtf,.md,.html,.htm"
-                onChange={(e) => onScriptFile(e.target.files?.[0])}
-                className="block w-full text-sm"
-              />
-              {uploading && <div className="text-xs text-gray-500 mt-1">Uploading...</div>}
-              {(form as any).f_script_url && (
-                <div className="text-xs mt-1">Uploaded: <a className="text-blue-600 hover:underline" href={(form as any).f_script_url} target="_blank">Open</a></div>
-              )}
-            </div>
-            <div className="md:col-span-2 flex items-center gap-3">
-              <label className="text-sm font-medium text-gray-700">Status</label>
-              <button type="button" onClick={() => onChange('f_status', !form.f_status)} className={`px-3 py-1.5 rounded text-xs ${form.f_status ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
-                {form.f_status ? 'Active' : 'Inactive'}
-              </button>
-            </div>
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle>Campaign Details</CardTitle>
+              <CardDescription>Fill out the campaign information below.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="c_id">Campaign ID</Label>
+                  <Input id="c_id" value={form.c_id} onChange={(e) => onChange('c_id', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="f_campaign_name">Campaign Name</Label>
+                  <Input id="f_campaign_name" value={form.f_campaign_name} onChange={(e) => onChange('f_campaign_name', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <DatePicker
+                    id="f_start_date"
+                    label="Start Date"
+                    value={fromYMD(form.f_start_date)}
+                    onChange={(d) => onChange('f_start_date', toYMD(d))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <DatePicker
+                    id="f_end_date"
+                    label="End Date"
+                    value={fromYMD(form.f_end_date)}
+                    onChange={(d) => onChange('f_end_date', toYMD(d))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="f_assignto">Assign To</Label>
+                  <Input id="f_assignto" value={form.f_assignto} onChange={(e) => onChange('f_assignto', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="f_allocation">Allocation</Label>
+                  <Input id="f_allocation" type="number" value={form.f_allocation} onChange={(e) => onChange('f_allocation', e.target.value)} />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="f_method">Method</Label>
+                  <Input id="f_method" value={form.f_method} onChange={(e) => onChange('f_method', e.target.value)} placeholder="Email / Call / Mixed" />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="f_script">Script</Label>
+                  <textarea
+                    id="f_script"
+                    className="min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    rows={4}
+                    value={form.f_script}
+                    onChange={(e) => onChange('f_script', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="f_script_file">Script Document (upload)</Label>
+                  <Input
+                    id="f_script_file"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.txt,.rtf,.md,.html,.htm"
+                    onChange={(e) => onScriptFile(e.target.files?.[0])}
+                  />
+                  {uploading ? (
+                    <div className="text-xs text-muted-foreground">Uploading...</div>
+                  ) : null}
+                  {(form as any).f_script_url ? (
+                    <div className="text-xs">Uploaded: <a className="text-primary underline" href={(form as any).f_script_url} target="_blank">Open</a></div>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-3 sm:col-span-2">
+                  <Label className="m-0">Status</Label>
+                  <Button type="button" size="sm" variant={form.f_status ? "default" : "outline"} onClick={() => onChange('f_status', !form.f_status)}>
+                    {form.f_status ? 'Active' : 'Inactive'}
+                  </Button>
+                </div>
 
-            <div className="md:col-span-2 pt-2 border-t flex items-center gap-3">
-              <button type="submit" disabled={loading || !allowed} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{loading ? 'Saving...' : 'Add Campaign'}</button>
-              {message && <div className={`text-sm ${message.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>{message}</div>}
-            </div>
-          </form>
+                <CardFooter className="px-0 sm:col-span-2 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                  <Button type="submit" disabled={loading || !allowed}>
+                    {loading ? 'Saving...' : (editId ? 'Save Changes' : 'Add Campaign')}
+                  </Button>
+                  {message ? (
+                    <div className={`text-sm ${message.startsWith('Error') ? 'text-destructive' : 'text-emerald-600'}`}>{message}</div>
+                  ) : null}
+                </CardFooter>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </>

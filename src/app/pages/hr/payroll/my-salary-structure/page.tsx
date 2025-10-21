@@ -87,7 +87,7 @@ export default function MySalaryStructurePage() {
   if (loading) {
     return (
       <>
-        <SidebarConfig role="user" />
+        <SidebarConfig role="hr" />
         <div className="p-6">
           <div className="max-w-5xl mx-auto">
             <Card>
@@ -106,7 +106,7 @@ export default function MySalaryStructurePage() {
   if (!employee) {
     return (
       <>
-        <SidebarConfig role="user" />
+        <SidebarConfig role="hr" />
         <div className="p-6">
           <div className="max-w-5xl mx-auto">
             <Card>
@@ -124,7 +124,7 @@ export default function MySalaryStructurePage() {
 
   return (
     <>
-      <SidebarConfig role="user" />
+      <SidebarConfig role="hr" />
       <div className="p-6">
         <div className="max-w-5xl mx-auto">
           <Card>

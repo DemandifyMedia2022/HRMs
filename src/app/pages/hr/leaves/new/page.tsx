@@ -2,7 +2,35 @@
  
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { SidebarConfig } from "@/components/sidebar-config"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { DatePicker } from "@/components/ui/date-picker"
+
+const leaveOptions = [
+  "Casual Leave",
+  "Sick Leave",
+  "Privileged Leave",
+  "Maternity Leave",
+  "Paternity Leave",
+  "Comp-Off",
+  "WFH",
+]
+
+const toYMD = (d?: Date | null) =>
+  d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : ""
+
+const fromYMD = (s: string) => {
+  if (!s) return undefined
+  const [y, m, dd] = s.split("-").map((n) => parseInt(n, 10))
+  if (!y || !m || !dd) return undefined
+  return new Date(y, m - 1, dd)
+}
  
 export default function NewLeavePage() {
   const router = useRouter()
@@ -44,99 +72,97 @@ export default function NewLeavePage() {
   }
  
   return (
-    <div className="p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-4">New Leave Request</h1>
-      {error && (
-        <div className="mb-4 text-sm text-red-600">{error}</div>
-      )}
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm mb-1">Leave Type</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            value={leaveType}
-            onChange={(e) => setLeaveType(e.target.value)}
-            placeholder="Sick / Casual / Annual"
-            required
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm mb-1">Start Date</label>
-            {(() => {
-              const toYMD = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : "";
-              const fromYMD = (s: string) => {
-                if (!s) return undefined as unknown as Date | undefined;
-                const [y,m,dd] = s.split('-').map((n) => parseInt(n,10));
-                return new Date(y, (m||1)-1, dd||1);
-              };
-              return (
-                <DatePicker
-                  id="leave_start"
-                  placeholder="dd-mm-yyyy"
-                  value={fromYMD(startDate)}
-                  onChange={(d) => setStartDate(toYMD(d))}
+    <div className="p-6">
+      <SidebarConfig role="hr" />
+      <div className="mx-auto max-w-4xl space-y-6">
+        <Card className="border-muted/50 bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+          <CardHeader className="pb-4">
+            <CardTitle>New Leave Request</CardTitle>
+            <CardDescription>Capture the leave details and submit to notify the HR team.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {error ? (
+              <Alert variant="destructive" className="border-destructive/50">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            <form onSubmit={onSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="leave_type">Leave Type</Label>
+                  <Select value={leaveType} onValueChange={setLeaveType}>
+                    <SelectTrigger id="leave_type" className="h-10">
+                      <SelectValue placeholder="Select leave type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {leaveOptions.map((option) => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="added_by">Added By (Your Name)</Label>
+                  <Input
+                    id="added_by"
+                    value={addedByUser}
+                    onChange={(e) => setAddedByUser(e.target.value)}
+                    placeholder="Enter your name"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="leave_start">Start Date</Label>
+                  <DatePicker
+                    id="leave_start"
+                    placeholder="Select start date"
+                    value={fromYMD(startDate)}
+                    onChange={(d) => setStartDate(toYMD(d))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="leave_end">End Date</Label>
+                  <DatePicker
+                    id="leave_end"
+                    placeholder="Select end date"
+                    value={fromYMD(endDate)}
+                    onChange={(d) => setEndDate(toYMD(d))}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="leave_reason">Reason</Label>
+                <Textarea
+                  id="leave_reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Provide context for the leave request"
+                  className="min-h-[120px]"
+                  required
                 />
-              )
-            })()}
-          </div>
-          <div>
-            <label className="block text-sm mb-1">End Date</label>
-            {(() => {
-              const toYMD = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : "";
-              const fromYMD = (s: string) => {
-                if (!s) return undefined as unknown as Date | undefined;
-                const [y,m,dd] = s.split('-').map((n) => parseInt(n,10));
-                return new Date(y, (m||1)-1, dd||1);
-              };
-              return (
-                <DatePicker
-                  id="leave_end"
-                  placeholder="dd-mm-yyyy"
-                  value={fromYMD(endDate)}
-                  onChange={(d) => setEndDate(toYMD(d))}
-                />
-              )
-            })()}
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm mb-1">Reason</label>
-          <textarea
-            className="w-full border rounded px-3 py-2"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Reason for leave"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm mb-1">Added By (Your Name)</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            value={addedByUser}
-            onChange={(e) => setAddedByUser(e.target.value)}
-            placeholder="Enter your name"
-            required
-          />
-        </div>
-        <div className="flex gap-3 pt-2">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="inline-flex items-center justify-center rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
-          >
-            {submitting ? "Submitting..." : "Submit"}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/pages/hr")}
-            className="inline-flex items-center justify-center rounded border px-4 py-2"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
+              </div>
+
+              <CardFooter className="flex flex-col gap-2 px-0 sm:flex-row sm:justify-end sm:gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push("/pages/hr")}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? "Submitting..." : "Submit Request"}
+                </Button>
+              </CardFooter>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
