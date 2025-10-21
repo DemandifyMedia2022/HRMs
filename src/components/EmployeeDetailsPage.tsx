@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react"
+import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 
-type User = {
+export type User = {
   id: number
   Prefix?: string | null
   Full_name?: string | null
@@ -32,7 +32,6 @@ type User = {
   job_role?: string | null
   reporting_manager?: string | null
   Functional_manager?: string | null
-  // Family / other
   father_name?: string | null
   father_dob?: string | null
   mother_name?: string | null
@@ -63,11 +62,9 @@ type User = {
   insuree_dob?: string | null
   insuree_gender?: string | null
   insuree_code?: string | null
-  // Children
   child_name?: string | null
   child_dob?: string | null
   child_gender?: string | null
-  // Documents
   aadhaar_card?: string | null
   pan_card?: string | null
   bankpassbook?: string | null
@@ -75,7 +72,6 @@ type User = {
   certifications?: string | null
   marksheet?: string | null
   pay_slips?: string | null
-  bank_statement?: string | null
 }
 
 type ListResponse = { data: User[]; pagination?: { total: number } }
@@ -121,7 +117,6 @@ export default function EmployeeDetailsPage() {
       if (!res.ok) throw new Error(j?.error || "Failed to upload documents")
       setFlash("Documents uploaded successfully")
       setTimeout(() => setFlash(null), 2500)
-      // Refresh selected with latest data
       const full = await fetch(`/api/hr/employees/${selected.id}`, { cache: "no-store" }).then((r) => r.json())
       setSelected((prev) => (prev ? { ...prev, ...full } : full))
       form.reset()
@@ -130,28 +125,6 @@ export default function EmployeeDetailsPage() {
     } finally {
       setSaving(false)
     }
-  }
-
-  function parseArrayField(s?: string | null): string[] {
-    if (!s) return []
-    const trimmed = s.trim()
-    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-      try {
-        const arr = JSON.parse(trimmed)
-        return Array.isArray(arr) ? arr : []
-      } catch {
-        // fallthrough
-      }
-    }
-    // If DB stored a single URL string (legacy), show it as one item
-    if (/^\/?(?:uploads|employee_documents)\//.test(trimmed)) return [trimmed]
-    return []
-  }
-
-  function docUrl(p?: string | null) {
-    if (!p) return ""
-    if (/^https?:\/\//i.test(p)) return p
-    return p.startsWith("/") ? p : "/" + p
   }
 
   function hasDocStr(p?: string | null) {
@@ -165,7 +138,6 @@ export default function EmployeeDetailsPage() {
   const qs = useMemo(() => {
     const p = new URLSearchParams()
     if (search) p.set("search", search)
-    // Department filtering is client-side
     p.set("page", "1")
     p.set("pageSize", "200")
     return p.toString()
@@ -176,19 +148,15 @@ export default function EmployeeDetailsPage() {
       setLoading(true)
       setError(null)
       try {
-        // Reuse HR settlement users listing endpoint for users search
         const res = await fetch(`/api/hr/settlement/users?${qs}`, { cache: "no-store" })
         const json = await res.json()
         if (!res.ok) throw new Error(json?.error || "Failed to load employees")
         const list = (json?.data || []) as User[]
         setEmployeesAll(list)
-        // Build departments from the full list
         const depts = Array.from(new Set((list || []).map((u) => u.department || "").filter(Boolean))) as string[]
         setDepartments(["All", ...depts])
-        // Apply current department filter on new data
         const filtered = deptFilter === "All" ? list : list.filter((u) => (u.department || "") === deptFilter)
         setEmployees(filtered)
-        // If current selection not in filtered, adjust selection
         if (!selected || !filtered.find((u) => u.id === selected.id)) {
           setSelected(filtered[0] || null)
         }
@@ -219,7 +187,6 @@ export default function EmployeeDetailsPage() {
   }, [selected?.id])
 
   useEffect(() => {
-    // Recompute client-side department filtering when deptFilter changes
     const filtered = deptFilter === "All" ? employeesAll : employeesAll.filter((u) => (u.department || "") === deptFilter)
     setEmployees(filtered)
     if (!selected || !filtered.find((u) => u.id === selected.id)) {
@@ -228,7 +195,6 @@ export default function EmployeeDetailsPage() {
     setPageNum(1)
   }, [deptFilter, employeesAll])
 
-  // Keep family marital status state in sync with selected employee
   useEffect(() => {
     setFamilyMarital(selected?.marital_status || "")
   }, [selected?.id, selected?.marital_status])
@@ -283,6 +249,9 @@ export default function EmployeeDetailsPage() {
     <div className="p-6 grid grid-cols-1 gap-6">
       <div className="border rounded p-4 space-y-3">
         <div className="text-xl font-semibold">Employees</div>
+        {error ? (
+          <div className="text-sm text-red-600 border border-red-200 bg-red-50 px-3 py-2 rounded">{error}</div>
+        ) : null}
         <Input placeholder="Search name or code" value={search} onChange={(e) => setSearch(e.target.value)} />
         <div className="flex gap-8 flex-wrap text-sm">
           {departments.length === 0 ? (
@@ -299,7 +268,7 @@ export default function EmployeeDetailsPage() {
           {loading ? (
             <div className="p-2 text-sm">Loading...</div>
           ) : employees.length === 0 ? (
-            <div className="p-2 text-sm">No employees</div>
+            <div className="p-2 text-sm">{error ? "Failed to load employees" : "No employees"}</div>
           ) : (
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -487,7 +456,7 @@ export default function EmployeeDetailsPage() {
                     {hasDocStr(selected.aadhaar_card) ? (
                       <div className="mt-1">
                         <Button asChild variant="outline" size="sm">
-                          <a href={docUrl(selected.aadhaar_card)} target="_blank">View Document</a>
+                          <a href={(selected.aadhaar_card || "").toString().startsWith("http") ? (selected.aadhaar_card as string) : `/${selected.aadhaar_card}`} target="_blank">View Document</a>
                         </Button>
                       </div>
                     ) : <div className="text-xs text-gray-500 mt-1">No document uploaded</div>}
@@ -498,7 +467,7 @@ export default function EmployeeDetailsPage() {
                     {hasDocStr(selected.pan_card) ? (
                       <div className="mt-1">
                         <Button asChild variant="outline" size="sm">
-                          <a href={docUrl(selected.pan_card)} target="_blank">View Document</a>
+                          <a href={(selected.pan_card || "").toString().startsWith("http") ? (selected.pan_card as string) : `/${selected.pan_card}`} target="_blank">View Document</a>
                         </Button>
                       </div>
                     ) : <div className="text-xs text-gray-500 mt-1">No document uploaded</div>}
@@ -509,7 +478,7 @@ export default function EmployeeDetailsPage() {
                     {hasDocStr(selected.bankpassbook) ? (
                       <div className="mt-1">
                         <Button asChild variant="outline" size="sm">
-                          <a href={docUrl(selected.bankpassbook)} target="_blank">View Document</a>
+                          <a href={(selected.bankpassbook || "").toString().startsWith("http") ? (selected.bankpassbook as string) : `/${selected.bankpassbook}`} target="_blank">View Document</a>
                         </Button>
                       </div>
                     ) : <div className="text-xs text-gray-500 mt-1">No document uploaded</div>}
@@ -520,7 +489,7 @@ export default function EmployeeDetailsPage() {
                     {hasDocStr(selected.relieving_letter) ? (
                       <div className="mt-1">
                         <Button asChild variant="outline" size="sm">
-                          <a href={docUrl(selected.relieving_letter)} target="_blank">View Document</a>
+                          <a href={(selected.relieving_letter || "").toString().startsWith("http") ? (selected.relieving_letter as string) : `/${selected.relieving_letter}`} target="_blank">View Document</a>
                         </Button>
                       </div>
                     ) : <div className="text-xs text-gray-500 mt-1">No document uploaded</div>}
@@ -531,7 +500,7 @@ export default function EmployeeDetailsPage() {
                     {hasDocStr(selected.certifications) ? (
                       <div className="mt-1">
                         <Button asChild variant="outline" size="sm">
-                          <a href={docUrl(selected.certifications)} target="_blank">View Document</a>
+                          <a href={(selected.certifications || "").toString().startsWith("http") ? (selected.certifications as string) : `/${selected.certifications}`} target="_blank">View Document</a>
                         </Button>
                       </div>
                     ) : <div className="text-xs text-gray-500 mt-1">No document uploaded</div>}
@@ -542,7 +511,7 @@ export default function EmployeeDetailsPage() {
                     {hasDocStr(selected.marksheet) ? (
                       <div className="mt-1">
                         <Button asChild variant="outline" size="sm">
-                          <a href={docUrl(selected.marksheet)} target="_blank">View Document</a>
+                          <a href={(selected.marksheet || "").toString().startsWith("http") ? (selected.marksheet as string) : `/${selected.marksheet}`} target="_blank">View Document</a>
                         </Button>
                       </div>
                     ) : <div className="text-xs text-gray-500 mt-1">No document uploaded</div>}
@@ -550,52 +519,14 @@ export default function EmployeeDetailsPage() {
                   <div>
                     <div className="text-sm font-medium mb-1">Pay Slips</div>
                     <Input type="file" name="pay_slips" accept=".pdf,.jpg,.jpeg,.png" multiple />
-                    {parseArrayField(selected.pay_slips).length ? (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {parseArrayField(selected.pay_slips).map((u, i) => (
-                          <Button key={i} asChild variant="outline" size="sm">
-                            <a href={docUrl(u)} target="_blank">Slip {i + 1}</a>
-                          </Button>
-                        ))}
-                      </div>
-                    ) : <div className="text-xs text-gray-500 mt-1">No documents uploaded</div>}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium mb-1">Bank Statements</div>
-                    <Input type="file" name="bank_statements" accept=".pdf,.jpg,.jpeg,.png" multiple />
-                    {parseArrayField(selected.bank_statement).length ? (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {parseArrayField(selected.bank_statement).map((u, i) => (
-                          <Button key={i} asChild variant="outline" size="sm">
-                            <a href={docUrl(u)} target="_blank">Statement {i + 1}</a>
-                          </Button>
-                        ))}
-                      </div>
-                    ) : <div className="text-xs text-gray-500 mt-1">No documents uploaded</div>}
                   </div>
                 </div>
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={saving}>{saving ? "Uploading..." : "Upload Documents"}</Button>
-                </div>
+                <div className="flex justify-end"><Button type="submit" disabled={saving}>{saving ? "Uploading..." : "Upload Documents"}</Button></div>
               </form>
             )}
-
-            {(() => {
-              const order = ["basic","family","employment","position","bank","other","insurance","documents"]
-              const idx = order.indexOf(tab)
-              const canPrev = idx > 0
-              const canNext = idx >= 0 && idx < order.length - 1
-              return (
-                <div className="flex gap-2 justify-start pt-2">
-                  <Button variant="outline" size="sm" disabled={!canPrev} onClick={() => canPrev && setTab(order[idx-1])}>Previous</Button>
-                  <Button variant="default" size="sm" disabled={!canNext} onClick={() => canNext && setTab(order[idx+1])}>Next</Button>
-                </div>
-              )
-            })()}
           </div>
         )}
       </div>
     </div>
   )
 }
-

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState, type ChangeEvent } from "react"
-import Link from "next/link"
+ 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 
@@ -143,9 +143,6 @@ export default function AdminLeavesPage() {
       ) : null}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">All Employees Leaves</h1>
-        <Link href="/pages/hr/leave/new" className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-          New Leave
-        </Link>
       </div>
 
       <div className="border rounded p-4">

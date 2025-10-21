@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 export default function AddEmployeePage() {
@@ -8,6 +8,52 @@ export default function AddEmployeePage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [optLoading, setOptLoading] = useState(false)
+  const [optError, setOptError] = useState<string | null>(null)
+  const [deptOptions, setDeptOptions] = useState<string[]>([])
+  const [buOptions, setBuOptions] = useState<string[]>([])
+
+  useEffect(() => {
+    let abort = false
+    async function loadOptions() {
+      setOptLoading(true)
+      setOptError(null)
+      try {
+        const deptSet = new Set<string>()
+        const buSet = new Set<string>()
+        // The API caps pageSize at 50; iterate pages to collect more
+        const maxPages = 10
+        for (let p = 1; p <= maxPages; p++) {
+          const res = await fetch(`/api/hr/settlement/users?page=${p}&pageSize=50`, { cache: "no-store" })
+          const j = await res.json().catch(() => ({}))
+          if (!res.ok) throw new Error(j?.error || "Failed to load options")
+          const list: any[] = Array.isArray(j?.data) ? j.data : []
+          for (const u of list) {
+            const d = (u?.department ?? "").toString().trim()
+            if (d) deptSet.add(d)
+            const bu = (u?.Business_unit ?? u?.business_unit ?? "").toString().trim()
+            if (bu) buSet.add(bu)
+          }
+          const totalPages = Number(j?.pagination?.totalPages || 1)
+          if (p >= totalPages) break
+          if (abort) break
+        }
+        if (!abort) {
+          const deptArr = [...deptSet.values()].sort()
+          const buArr = [...buSet.values()].sort()
+          setDeptOptions(deptArr)
+          // Fallback: if no explicit Business Unit values, use departments for BU dropdown
+          setBuOptions(buArr.length > 0 ? buArr : deptArr)
+        }
+      } catch (e: any) {
+        if (!abort) setOptError(e?.message || "Failed to load dropdown options")
+      } finally {
+        if (!abort) setOptLoading(false)
+      }
+    }
+    loadOptions()
+    return () => { abort = true }
+  }, [])
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -52,7 +98,14 @@ export default function AddEmployeePage() {
           </div>
           <div>
             <label className="block text-sm mb-1">Prefix</label>
-            <input name="Prefix" className="w-full border rounded px-3 py-2" />
+            <select name="Prefix" className="w-full border rounded px-3 py-2">
+              <option value="">Select</option>
+              <option value="Mr.">Mr.</option>
+              <option value="Ms.">Ms.</option>
+              <option value="Mrs.">Mrs.</option>
+              <option value="Dr.">Dr.</option>
+              <option value="Prof.">Prof.</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm mb-1">Name</label>
@@ -77,7 +130,17 @@ export default function AddEmployeePage() {
           </div>
           <div>
             <label className="block text-sm mb-1">Blood Group</label>
-            <input name="blood_group" className="w-full border rounded px-3 py-2" />
+            <select name="blood_group" className="w-full border rounded px-3 py-2">
+              <option value="">Select</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm mb-1">Nationality</label>
@@ -105,19 +168,43 @@ export default function AddEmployeePage() {
           </div>
           <div>
             <label className="block text-sm mb-1">Employment Type</label>
-            <input name="employment_type" className="w-full border rounded px-3 py-2" />
+            <select name="employment_type" className="w-full border rounded px-3 py-2">
+              <option value="">Select</option>
+              <option value="Consultant">Consultant</option>
+              <option value="Contractual">Contractual</option>
+              <option value="Permanent">Permanent</option>
+              <option value="Trainee">Trainee</option>
+              <option value="Wages">Wages</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm mb-1">Employment Status</label>
-            <input name="employment_status" className="w-full border rounded px-3 py-2" />
+            <select name="employment_status" className="w-full border rounded px-3 py-2">
+              <option value="">Select</option>
+              <option value="Probation">Probation</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Resigned">Resigned</option>
+              <option value="Relieved">Relieved</option>
+              <option value="Settled">Settled</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm mb-1">Company</label>
-            <input name="company" className="w-full border rounded px-3 py-2" />
+            <select name="company" className="w-full border rounded px-3 py-2">
+              <option value="">Select</option>
+              <option value="Demandify Media">Demandify Media</option>
+              <option value="Gnosis Dtata Marketing">Gnosis Dtata Marketing</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm mb-1">Business Unit</label>
-            <input name="Business_unit" className="w-full border rounded px-3 py-2" />
+            <select name="Business_unit" className="w-full border rounded px-3 py-2" disabled={optLoading}>
+              <option value="">{optLoading ? "Loading..." : "Select"}</option>
+              {buOptions.map((bu) => (
+                <option key={bu} value={bu}>{bu}</option>
+              ))}
+            </select>
+            {optError ? <div className="text-xs text-red-600 mt-1">{optError}</div> : null}
           </div>
           <div>
             <label className="block text-sm mb-1">Job Role</label>
@@ -125,7 +212,13 @@ export default function AddEmployeePage() {
           </div>
           <div>
             <label className="block text-sm mb-1">Department</label>
-            <input name="department" className="w-full border rounded px-3 py-2" />
+            <select name="department" className="w-full border rounded px-3 py-2" disabled={optLoading}>
+              <option value="">{optLoading ? "Loading..." : "Select"}</option>
+              {deptOptions.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+            {optError ? <div className="text-xs text-red-600 mt-1">{optError}</div> : null}
           </div>
           <div>
             <label className="block text-sm mb-1">Reporting Manager</label>
@@ -142,9 +235,14 @@ export default function AddEmployeePage() {
           <div>
             <label className="block text-sm mb-1">Role Type</label>
             <select name="type" className="w-full border rounded px-3 py-2">
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-              <option value="hr">HR</option>
+              <option value="">Select</option>
+              <option value="Manager">Manager</option>
+              <option value="HR">HR</option>
+              <option value="Quality">Quality</option>
+              <option value="IT">IT</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Sales">Sales</option>
+              <option value="Operation Agent">Operation Agent</option>
             </select>
           </div>
           <div>

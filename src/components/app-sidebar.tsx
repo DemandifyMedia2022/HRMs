@@ -53,7 +53,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconChartBar,
         children: [
           { title: "Leaves", url: "/pages/admin/leaves", icon: IconListDetails },
-          { title: "Leave Requests", url: "/pages/admin/leaves/request", icon: IconListDetails },
+          { title: "All Employee Details", url: "/pages/admin/All-employee", icon: IconListDetails },
          
         ],
       },

@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // SOAP mode: Get date range from request or use defaults
-    const fromDate = body.fromDate || '2025-01-01 07:00:00';
+    const fromDate = body.fromDate || '2025-10-01 07:00:00';
     const toDate = body.toDate || new Date().toISOString().replace('T', ' ').substring(0, 19);
 
     // ESSL Configuration from environment variables
@@ -76,23 +76,43 @@ export async function POST(request: NextRequest) {
     let insertedCount = 0;
     let updatedCount = 0;
 
-    const minAllowedDate = new Date('2025-01-01T00:00:00');
+    const minAllowedDate = new Date('2025-10-01T07:00:00');
     for (const [employeeID, dates] of Object.entries(attendanceData)) {
       for (const [cycleDate, timestamps] of Object.entries(dates)) {
-        // Enforce only 2025 data
-        const cycleDateObj = new Date(`${cycleDate}T00:00:00`);
-        if (cycleDateObj < minAllowedDate) {
+        // Enforce from 2025-10-01 07:00:00 based on 7AM cycle start
+        const cycleStartAt7 = new Date(`${cycleDate}T07:00:00`);
+        if (cycleStartAt7 < minAllowedDate) {
           continue;
         }
-        const sortedTimestamps = timestamps.sort((a, b) => a - b);
+        // Restrict timestamps to the current 7AM->7AM cycle window
+        const cycleEndAt7 = new Date(cycleStartAt7);
+        cycleEndAt7.setDate(cycleEndAt7.getDate() + 1);
+        const startSec = Math.floor(cycleStartAt7.getTime() / 1000);
+        const endSec = Math.floor(cycleEndAt7.getTime() / 1000);
+        const sortedTimestamps = timestamps
+          .filter((ts) => ts >= startSec && ts < endSec)
+          .sort((a, b) => a - b);
+        if (sortedTimestamps.length === 0) {
+          continue;
+        }
         const employeeIdNum = Number(employeeID);
         if (Number.isNaN(employeeIdNum)) {
           continue;
         }
 
-        // Extract first and last clock-in/out times
-        const inTime = new Date(sortedTimestamps[0] * 1000);
-        const outTime = new Date(sortedTimestamps[sortedTimestamps.length - 1] * 1000);
+        // Extract first and last clock-in/out times and construct UTC Date so UI shows HH:mm as clockTimes
+        const firstTs = sortedTimestamps[0];
+        const lastTs = sortedTimestamps[sortedTimestamps.length - 1];
+        const firstLocal = new Date(firstTs * 1000);
+        const lastLocal = new Date(lastTs * 1000);
+        const baseLocal = new Date(`${cycleDate}T00:00:00`);
+        const baseY = baseLocal.getFullYear();
+        const baseM = baseLocal.getMonth(); // 0-based
+        const baseD = baseLocal.getDate();
+        const inTime = new Date(Date.UTC(baseY, baseM, baseD, firstLocal.getHours(), firstLocal.getMinutes(), firstLocal.getSeconds()));
+        // If lastLocal is on the next calendar day relative to base (i.e., after midnight), shift day by +1
+        const nextDayOffset = lastLocal.getDate() !== baseD ? 1 : 0;
+        const outTime = new Date(Date.UTC(baseY, baseM, baseD + nextDayOffset, lastLocal.getHours(), lastLocal.getMinutes(), lastLocal.getSeconds()));
 
         // Get all clock times in HH:mm format
         const clockTimes = sortedTimestamps.map(ts => {
@@ -100,7 +120,7 @@ export async function POST(request: NextRequest) {
           return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
         });
 
-        // Calculate working hours
+        // Calculate working hours within the cycle window
         const totalSeconds = sortedTimestamps[sortedTimestamps.length - 1] - sortedTimestamps[0];
         let workingSeconds = 0;
 
