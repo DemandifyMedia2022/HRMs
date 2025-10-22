@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
+import { SidebarConfig } from "@/components/sidebar-config"
 
 type User = {
   id: number
@@ -277,6 +278,7 @@ export default function EmployeeDetailsPage() {
 
   return (
     <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <SidebarConfig role="hr" />
       <div className="lg:col-span-1 border rounded p-4 space-y-3">
         <div className="text-xl font-semibold">Employees</div>
         <Input placeholder="Search name or code" value={search} onChange={(e) => setSearch(e.target.value)} />

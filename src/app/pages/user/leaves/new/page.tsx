@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { DatePicker } from "@/components/ui/date-picker"
+import { SidebarConfig } from "@/components/sidebar-config";
 
 export default function NewLeavePage() {
   const router = useRouter()
@@ -44,6 +45,8 @@ export default function NewLeavePage() {
   }
 
   return (
+    <>
+    <SidebarConfig role="user" />
     <div className="p-6 max-w-2xl">
       <h1 className="text-2xl font-bold mb-4">New Leave Request</h1>
       {error && (
@@ -138,5 +141,6 @@ export default function NewLeavePage() {
         </div>
       </form>
     </div>
+    </>
   )
 }

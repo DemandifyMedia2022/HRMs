@@ -69,10 +69,10 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: "#",
         icon: IconSettings,
         children: [
-          { title: "Paylip", url: "#", icon: IconReport },
-          { title: "My Salary Structure", url: "#", icon: IconFileDescription },
-          { title: "Employee Salary Structure", url: "#", icon: IconFileDescription },
-          { title: "Tax", url: "#", icon: IconReport },
+          { title: "Paylip", url: "/pages/admin/payroll", icon: IconReport },
+          { title: "My Salary Structure", url: "/pages/admin/payroll/my-salary-structure", icon: IconFileDescription },
+          { title: "Employee Salary Structure", url: "/pages/admin/payroll/employee-salary-structure", icon: IconFileDescription },
+          { title: "Tax", url: "/pages/admin/payroll/tax", icon: IconReport },
         ],
       },
        

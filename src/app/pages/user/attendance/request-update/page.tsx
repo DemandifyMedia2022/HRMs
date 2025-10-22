@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SidebarConfig } from "@/components/sidebar-config";
 
 type Issue = {
   id: number;
@@ -77,6 +78,8 @@ export default function Page() {
   }
 
   return (
+    <>
+    <SidebarConfig role="user" />
     <div className="p-4 space-y-6">
       <h1 className="text-xl font-semibold">User · Attendance · Request Update</h1>
 
@@ -170,5 +173,6 @@ export default function Page() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

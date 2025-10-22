@@ -55,7 +55,7 @@ export default function MyCallsPage() {
 
   return (
     <div>
-      <SidebarConfig role="user" />
+      <SidebarConfig role="admin" />
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           <div className="border-b pb-4">

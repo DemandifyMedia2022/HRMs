@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SidebarConfig } from "@/components/sidebar-config";
 
 type Issue = {
   id: number;
@@ -49,6 +50,8 @@ export default function Page() {
   }, [status, month]);
 
   return (
+    <>
+    <SidebarConfig role="user" />
     <div className="p-4 space-y-6">
       <h1 className="text-xl font-semibold">User · Attendance · Status</h1>
 
@@ -122,5 +125,6 @@ export default function Page() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

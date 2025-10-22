@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { SidebarConfig } from "@/components/sidebar-config";
 
 type EventItem = {
   title: string;
@@ -225,6 +226,8 @@ export default function Page() {
   const todayStr = new Date().toISOString().split('T')[0];
 
   return (
+    <>
+    <SidebarConfig role="user" />
     <div className="p-4 space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-xl font-semibold">User · Attendance</h1>
@@ -343,11 +346,7 @@ export default function Page() {
                               </span>
                             </span>
                           </div>
-                          {c.ev.extendedProps.shift_time ? (
-                            <div className="text-[11px] text-gray-600">{c.ev.extendedProps.shift_time}</div>
-                          ) : (
-                            <div className="text-[11px] text-gray-600">{c.ev.extendedProps.in_time} - {c.ev.extendedProps.out_time}</div>
-                          )}
+                          <div className="text-[11px] text-gray-600">{formatTime(c.ev.extendedProps.in_time)} - {formatTime(c.ev.extendedProps.out_time)}</div>
                           <div className="text-[11px] text-gray-600">Work {formatDuration(c.ev.extendedProps.login_hours)}</div>
                         </div>
                       ) : isWeekend ? (
@@ -448,5 +447,6 @@ export default function Page() {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   );
 }

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SidebarConfig } from "@/components/sidebar-config";
 
 // Types aligned with existing Attendance events endpoint
 type EventItem = {
@@ -227,6 +228,7 @@ export default function AdminAttendanceBulkPage() {
 
   return (
     <div className="p-4 space-y-6">
+      <SidebarConfig role="admin" />
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-xl font-semibold">Bulk Update Attendance</h1>
         <div className="flex items-center gap-2">

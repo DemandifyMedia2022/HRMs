@@ -1,5 +1,6 @@
 "use client"
 
+import { SidebarConfig } from "@/components/sidebar-config";
 import React, { useEffect, useMemo, useState } from "react"
 
 export default function TeamPage() {
@@ -100,6 +101,8 @@ export default function TeamPage() {
   }
 
   return (
+    <>
+    <SidebarConfig role="user" />
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Team</h1>
       <div className="flex items-center justify-between mb-4">
@@ -206,5 +209,6 @@ export default function TeamPage() {
         </table>
       </div>
     </div>
+    </>
   )
 }

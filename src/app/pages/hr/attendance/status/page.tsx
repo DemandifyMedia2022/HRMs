@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SidebarConfig } from "@/components/sidebar-config";
 
 type Issue = {
   id: number;
@@ -56,6 +57,7 @@ export default function Page() {
 
   return (
     <div className="p-4 space-y-6">
+      <SidebarConfig role="hr" />
       <h1 className="text-xl font-semibold">HR · Attendance · Status</h1>
 
       <Card>

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SidebarConfig } from "@/components/sidebar-config"
 
 type UserItem = { Full_name: string | null; emp_code: string | null }
 type GroupMember = { Full_name: string; biomatric_id: number; shift_time: string }
@@ -99,6 +100,7 @@ export default function Page() {
 
   return (
     <div className="p-4 space-y-4">
+      <SidebarConfig role="hr" />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Allocate Shift</h1>
         <Button type="button" onClick={() => setShowModal(true)}>Allocate Shift</Button>

@@ -193,8 +193,10 @@ export default function HRLeavesPage() {
   const selectStatusValue = status || "all"
 
   return (
+    <>
+    <SidebarConfig role="admin" />
     <div className="p-6">
-      <SidebarConfig role="admin" />
+      
       <div className="mx-auto max-w-6xl space-y-6">
         {flash ? (
           <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
@@ -440,5 +442,6 @@ export default function HRLeavesPage() {
         </Dialog>
       </div>
     </div>
+    </>
   )
 }

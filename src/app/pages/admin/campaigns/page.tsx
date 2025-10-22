@@ -42,7 +42,7 @@ export default function CampaignListPage() {
 
   return (
     <>
-      <SidebarConfig role="user" />
+      <SidebarConfig role="admin" />
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">Campaign List</h1>
         <p className="text-sm text-gray-600 mb-4">All users can view campaigns. Only specific roles can edit.</p>

@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+function pickHHMM(raw: any): string {
+  if (raw == null) return 'N/A';
+  const s = String(raw);
+  const m = s.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
+  if (m) return `${m[1].padStart(2, '0')}:${m[2]}`;
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+  return 'N/A';
+}
+
 // Build events for calendar from npattendance
 export async function GET(req: NextRequest) {
   try {
@@ -42,8 +56,22 @@ export async function GET(req: NextRequest) {
     const byUser: Record<string, any[]> = {};
     for (const r of records) {
       const dateISO = new Date(r.date).toISOString().split('T')[0];
-      const inTime = r.inTime ? new Date(r.inTime).toISOString().substring(11, 19) : 'N/A';
-      const outTime = r.outTime ? new Date(r.outTime).toISOString().substring(11, 19) : 'N/A';
+      let inTime = pickHHMM(r.inTime);
+      let outTime = pickHHMM(r.outTime);
+
+      let ctArr: string[] | null = null;
+      try {
+        if (r.clockTimes) {
+          const parsed = typeof r.clockTimes === 'string' ? JSON.parse(r.clockTimes) : r.clockTimes;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            ctArr = parsed.map((t: any) => pickHHMM(t)).filter((t: string) => t !== 'N/A');
+          }
+        }
+      } catch {}
+      if (ctArr && ctArr.length > 0) {
+        inTime = ctArr[0] || inTime;
+        outTime = ctArr[ctArr.length - 1] || outTime;
+      }
 
       const event = {
         title: r.status || '—',
