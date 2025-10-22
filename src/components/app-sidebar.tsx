@@ -56,13 +56,11 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
       },
       {
         title: "Leaves",
-        url: "#",
+        url: "/pages/admin/leaves",
         icon: IconChartBar,
-        children: [
-          { title: "Leaves", url: "/pages/admin/leaves", icon: IconListDetails },
-          { title: "Leave Requests", url: "/pages/admin/leaves/request", icon: IconListDetails },
+       
          
-        ],
+        
       },
       {
         title: "Payroll",
