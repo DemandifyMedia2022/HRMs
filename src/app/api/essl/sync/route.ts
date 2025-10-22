@@ -19,9 +19,21 @@ export async function POST(request: NextRequest) {
       return await handleJsonAttendance(jsonUrl);
     }
 
-    // SOAP mode: Get date range from request or use defaults
-    const fromDate = body.fromDate || '2025-01-01 07:00:00';
-    const toDate = body.toDate || new Date().toISOString().replace('T', ' ').substring(0, 19);
+    // SOAP mode: Get date range from request or use dynamic defaults
+    // Default from: latest attendance date (00:00:00); if none, yesterday 00:00:00
+    const lastRecord = await prisma.npAttendance.findFirst({
+      orderBy: { date: 'desc' },
+      select: { date: true },
+    });
+    const now = new Date();
+    const fallbackFrom = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    fallbackFrom.setHours(0, 0, 0, 0);
+    const baseFrom = lastRecord ? new Date(lastRecord.date) : fallbackFrom;
+    baseFrom.setHours(0, 0, 0, 0);
+    const fromDate = body.fromDate || formatLocalDateTime(baseFrom);
+    const toDate = (typeof body.toDate === 'string' && body.toDate.toLowerCase() === 'now')
+      ? formatLocalDateTime(now)
+      : (body.toDate || formatLocalDateTime(now));
 
     // ESSL Configuration from environment variables
     const serverUrl = process.env.ESSL_SERVER_URL!;
@@ -76,19 +88,45 @@ export async function POST(request: NextRequest) {
     let insertedCount = 0;
     let updatedCount = 0;
 
-    const minAllowedDate = new Date('2025-01-01T00:00:00');
+    const minAllowedDate = new Date(`${fromDate.substring(0, 10)}T00:00:00`);
     for (const [employeeID, dates] of Object.entries(attendanceData)) {
       for (const [cycleDate, timestamps] of Object.entries(dates)) {
-        // Enforce only 2025 data
-        const cycleDateObj = new Date(`${cycleDate}T00:00:00`);
-        if (cycleDateObj < minAllowedDate) {
+        // Enforce from 2025-10-01 07:00:00 based on 7AM cycle start
+        const cycleStartAt7 = new Date(`${cycleDate}T07:00:00`);
+        if (cycleStartAt7 < minAllowedDate) {
           continue;
         }
-        const sortedTimestamps = timestamps.sort((a, b) => a - b);
+        // Restrict timestamps to the current 7AM->7AM cycle window
+        const cycleEndAt7 = new Date(cycleStartAt7);
+        cycleEndAt7.setDate(cycleEndAt7.getDate() + 1);
+        const startSec = Math.floor(cycleStartAt7.getTime() / 1000);
+        const endSec = Math.floor(cycleEndAt7.getTime() / 1000);
+        const sortedTimestamps = timestamps
+          .filter((ts) => ts >= startSec && ts < endSec)
+          .sort((a, b) => a - b);
+        if (sortedTimestamps.length === 0) {
+          continue;
+        }
+        const nowLocal = new Date();
+        const isCurrentCycle = nowLocal >= cycleStartAt7 && nowLocal < cycleEndAt7;
+        const employeeIdNum = Number(employeeID);
+        if (Number.isNaN(employeeIdNum)) {
+          continue;
+        }
+        const employeeIdStr = String(employeeID).trim();
 
-        // Extract first and last clock-in/out times
-        const inTime = new Date(sortedTimestamps[0] * 1000);
-        const outTime = new Date(sortedTimestamps[sortedTimestamps.length - 1] * 1000);
+        // Extract first and last clock-in/out times as HH:mm:ss strings
+        const firstTs = sortedTimestamps[0];
+        const lastTs = sortedTimestamps[sortedTimestamps.length - 1];
+        const firstLocal = new Date(firstTs * 1000);
+        const lastLocal = new Date(lastTs * 1000);
+        const baseLocal = new Date(`${cycleDate}T00:00:00`);
+        const baseY = baseLocal.getFullYear();
+        const baseM = baseLocal.getMonth(); // 0-based
+        const baseD = baseLocal.getDate();
+        const inTime = new Date(Date.UTC(baseY, baseM, baseD, firstLocal.getHours(), firstLocal.getMinutes(), firstLocal.getSeconds()));
+        const nextDayOffset = lastLocal.getDate() !== baseD ? 1 : 0;
+        const outTime = new Date(Date.UTC(baseY, baseM, baseD + nextDayOffset, lastLocal.getHours(), lastLocal.getMinutes(), lastLocal.getSeconds()));
 
         // Get all clock times in HH:mm format
         const clockTimes = sortedTimestamps.map(ts => {
@@ -96,7 +134,7 @@ export async function POST(request: NextRequest) {
           return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
         });
 
-        // Calculate working hours
+        // Calculate working hours within the cycle window
         const totalSeconds = sortedTimestamps[sortedTimestamps.length - 1] - sortedTimestamps[0];
         let workingSeconds = 0;
 
@@ -117,10 +155,12 @@ export async function POST(request: NextRequest) {
           : workingSeconds >= 4 * 3600 
             ? 'Half-day' 
             : 'Absent';
+        // Suppress status for the CURRENT 7AM->7AM cycle window
+        const statusFinal = isCurrentCycle ? '' : status;
 
         // Fetch employee name if exists
         const existingEmployee = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeID },
+          where: { employeeId: employeeIdStr },
           select: { empName: true },
         });
 
@@ -129,7 +169,7 @@ export async function POST(request: NextRequest) {
         // Check if record exists
         const existingRecord = await prisma.npAttendance.findFirst({
           where: {
-            employeeId: employeeID,
+            employeeId: employeeIdStr,
             date: new Date(cycleDate),
           },
         });
@@ -138,16 +178,16 @@ export async function POST(request: NextRequest) {
           // Insert new record
           await prisma.npAttendance.create({
             data: {
-              employeeId: employeeID,
+              employeeId: employeeIdStr,
               empName: employeeName,
               date: new Date(cycleDate),
               inTime,
               outTime,
               clockTimes: JSON.stringify(clockTimes),
-              totalHours,
+              totalHours: totalHours,
               loginHours: workingHours,
-              breakHours,
-              status,
+              breakHours: breakHours,
+              status: statusFinal,
             },
           });
           insertedCount++;
@@ -159,10 +199,10 @@ export async function POST(request: NextRequest) {
               inTime,
               outTime,
               clockTimes: JSON.stringify(clockTimes),
-              totalHours,
+              totalHours: totalHours,
               loginHours: workingHours,
-              breakHours,
-              status,
+              breakHours: breakHours,
+              status: statusFinal,
             },
           });
           updatedCount++;
@@ -250,6 +290,28 @@ function formatSeconds(seconds: number): string {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
+// Convert duration in seconds to a Date object representing that time of day (UTC)
+function secondsToTimeDate(seconds: number): Date {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  const hh = String(hours).padStart(2, '0');
+  const mm = String(minutes).padStart(2, '0');
+  const ss = String(secs).padStart(2, '0');
+  return new Date(`1970-01-01T${hh}:${mm}:${ss}.000Z`);
+}
+
+// Format a Date object in local time as "YYYY-MM-DD HH:mm:ss"
+function formatLocalDateTime(d: Date): string {
+  const yyyy = d.getFullYear();
+  const MM = String(d.getMonth() + 1).padStart(2, '0');
+  const DD = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${yyyy}-${MM}-${DD} ${hh}:${mm}:${ss}`;
+}
+
 // GET endpoint to trigger sync (for testing)
 export async function GET(request: NextRequest) {
   return POST(request);
@@ -301,14 +363,17 @@ async function handleJsonAttendance(url: string) {
         const employeeID: string = String(log['employee_id'] ?? '').trim();
         const logDate: string = (log['date'] ?? '').toString().substring(0, 10); // YYYY-MM-DD
         if (!employeeID || !logDate) continue;
+        const employeeIdNum = Number(employeeID);
+        if (Number.isNaN(employeeIdNum)) continue;
 
         const cycleDate = logDate; // In this mode, use plain date (no 7AM cycle)
         const cycleDateObj = new Date(`${cycleDate}T00:00:00`);
         if (cycleDateObj < minAllowedDate) { skippedNon2025++; continue; }
 
         // Existing employee name from prior entries if available
+        const employeeIdStr = String(employeeID);
         const existingEmployee = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeID },
+          where: { employeeId: employeeIdStr },
           select: { empName: true },
         });
         const employeeName: string = existingEmployee?.empName || log['employee_name'] || 'Unknown';
@@ -316,8 +381,11 @@ async function handleJsonAttendance(url: string) {
         // Times/metrics
         const loginHoursStr: string | undefined = log['working_hours'] || undefined;
         const workingSeconds = parseHmsToSeconds(loginHoursStr);
-        const totalHours: string | undefined = log['total_hours'] || undefined;
-        const breakHours: string | undefined = log['break_hours'] || undefined;
+        const totalHoursRaw: string | undefined = log['total_hours'] || undefined;
+        const breakHoursRaw: string | undefined = log['break_hours'] || undefined;
+        const loginHoursFmt = formatSeconds(workingSeconds);
+        const totalHoursFmt = formatSeconds(parseHmsToSeconds(totalHoursRaw || '00:00:00'));
+        const breakHoursFmt = formatSeconds(parseHmsToSeconds(breakHoursRaw || '00:00:00'));
 
         // Clock times array (HH:mm)
         let clockTimes: string[] = Array.isArray(log['clock_times']) ? (log['clock_times'] as string[]) : [];
@@ -338,9 +406,14 @@ async function handleJsonAttendance(url: string) {
         else if (workingSeconds >= 5 * 3600) status = 'Half-day';
         else if (workingSeconds < 4 * 3600 && cycleDate !== new Date().toISOString().split('T')[0]) status = 'Absent';
 
+        // For today's record, suppress status
+        const todayLocalJson = new Date();
+        const todayStrJson = `${todayLocalJson.getFullYear()}-${String(todayLocalJson.getMonth() + 1).padStart(2, '0')}-${String(todayLocalJson.getDate()).padStart(2, '0')}`;
+        const statusFinalJson = cycleDate === todayStrJson ? '' : status;
+
         // Check if record exists
         const existingRecord = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeID, date: new Date(cycleDate) },
+          where: { employeeId: employeeIdStr, date: new Date(cycleDate) },
         });
 
         if (existingRecord) {
@@ -354,27 +427,27 @@ async function handleJsonAttendance(url: string) {
             where: { id: existingRecord.id },
             data: {
               outTime,
-              loginHours: loginHoursStr ?? existingRecord.loginHours,
-              totalHours: totalHours ?? existingRecord.totalHours,
-              breakHours: breakHours ?? existingRecord.breakHours,
+              loginHours: loginHoursFmt ?? existingRecord.loginHours,
+              totalHours: totalHoursFmt ?? existingRecord.totalHours,
+              breakHours: breakHoursFmt ?? existingRecord.breakHours,
               clockTimes: JSON.stringify(mergedClockTimes),
-              status,
+              status: statusFinalJson,
             },
           });
           updated++;
         } else {
           await prisma.npAttendance.create({
             data: {
-              employeeId: employeeID,
+              employeeId: employeeIdStr,
               empName: employeeName,
               date: new Date(cycleDate),
               inTime,
               outTime,
-              loginHours: loginHoursStr || '00:00:00',
-              totalHours: totalHours || '00:00:00',
-              breakHours: breakHours || '00:00:00',
+              loginHours: loginHoursFmt,
+              totalHours: totalHoursFmt,
+              breakHours: breakHoursFmt,
               clockTimes: JSON.stringify(clockTimes),
-              status,
+              status: statusFinalJson,
             },
           });
           inserted++;

@@ -1,6 +1,8 @@
 "use client"
 
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
+import { usePathname } from "next/navigation"
+import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -27,6 +29,7 @@ export function NavMain({
     children?: { title: string; url: string; icon?: Icon }[]
   }[]
 }) {
+  const pathname = usePathname()
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -35,35 +38,52 @@ export function NavMain({
            
         </SidebarMenu>
         <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              {item.children && item.children.length > 0 ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <SidebarMenuButton tooltip={item.title}>
+          {items.map((item) => {
+            const hasChildren = !!(item.children && item.children.length > 0)
+            const childActive = hasChildren
+              ? item.children!.some((c) => c.url !== "#" && pathname.startsWith(c.url))
+              : false
+            const isActive = (!hasChildren && item.url !== "#" && pathname === item.url) || childActive
+            const activeCls = isActive
+              ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary data-[active=true]:!bg-sidebar-primary data-[active=true]:!text-sidebar-primary-foreground"
+              : ""
+            return (
+              <SidebarMenuItem key={item.title}>
+                {hasChildren ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuButton tooltip={item.title} isActive={isActive} className={activeCls}>
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" sideOffset={8}>
+                      {item.children!.map((child) => (
+                        <DropdownMenuItem asChild key={child.title}>
+                          <Link
+                            href={child.url}
+                            className={`flex items-center gap-2 ${
+                              child.url !== "#" && pathname.startsWith(child.url) ? "font-medium" : ""
+                            }`}
+                          >
+                            {child.icon && <child.icon />}
+                            <span>{child.title}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <SidebarMenuButton tooltip={item.title} asChild isActive={isActive} className={activeCls}>
+                    <Link href={item.url}>
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" sideOffset={8}>
-                    {item.children.map((child) => (
-                      <DropdownMenuItem key={child.title}>
-                        <a href={child.url} className="flex items-center gap-2">
-                          {child.icon && <child.icon />}
-                          <span>{child.title}</span>
-                        </a>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <SidebarMenuButton tooltip={item.title}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                </SidebarMenuButton>
-              )}
-            </SidebarMenuItem>
-          ))}
+                    </Link>
+                  </SidebarMenuButton>
+                )}
+              </SidebarMenuItem>
+            )
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

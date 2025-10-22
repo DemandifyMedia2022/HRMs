@@ -23,18 +23,9 @@ model NpAttendance {
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@unique([employeeId, date])
-  @@index([employeeId])
   @@index([date])
+  @@index([employeeId])
   @@map("npattendance")
-}
-
-model employee {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique(map: "Employee_email_key")
-  position  String?
-  salary    Float?
-  createdAt DateTime @default(now())
 }
 
 model users {
@@ -152,4 +143,49 @@ model users {
   Reimbursement_amount                      Int?
   months                                    Int?
   status                                    Int?      @db.TinyInt
+}
+
+model crud_events {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  event_name  String    @db.VarChar(255)
+  event_date  DateTime? @default(now()) @db.DateTime(0)
+  event_start DateTime  @db.Date
+  event_end   DateTime  @db.Date
+  description String    @db.Text
+  created_at  DateTime? @db.Timestamp(0)
+  updated_at  DateTime? @db.Timestamp(0)
+}
+
+model leavedata {
+  l_id                  Int      @id @default(autoincrement())
+  leave_type            String   @db.VarChar(55)
+  start_date            DateTime @db.Date
+  end_date              DateTime @db.Date
+  reason                String   @db.VarChar(1000)
+  HRapproval            String   @db.VarChar(255)
+  HRrejectReason        String?  @db.VarChar(255)
+  Managerapproval       String   @db.VarChar(255)
+  ManagerRejecjetReason String?  @db.VarChar(255)
+  leaveregdate          DateTime @db.Date
+  added_by_user         String?  @db.VarChar(255)
+  emp_code              String?  @db.VarChar(255)
+  Team                  String?  @db.VarChar(55)
+  status                String?  @db.VarChar(20)
+}
+
+model shift_time {
+  Id           Int    @id @default(autoincrement())
+  Full_name    String @db.VarChar(255)
+  biomatric_id Int
+  shift_time   String @db.VarChar(255)
+  group_name   String @db.VarChar(255)
+}
+
+model employee {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique(map: "Employee_email_key")
+  position  String?
+  salary    Float?
+  createdAt DateTime @default(now())
 }
