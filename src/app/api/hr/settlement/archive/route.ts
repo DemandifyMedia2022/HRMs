@@ -1,15 +1,15 @@
-import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json()
-    const id = Number(body?.id)
-    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
+    const body = await req.json();
+    const id = Number(body?.id);
+    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-    const user = await prisma.users.findUnique({ where: { id: BigInt(id) } as any })
+    const user = await prisma.users.findUnique({ where: { id: BigInt(id) } as any });
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Map fields from users -> deleted_user_informations (normalize casing/column names)
@@ -135,21 +135,21 @@ export async function POST(req: Request) {
       resignation_reason_employee: body?.resignation_reason_employee ?? null,
       resignation_reason_approver: body?.resignation_reason_approver ?? null,
       settelment_employee_other_status: body?.employee_other_status ?? null,
-      employee_other_status_remarks: body?.employee_other_status_remarks ?? null,
-    }
+      employee_other_status_remarks: body?.employee_other_status_remarks ?? null
+    };
 
     // Remove undefined keys to satisfy Prisma validators
-    Object.keys(payload).forEach((k) => {
-      if (payload[k] === undefined) payload[k] = null
-    })
+    Object.keys(payload).forEach(k => {
+      if (payload[k] === undefined) payload[k] = null;
+    });
 
-    await prisma.deleted_user_informations.create({ data: payload })
-    await prisma.users.delete({ where: { id: BigInt(id) } as any })
+    await prisma.deleted_user_informations.create({ data: payload });
+    await prisma.users.delete({ where: { id: BigInt(id) } as any });
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true });
   } catch (e: any) {
-    console.error("/api/hr/settlement/archive error:", e)
-    const msg = typeof e?.message === "string" ? e.message : "Failed to archive user"
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('/api/hr/settlement/archive error:', e);
+    const msg = typeof e?.message === 'string' ? e.message : 'Failed to archive user';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

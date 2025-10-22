@@ -1,104 +1,104 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Card } from "@/components/ui/card"
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card } from '@/components/ui/card';
 
 type UserRow = {
-  id: number
-  name: string | null
-  Full_name: string | null
-  email: string | null
-  emp_code: string | null
-  department: string | null
-  employment_status: string | null
-  company_name: string | null
-}
+  id: number;
+  name: string | null;
+  Full_name: string | null;
+  email: string | null;
+  emp_code: string | null;
+  department: string | null;
+  employment_status: string | null;
+  company_name: string | null;
+};
 
 type PageResp = {
-  data: UserRow[]
-  pagination: { page: number; pageSize: number; total: number; totalPages: number }
-}
+  data: UserRow[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+};
 
 export default function HREmployeeSettlementPage() {
-  const [search, setSearch] = useState("")
-  const [page, setPage] = useState(1)
-  const [data, setData] = useState<UserRow[]>([])
-  const [totalPages, setTotalPages] = useState(1)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState<UserRow[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [openId, setOpenId] = useState<number | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const [openId, setOpenId] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
-    date_of_resignation: "",
-    expected_last_working_day: "",
-    date_of_relieving: "",
-    resignation_reason_employee: "",
-    resignation_reason_approver: "",
-    employment_status: "",
-    employee_other_status: "",
-    employee_other_status_remarks: "",
-  })
+    date_of_resignation: '',
+    expected_last_working_day: '',
+    date_of_relieving: '',
+    resignation_reason_employee: '',
+    resignation_reason_approver: '',
+    employment_status: '',
+    employee_other_status: '',
+    employee_other_status_remarks: ''
+  });
 
   async function load() {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      const params = new URLSearchParams()
-      if (search.trim()) params.set("search", search.trim())
-      params.set("page", String(page))
-      params.set("pageSize", "10")
-      const res = await fetch(`/api/hr/settlement/users?${params.toString()}`, { cache: "no-store" })
-      const json = (await res.json()) as PageResp | any
-      if (!res.ok) throw new Error(json?.error || "Failed to load users")
-      setData((json as PageResp).data)
-      setTotalPages((json as PageResp).pagination.totalPages)
+      const params = new URLSearchParams();
+      if (search.trim()) params.set('search', search.trim());
+      params.set('page', String(page));
+      params.set('pageSize', '10');
+      const res = await fetch(`/api/hr/settlement/users?${params.toString()}`, { cache: 'no-store' });
+      const json = (await res.json()) as PageResp | any;
+      if (!res.ok) throw new Error(json?.error || 'Failed to load users');
+      setData((json as PageResp).data);
+      setTotalPages((json as PageResp).pagination.totalPages);
     } catch (e: any) {
-      setError(e?.message || "Failed to load users")
+      setError(e?.message || 'Failed to load users');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    load()
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page])
+  }, [page]);
 
   function openArchive(u: UserRow) {
-    setOpenId(u.id)
+    setOpenId(u.id);
     setForm({
-      date_of_resignation: "",
-      expected_last_working_day: "",
-      date_of_relieving: "",
-      resignation_reason_employee: "",
-      resignation_reason_approver: "",
-      employment_status: u.employment_status || "Resigned",
-      employee_other_status: "",
-      employee_other_status_remarks: "",
-    })
+      date_of_resignation: '',
+      expected_last_working_day: '',
+      date_of_relieving: '',
+      resignation_reason_employee: '',
+      resignation_reason_approver: '',
+      employment_status: u.employment_status || 'Resigned',
+      employee_other_status: '',
+      employee_other_status_remarks: ''
+    });
   }
 
   async function submitArchive(id: number) {
-    setSubmitting(true)
-    setError(null)
+    setSubmitting(true);
+    setError(null);
     try {
-      const res = await fetch("/api/hr/settlement/archive", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, ...form }),
-      })
-      const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json?.error || "Failed to archive user")
-      setOpenId(null)
-      await load()
+      const res = await fetch('/api/hr/settlement/archive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...form })
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'Failed to archive user');
+      setOpenId(null);
+      await load();
     } catch (e: any) {
-      setError(e?.message || "Failed to archive user")
+      setError(e?.message || 'Failed to archive user');
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
@@ -112,11 +112,19 @@ export default function HREmployeeSettlementPage() {
             <label className="block text-sm mb-1">Search</label>
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               placeholder="Search by Full name, Name, Email, Emp Code"
             />
           </div>
-          <Button variant="outline" onClick={() => { setPage(1); load() }}>Search</Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setPage(1);
+              load();
+            }}
+          >
+            Search
+          </Button>
         </div>
       </Card>
 
@@ -138,7 +146,7 @@ export default function HREmployeeSettlementPage() {
               </tr>
             </thead>
             <tbody>
-              {data.map((u) => (
+              {data.map(u => (
                 <tr key={u.id} className="border-t align-top">
                   <td className="py-2 pr-4">{u.id}</td>
                   <td className="py-2 pr-4">{u.Full_name || u.name}</td>
@@ -147,7 +155,9 @@ export default function HREmployeeSettlementPage() {
                   <td className="py-2 pr-4">{u.department}</td>
                   <td className="py-2 pr-4">{u.employment_status}</td>
                   <td className="py-2 pr-4">
-                    <Button variant="outline" size="sm" onClick={() => openArchive(u)}>Archive</Button>
+                    <Button variant="outline" size="sm" onClick={() => openArchive(u)}>
+                      Archive
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -156,57 +166,99 @@ export default function HREmployeeSettlementPage() {
         </div>
 
         <div className="flex items-center justify-between mt-4">
-          <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</Button>
-          <div className="text-sm">Page {page} of {totalPages}</div>
-          <Button variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+          <Button variant="outline" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
+            Prev
+          </Button>
+          <div className="text-sm">
+            Page {page} of {totalPages}
+          </div>
+          <Button variant="outline" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+            Next
+          </Button>
         </div>
       </Card>
 
-      <Dialog open={openId !== null} onOpenChange={(o) => { if (!o) setOpenId(null) }}>
+      <Dialog
+        open={openId !== null}
+        onOpenChange={o => {
+          if (!o) setOpenId(null);
+        }}
+      >
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Archive User {openId !== null ? `#${openId}` : ""}</DialogTitle>
+            <DialogTitle>Archive User {openId !== null ? `#${openId}` : ''}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm mb-1">Date of Resignation</label>
-              <Input type="date" value={form.date_of_resignation} onChange={(e) => setForm({ ...form, date_of_resignation: e.target.value })} />
+              <Input
+                type="date"
+                value={form.date_of_resignation}
+                onChange={e => setForm({ ...form, date_of_resignation: e.target.value })}
+              />
             </div>
             <div>
               <label className="block text-sm mb-1">Expected Last Working Day</label>
-              <Input type="date" value={form.expected_last_working_day} onChange={(e) => setForm({ ...form, expected_last_working_day: e.target.value })} />
+              <Input
+                type="date"
+                value={form.expected_last_working_day}
+                onChange={e => setForm({ ...form, expected_last_working_day: e.target.value })}
+              />
             </div>
             <div>
               <label className="block text-sm mb-1">Date of Relieving</label>
-              <Input type="date" value={form.date_of_relieving} onChange={(e) => setForm({ ...form, date_of_relieving: e.target.value })} />
+              <Input
+                type="date"
+                value={form.date_of_relieving}
+                onChange={e => setForm({ ...form, date_of_relieving: e.target.value })}
+              />
             </div>
             <div>
               <label className="block text-sm mb-1">Employment Status</label>
-              <Input value={form.employment_status} onChange={(e) => setForm({ ...form, employment_status: e.target.value })} />
+              <Input
+                value={form.employment_status}
+                onChange={e => setForm({ ...form, employment_status: e.target.value })}
+              />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm mb-1">Resignation Reason (Employee)</label>
-              <Input value={form.resignation_reason_employee} onChange={(e) => setForm({ ...form, resignation_reason_employee: e.target.value })} />
+              <Input
+                value={form.resignation_reason_employee}
+                onChange={e => setForm({ ...form, resignation_reason_employee: e.target.value })}
+              />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm mb-1">Resignation Reason (Approver)</label>
-              <Input value={form.resignation_reason_approver} onChange={(e) => setForm({ ...form, resignation_reason_approver: e.target.value })} />
+              <Input
+                value={form.resignation_reason_approver}
+                onChange={e => setForm({ ...form, resignation_reason_approver: e.target.value })}
+              />
             </div>
             <div>
               <label className="block text-sm mb-1">Other Status</label>
-              <Input value={form.employee_other_status} onChange={(e) => setForm({ ...form, employee_other_status: e.target.value })} />
+              <Input
+                value={form.employee_other_status}
+                onChange={e => setForm({ ...form, employee_other_status: e.target.value })}
+              />
             </div>
             <div>
               <label className="block text-sm mb-1">Other Status Remarks</label>
-              <Input value={form.employee_other_status_remarks} onChange={(e) => setForm({ ...form, employee_other_status_remarks: e.target.value })} />
+              <Input
+                value={form.employee_other_status_remarks}
+                onChange={e => setForm({ ...form, employee_other_status_remarks: e.target.value })}
+              />
             </div>
           </div>
           <div className="flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setOpenId(null)}>Cancel</Button>
-            <Button disabled={submitting} onClick={() => openId !== null && submitArchive(openId)}>{submitting ? "Archiving..." : "Confirm Archive"}</Button>
+            <Button variant="outline" onClick={() => setOpenId(null)}>
+              Cancel
+            </Button>
+            <Button disabled={submitting} onClick={() => openId !== null && submitArchive(openId)}>
+              {submitting ? 'Archiving...' : 'Confirm Archive'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

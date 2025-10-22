@@ -1,88 +1,88 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { SidebarConfig } from "@/components/sidebar-config"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { SidebarConfig } from '@/components/sidebar-config';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Employee {
-  id: string
-  Full_name: string | null
-  emp_code: string | null
-  job_role: string | null
-  salary_pay_mode: string | null
-  reimbursement_pay_mode: string | null
-  Is_employees_Aadhar_and_PAN_number_linked: string | null
-  PF_Number: string | null
-  UAN: string | null
-  Employee_PF_Contribution_limit: string | null
-  Salary_revision_month: string | null
-  Arrear_with_effect_from: string | null
-  Paygroup: string | null
-  CTC: string | null
-  Basic_Monthly_Remuneration: string | null
-  Basic_Annual_Remuneration: string | null
-  HRA_Monthly_Remuneration: string | null
-  HRA_Annual_Remuneration: string | null
-  OTHER_ALLOWANCE_Monthly_Remuneration: string | null
-  OTHER_ALLOWANCE_Annual_Remuneration: string | null
-  PF_Monthly_Contribution: string | null
-  PF_Annual_Contribution: string | null
-  Employee_Esic_Monthly: string | null
-  Employee_Esic_Annual: string | null
-  Employer_Esic_Monthly: string | null
-  Employer_Esic_Annual: string | null
-  gross_salary: string | null
-  netSalary: string | null
+  id: string;
+  Full_name: string | null;
+  emp_code: string | null;
+  job_role: string | null;
+  salary_pay_mode: string | null;
+  reimbursement_pay_mode: string | null;
+  Is_employees_Aadhar_and_PAN_number_linked: string | null;
+  PF_Number: string | null;
+  UAN: string | null;
+  Employee_PF_Contribution_limit: string | null;
+  Salary_revision_month: string | null;
+  Arrear_with_effect_from: string | null;
+  Paygroup: string | null;
+  CTC: string | null;
+  Basic_Monthly_Remuneration: string | null;
+  Basic_Annual_Remuneration: string | null;
+  HRA_Monthly_Remuneration: string | null;
+  HRA_Annual_Remuneration: string | null;
+  OTHER_ALLOWANCE_Monthly_Remuneration: string | null;
+  OTHER_ALLOWANCE_Annual_Remuneration: string | null;
+  PF_Monthly_Contribution: string | null;
+  PF_Annual_Contribution: string | null;
+  Employee_Esic_Monthly: string | null;
+  Employee_Esic_Annual: string | null;
+  Employer_Esic_Monthly: string | null;
+  Employer_Esic_Annual: string | null;
+  gross_salary: string | null;
+  netSalary: string | null;
 }
 
 export default function MySalaryStructurePage() {
-  const router = useRouter()
-  const [employee, setEmployee] = useState<Employee | null>(null)
-  const [loading, setLoading] = useState(true)
+  const router = useRouter();
+  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchEmployeeData()
-  }, [])
+    fetchEmployeeData();
+  }, []);
 
   const fetchEmployeeData = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       // Fetch logged-in user's salary structure
       const response = await fetch('/api/payroll/salary-structure', {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      
-      const data = await response.json()
-      
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
       if (data.success) {
-        setEmployee(data.data)
+        setEmployee(data.data);
       } else {
-        console.error('Failed to fetch salary structure:', data.error)
+        console.error('Failed to fetch salary structure:', data.error);
         // If not authenticated, redirect to login
         if (response.status === 401) {
-          window.location.href = '/login'
+          window.location.href = '/login';
         }
       }
     } catch (error) {
-      console.error('Error fetching employee:', error)
+      console.error('Error fetching employee:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return ''
-    return new Date(dateString).toLocaleDateString()
-  }
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString();
+  };
 
   if (loading) {
     return (
@@ -100,7 +100,7 @@ export default function MySalaryStructurePage() {
           </div>
         </div>
       </>
-    )
+    );
   }
 
   if (!employee) {
@@ -119,7 +119,7 @@ export default function MySalaryStructurePage() {
           </div>
         </div>
       </>
-    )
+    );
   }
 
   return (
@@ -132,7 +132,6 @@ export default function MySalaryStructurePage() {
               <CardTitle>Employee Salary Structure</CardTitle>
             </CardHeader>
             <CardContent className="space-y-8">
-
               {/* Payment Details */}
               <div className="space-y-4">
                 <h3 className="text-base font-semibold">Payment Details</h3>
@@ -150,7 +149,9 @@ export default function MySalaryStructurePage() {
                 <Separator />
                 <div className="flex items-center gap-4 p-4">
                   <span className="text-sm">Is Employee's Aadhar and PAN Number Linked?</span>
-                  <span className="text-sm font-semibold">{employee.Is_employees_Aadhar_and_PAN_number_linked || 'N/A'}</span>
+                  <span className="text-sm font-semibold">
+                    {employee.Is_employees_Aadhar_and_PAN_number_linked || 'N/A'}
+                  </span>
                 </div>
               </div>
 
@@ -215,20 +216,62 @@ export default function MySalaryStructurePage() {
                     <TableRow>
                       <TableCell>BASIC</TableCell>
                       <TableCell>Fixed</TableCell>
-                      <TableCell><Input type="number" readOnly value={employee.Basic_Monthly_Remuneration || ''} className="text-center" /></TableCell>
-                      <TableCell><Input type="number" readOnly value={employee.Basic_Annual_Remuneration || ''} className="text-center" /></TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          readOnly
+                          value={employee.Basic_Monthly_Remuneration || ''}
+                          className="text-center"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          readOnly
+                          value={employee.Basic_Annual_Remuneration || ''}
+                          className="text-center"
+                        />
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>HRA</TableCell>
                       <TableCell>Fixed</TableCell>
-                      <TableCell><Input type="number" readOnly value={employee.HRA_Monthly_Remuneration || ''} className="text-center" /></TableCell>
-                      <TableCell><Input type="number" readOnly value={employee.HRA_Annual_Remuneration || ''} className="text-center" /></TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          readOnly
+                          value={employee.HRA_Monthly_Remuneration || ''}
+                          className="text-center"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          readOnly
+                          value={employee.HRA_Annual_Remuneration || ''}
+                          className="text-center"
+                        />
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>OTHER ALLOWANCE</TableCell>
                       <TableCell>Fixed</TableCell>
-                      <TableCell><Input type="number" readOnly value={employee.OTHER_ALLOWANCE_Monthly_Remuneration || ''} className="text-center" /></TableCell>
-                      <TableCell><Input type="number" readOnly value={employee.OTHER_ALLOWANCE_Annual_Remuneration || ''} className="text-center" /></TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          readOnly
+                          value={employee.OTHER_ALLOWANCE_Monthly_Remuneration || ''}
+                          className="text-center"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          readOnly
+                          value={employee.OTHER_ALLOWANCE_Annual_Remuneration || ''}
+                          className="text-center"
+                        />
+                      </TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -254,13 +297,28 @@ export default function MySalaryStructurePage() {
                   <TableBody>
                     <TableRow>
                       <TableCell>PF</TableCell>
-                      <TableCell><Input type="number" readOnly value={employee.PF_Monthly_Contribution || ''} className="text-center" /></TableCell>
-                      <TableCell><Input type="number" readOnly value={employee.PF_Annual_Contribution || ''} className="text-center" /></TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          readOnly
+                          value={employee.PF_Monthly_Contribution || ''}
+                          className="text-center"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          readOnly
+                          value={employee.PF_Annual_Contribution || ''}
+                          className="text-center"
+                        />
+                      </TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
                 <div className="text-sm bg-muted/50 border-l-4 border-primary p-3">
-                  ⚠ Note: Retrials will not be paid with salary. The contribution will be either made on your respective fund accounts or you will be entitled for them on retirement/separation from organisation.
+                  ⚠ Note: Retrials will not be paid with salary. The contribution will be either made on your
+                  respective fund accounts or you will be entitled for them on retirement/separation from organisation.
                 </div>
               </div>
 
@@ -303,5 +361,5 @@ export default function MySalaryStructurePage() {
         </div>
       </div>
     </>
-  )
+  );
 }

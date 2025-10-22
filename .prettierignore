@@ -1,0 +1,11 @@
+# Ignore artifacts:
+node_modules
+.build
+dist
+.next
+coverage
+.turbo
+.cache
+.vercel
+.netlify
+out

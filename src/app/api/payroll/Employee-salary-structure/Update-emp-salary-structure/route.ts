@@ -4,47 +4,56 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { id } = body;
     console.log('Received ID for employee fetch:', id);
- 
+
     if (!id) {
-      return NextResponse.json({
-        success: false,
-        error: 'Employee ID is required',
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Employee ID is required'
+        },
+        { status: 400 }
+      );
     }
- 
+
     const employeeData = await prisma.users.findUnique({
-      where: { id: BigInt(id) },
+      where: { id: BigInt(id) }
     });
- 
+
     if (!employeeData) {
-      return NextResponse.json({
-        success: false,
-        error: 'Employee not found',
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Employee not found'
+        },
+        { status: 404 }
+      );
     }
- 
+
     // Convert BigInt to string for JSON serialization
     const employee = {
       ...employeeData,
-      id: employeeData.id.toString(),
+      id: employeeData.id.toString()
     };
- 
+
     return NextResponse.json({
       success: true,
-      data: employee,
+      data: employee
     });
   } catch (error: any) {
-    return NextResponse.json({
-      success: false,
-      error: error.message,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message
+      },
+      { status: 500 }
+    );
   }
 }
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
- 
+
 const prisma = new PrismaClient();
- 
+
 // PUT - Update employee salary structure
 export async function PUT(request: NextRequest) {
   try {
@@ -76,16 +85,19 @@ export async function PUT(request: NextRequest) {
       Employer_Esic_Monthly,
       Employer_Esic_Annual,
       gross_salary,
-      netSalary,
+      netSalary
     } = body;
- 
+
     if (!id) {
-      return NextResponse.json({
-        success: false,
-        error: 'Employee ID is required',
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Employee ID is required'
+        },
+        { status: 400 }
+      );
     }
- 
+
     const updatedEmployee = await prisma.users.update({
       where: { id: BigInt(id) },
       data: {
@@ -115,22 +127,25 @@ export async function PUT(request: NextRequest) {
         Employer_Esic_Annual: Employer_Esic_Annual ? parseFloat(Employer_Esic_Annual) : null,
         gross_salary,
         netSalary,
-        updated_at: new Date(),
-      },
+        updated_at: new Date()
+      }
     });
- 
+
     return NextResponse.json({
       success: true,
       message: 'Salary structure updated successfully!',
       data: {
         ...updatedEmployee,
-        id: updatedEmployee.id.toString(),
-      },
+        id: updatedEmployee.id.toString()
+      }
     });
   } catch (error: any) {
-    return NextResponse.json({
-      success: false,
-      error: error.message,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message
+      },
+      { status: 500 }
+    );
   }
 }

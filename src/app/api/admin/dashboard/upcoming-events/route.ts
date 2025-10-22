@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 function parseMaybeDate(val: any): Date | null {
   if (!val) return null;
@@ -65,10 +65,13 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    birthdays.sort((a,b) => a.date.localeCompare(b.date));
-    workAnniv.sort((a,b) => a.date.localeCompare(b.date));
+    birthdays.sort((a, b) => a.date.localeCompare(b.date));
+    workAnniv.sort((a, b) => a.date.localeCompare(b.date));
 
-    return NextResponse.json({ days, birthdays, workAnniversaries: workAnniv }, { headers: { 'Cache-Control': 'public, max-age=300' } });
+    return NextResponse.json(
+      { days, birthdays, workAnniversaries: workAnniv },
+      { headers: { 'Cache-Control': 'public, max-age=300' } }
+    );
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'error' }, { status: 500 });
   }

@@ -1,6 +1,6 @@
-"use client"
+'use client';
 
-import { SidebarConfig } from "@/components/sidebar-config";
+import { SidebarConfig } from '@/components/sidebar-config';
 
 export default function Page() {
   return (
@@ -8,5 +8,5 @@ export default function Page() {
       <SidebarConfig role="admin" />
       <h1 className="text-xl font-semibold">Admin · Leads</h1>
     </div>
-  )
+  );
 }

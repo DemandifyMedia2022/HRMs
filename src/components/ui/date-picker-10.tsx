@@ -1,36 +1,36 @@
-"use client"
+'use client';
 
-import { useMemo, useState } from "react"
-import { ChevronDownIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useMemo, useState } from 'react';
+import { ChevronDownIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export type DateTimePickerProps = {
-  label?: string
-  value: Date | null
-  onChange: (date: Date | null) => void
-}
+  label?: string;
+  value: Date | null;
+  onChange: (date: Date | null) => void;
+};
 
 export function DateTimePicker({ label, value, onChange }: DateTimePickerProps) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   const timeString = useMemo(() => {
-    if (!value) return ""
-    const h = String(value.getHours()).padStart(2, "0")
-    const m = String(value.getMinutes()).padStart(2, "0")
-    const s = String(value.getSeconds()).padStart(2, "0")
-    return `${h}:${m}:${s}`
-  }, [value])
+    if (!value) return '';
+    const h = String(value.getHours()).padStart(2, '0');
+    const m = String(value.getMinutes()).padStart(2, '0');
+    const s = String(value.getSeconds()).padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  }, [value]);
 
   function applyTime(base: Date | null, time: string): Date | null {
-    if (!base) return null
-    const [hh = "0", mm = "0", ss = "0"] = time.split(":")
-    const d = new Date(base)
-    d.setHours(Number(hh), Number(mm), Number(ss || 0), 0)
-    return d
+    if (!base) return null;
+    const [hh = '0', mm = '0', ss = '0'] = time.split(':');
+    const d = new Date(base);
+    d.setHours(Number(hh), Number(mm), Number(ss || 0), 0);
+    return d;
   }
 
   return (
@@ -40,7 +40,7 @@ export function DateTimePicker({ label, value, onChange }: DateTimePickerProps) 
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" className="justify-between font-normal min-w-[200px]">
-              {value ? value.toLocaleDateString() : "Pick a date"}
+              {value ? value.toLocaleDateString() : 'Pick a date'}
               <ChevronDownIcon className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
@@ -48,11 +48,11 @@ export function DateTimePicker({ label, value, onChange }: DateTimePickerProps) 
             <Calendar
               mode="single"
               selected={value ?? undefined}
-              onSelect={(d) => {
+              onSelect={d => {
                 // keep existing time if any
-                const next = d ? applyTime(d, timeString || "00:00:00") : null
-                onChange(next)
-                setOpen(false)
+                const next = d ? applyTime(d, timeString || '00:00:00') : null;
+                onChange(next);
+                setOpen(false);
               }}
             />
           </PopoverContent>
@@ -61,16 +61,16 @@ export function DateTimePicker({ label, value, onChange }: DateTimePickerProps) 
           type="time"
           step="1"
           value={timeString}
-          onChange={(e) => {
-            const next = applyTime(value ?? new Date(), e.target.value)
-            onChange(next)
+          onChange={e => {
+            const next = applyTime(value ?? new Date(), e.target.value);
+            onChange(next);
           }}
           placeholder="HH:MM:SS"
           className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none min-w-[200px]"
         />
       </div>
     </div>
-  )
+  );
 }
 
-export default DateTimePicker
+export default DateTimePicker;

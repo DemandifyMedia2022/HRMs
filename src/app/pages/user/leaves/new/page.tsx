@@ -1,76 +1,76 @@
-"use client"
- 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { SidebarConfig } from "@/components/sidebar-config"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { DatePicker } from "@/components/ui/date-picker"
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { SidebarConfig } from '@/components/sidebar-config';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { DatePicker } from '@/components/ui/date-picker';
 
 const leaveOptions = [
-  "Casual Leave",
-  "Sick Leave",
-  "Privileged Leave",
-  "Maternity Leave",
-  "Paternity Leave",
-  "Comp-Off",
-  "WFH",
-]
+  'Casual Leave',
+  'Sick Leave',
+  'Privileged Leave',
+  'Maternity Leave',
+  'Paternity Leave',
+  'Comp-Off',
+  'WFH'
+];
 
 const toYMD = (d?: Date | null) =>
-  d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : ""
+  d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : '';
 
 const fromYMD = (s: string) => {
-  if (!s) return undefined
-  const [y, m, dd] = s.split("-").map((n) => parseInt(n, 10))
-  if (!y || !m || !dd) return undefined
-  return new Date(y, m - 1, dd)
-}
- 
+  if (!s) return undefined;
+  const [y, m, dd] = s.split('-').map(n => parseInt(n, 10));
+  if (!y || !m || !dd) return undefined;
+  return new Date(y, m - 1, dd);
+};
+
 export default function NewLeavePage() {
-  const router = useRouter()
-  const [leaveType, setLeaveType] = useState("")
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-  const [reason, setReason] = useState("")
-  const [addedByUser, setAddedByUser] = useState("")
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
- 
+  const router = useRouter();
+  const [leaveType, setLeaveType] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [reason, setReason] = useState('');
+  const [addedByUser, setAddedByUser] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSubmitting(true)
-    setError(null)
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
     try {
-      const res = await fetch("/api/leaves", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/leaves', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           Leave_Type: leaveType,
           Leave_Start_Date: startDate,
           Leave_End_Date: endDate,
           Reson: reason,
-          added_by_user: addedByUser,
-        }),
-      })
+          added_by_user: addedByUser
+        })
+      });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || "Failed to submit leave")
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || 'Failed to submit leave');
       }
-      router.push("/pages/hr")
-      router.refresh()
+      router.push('/pages/hr');
+      router.refresh();
     } catch (err: any) {
-      setError(err?.message || "Something went wrong")
+      setError(err?.message || 'Something went wrong');
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
- 
+
   return (
     <div className="p-6">
       <SidebarConfig role="user" />
@@ -96,8 +96,10 @@ export default function NewLeavePage() {
                       <SelectValue placeholder="Select leave type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {leaveOptions.map((option) => (
-                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      {leaveOptions.map(option => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -107,7 +109,7 @@ export default function NewLeavePage() {
                   <Input
                     id="added_by"
                     value={addedByUser}
-                    onChange={(e) => setAddedByUser(e.target.value)}
+                    onChange={e => setAddedByUser(e.target.value)}
                     placeholder="Enter your name"
                     required
                   />
@@ -121,7 +123,7 @@ export default function NewLeavePage() {
                     id="leave_start"
                     placeholder="Select start date"
                     value={fromYMD(startDate)}
-                    onChange={(d) => setStartDate(toYMD(d))}
+                    onChange={d => setStartDate(toYMD(d))}
                   />
                 </div>
                 <div className="space-y-2">
@@ -130,7 +132,7 @@ export default function NewLeavePage() {
                     id="leave_end"
                     placeholder="Select end date"
                     value={fromYMD(endDate)}
-                    onChange={(d) => setEndDate(toYMD(d))}
+                    onChange={d => setEndDate(toYMD(d))}
                   />
                 </div>
               </div>
@@ -140,7 +142,7 @@ export default function NewLeavePage() {
                 <Textarea
                   id="leave_reason"
                   value={reason}
-                  onChange={(e) => setReason(e.target.value)}
+                  onChange={e => setReason(e.target.value)}
                   placeholder="Provide context for the leave request"
                   className="min-h-[120px]"
                   required
@@ -148,15 +150,11 @@ export default function NewLeavePage() {
               </div>
 
               <CardFooter className="flex flex-col gap-2 px-0 sm:flex-row sm:justify-end sm:gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.push("/pages/hr")}
-                >
+                <Button type="button" variant="outline" onClick={() => router.push('/pages/hr')}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? "Submitting..." : "Submit Request"}
+                  {submitting ? 'Submitting...' : 'Submit Request'}
                 </Button>
               </CardFooter>
             </form>
@@ -164,5 +162,5 @@ export default function NewLeavePage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

@@ -1,10 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
-function startOfDay(d = new Date()) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
-function endOfDay(d = new Date()) { const x = new Date(d); x.setHours(23,59,59,999); return x; }
-function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate()+n); return x; }
-function toYMD(d: Date) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` }
+function startOfDay(d = new Date()) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+function endOfDay(d = new Date()) {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+}
+function addDays(d: Date, n: number) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
+function toYMD(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,11 +32,11 @@ export async function GET(req: NextRequest) {
         start_date: { lte: to },
         end_date: { gte: from },
         OR: [
-          { status: { equals: "Approved" } },
-          { HRapproval: { equals: "Approved" }, Managerapproval: { equals: "Approved" } },
-        ],
+          { status: { equals: 'Approved' } },
+          { HRapproval: { equals: 'Approved' }, Managerapproval: { equals: 'Approved' } }
+        ]
       },
-      select: { leave_type: true, start_date: true, end_date: true, emp_code: true, Team: true },
+      select: { leave_type: true, start_date: true, end_date: true, emp_code: true, Team: true }
     });
 
     // Expand each leave into per-day buckets within window
@@ -43,8 +57,12 @@ export async function GET(req: NextRequest) {
     }
 
     const items = Object.entries(byDate)
-      .map(([date, v]) => ({ date, total: v.total, types: Object.entries(v.byType).map(([type, count]) => ({ type, count })) }))
-      .sort((a,b) => a.date.localeCompare(b.date));
+      .map(([date, v]) => ({
+        date,
+        total: v.total,
+        types: Object.entries(v.byType).map(([type, count]) => ({ type, count }))
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     return NextResponse.json({ days, items }, { headers: { 'Cache-Control': 'public, max-age=120' } });
   } catch (e: any) {

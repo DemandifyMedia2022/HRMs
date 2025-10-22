@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import Dialer from "./dialer";
+import React from 'react';
+import Dialer from './dialer';
 
 type Props = {
   open: boolean;
@@ -18,9 +18,11 @@ export default function DialerModal({ open, onClose, number, userName }: Props) 
       <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">Dialer</h2>
-          <button onClick={onClose} className="text-sm px-2 py-1 rounded bg-gray-100 hover:bg-gray-200">Close</button>
+          <button onClick={onClose} className="text-sm px-2 py-1 rounded bg-gray-100 hover:bg-gray-200">
+            Close
+          </button>
         </div>
-        <div className="text-sm text-gray-700 mb-2">Number: {number || "N/A"}</div>
+        <div className="text-sm text-gray-700 mb-2">Number: {number || 'N/A'}</div>
         <Dialer number={number} userName={userName} />
       </div>
     </div>

@@ -9,7 +9,7 @@ type BulkUpdateBody = {
 
 function toUtcMidnight(dateStr: string): Date {
   // Normalize to UTC midnight to match MySQL DATE semantics
-  const [y, m, d] = dateStr.split('-').map((n) => Number(n));
+  const [y, m, d] = dateStr.split('-').map(n => Number(n));
   return new Date(Date.UTC(y, (m as number) - 1, d));
 }
 
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       // Try updating first; if no row updated, create
       const upd = await prisma.npAttendance.updateMany({
         where: { employeeId: Number(empCode), date },
-        data: { status },
+        data: { status }
       });
       if (upd.count && upd.count > 0) {
         updated += upd.count;
@@ -64,15 +64,15 @@ export async function POST(req: Request) {
             totalHours: '00:00:00',
             loginHours: '00:00:00',
             breakHours: '00:00:00',
-            status,
-          },
+            status
+          }
         });
         inserted++;
       } catch {
         // Likely unique constraint due to a concurrent insert; fallback to update
         const upd2 = await prisma.npAttendance.updateMany({
           where: { employeeId: Number(empCode), date },
-          data: { status },
+          data: { status }
         });
         if (upd2.count > 0) updated += upd2.count;
       }

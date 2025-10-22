@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
-function yStartEnd(year: number) { return { from: new Date(year,0,1,0,0,0,0), to: new Date(year,11,31,23,59,59,999) } }
+function yStartEnd(year: number) {
+  return { from: new Date(year, 0, 1, 0, 0, 0, 0), to: new Date(year, 11, 31, 23, 59, 59, 999) };
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,11 +16,11 @@ export async function GET(req: NextRequest) {
         start_date: { lte: to },
         end_date: { gte: from },
         OR: [
-          { status: { equals: "Approved" } },
-          { HRapproval: { equals: "Approved" }, Managerapproval: { equals: "Approved" } },
-        ],
+          { status: { equals: 'Approved' } },
+          { HRapproval: { equals: 'Approved' }, Managerapproval: { equals: 'Approved' } }
+        ]
       },
-      select: { leave_type: true, start_date: true, end_date: true },
+      select: { leave_type: true, start_date: true, end_date: true }
     });
 
     const months: { [k: number]: Record<string, number> } = {};
@@ -40,9 +42,9 @@ export async function GET(req: NextRequest) {
 
     const items = Array.from({ length: 12 }, (_, m) => {
       const byType = months[m];
-      const types = Object.entries(byType).map(([type, count]) => ({ type, count }))
-      return { month: m, types }
-    })
+      const types = Object.entries(byType).map(([type, count]) => ({ type, count }));
+      return { month: m, types };
+    });
 
     return NextResponse.json({ year, items }, { headers: { 'Cache-Control': 'public, max-age=120' } });
   } catch (e: any) {

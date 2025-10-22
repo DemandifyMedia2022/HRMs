@@ -1,45 +1,45 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { DatePicker } from "@/components/ui/date-picker"
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { DatePicker } from '@/components/ui/date-picker';
 
 export default function AddEmployeePage() {
-  const router = useRouter()
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [joinDate, setJoinDate] = useState("")
-  const [dob, setDob] = useState("")
-  const [retirementDate, setRetirementDate] = useState("")
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [joinDate, setJoinDate] = useState('');
+  const [dob, setDob] = useState('');
+  const [retirementDate, setRetirementDate] = useState('');
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setSubmitting(true)
-    setError(null)
-    setSuccess(null)
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    setSuccess(null);
 
-    const form = e.currentTarget
-    const fd = new FormData(form)
+    const form = e.currentTarget;
+    const fd = new FormData(form);
 
     try {
-      const res = await fetch("/api/employees", {
-        method: "POST",
-        body: fd,
-      })
-      const json = await res.json().catch(() => ({}))
+      const res = await fetch('/api/employees', {
+        method: 'POST',
+        body: fd
+      });
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(json?.error || "Failed to add employee")
+        throw new Error(json?.error || 'Failed to add employee');
       }
-      setSuccess("Employee created successfully")
+      setSuccess('Employee created successfully');
       // navigate back to HR home or details
       setTimeout(() => {
-        router.push("/pages/hr")
-      }, 800)
+        router.push('/pages/hr');
+      }, 800);
     } catch (e: any) {
-      setError(e?.message || "Something went wrong")
+      setError(e?.message || 'Something went wrong');
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
@@ -53,20 +53,23 @@ export default function AddEmployeePage() {
           <div>
             <label className="block text-sm mb-1">Join Date</label>
             {(() => {
-              const toYMD = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : "";
+              const toYMD = (d?: Date) =>
+                d
+                  ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                  : '';
               const fromYMD = (s: string) => {
                 if (!s) return undefined as unknown as Date | undefined;
-                const [y,m,dd] = s.split('-').map((n) => parseInt(n,10));
-                return new Date(y, (m||1)-1, dd||1);
+                const [y, m, dd] = s.split('-').map(n => parseInt(n, 10));
+                return new Date(y, (m || 1) - 1, dd || 1);
               };
               return (
                 <DatePicker
                   id="join_date"
                   placeholder="dd-mm-yyyy"
                   value={fromYMD(joinDate)}
-                  onChange={(d) => setJoinDate(toYMD(d))}
+                  onChange={d => setJoinDate(toYMD(d))}
                 />
-              )
+              );
             })()}
             <input type="hidden" name="join_date" value={joinDate} />
           </div>
@@ -118,40 +121,41 @@ export default function AddEmployeePage() {
           <div>
             <label className="block text-sm mb-1">DOB</label>
             {(() => {
-              const toYMD = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : "";
+              const toYMD = (d?: Date) =>
+                d
+                  ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                  : '';
               const fromYMD = (s: string) => {
                 if (!s) return undefined as unknown as Date | undefined;
-                const [y,m,dd] = s.split('-').map((n) => parseInt(n,10));
-                return new Date(y, (m||1)-1, dd||1);
+                const [y, m, dd] = s.split('-').map(n => parseInt(n, 10));
+                return new Date(y, (m || 1) - 1, dd || 1);
               };
               return (
-                <DatePicker
-                  id="dob"
-                  placeholder="dd-mm-yyyy"
-                  value={fromYMD(dob)}
-                  onChange={(d) => setDob(toYMD(d))}
-                />
-              )
+                <DatePicker id="dob" placeholder="dd-mm-yyyy" value={fromYMD(dob)} onChange={d => setDob(toYMD(d))} />
+              );
             })()}
             <input type="hidden" name="dob" value={dob} />
           </div>
           <div>
             <label className="block text-sm mb-1">Retirement Date</label>
             {(() => {
-              const toYMD = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : "";
+              const toYMD = (d?: Date) =>
+                d
+                  ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                  : '';
               const fromYMD = (s: string) => {
                 if (!s) return undefined as unknown as Date | undefined;
-                const [y,m,dd] = s.split('-').map((n) => parseInt(n,10));
-                return new Date(y, (m||1)-1, dd||1);
+                const [y, m, dd] = s.split('-').map(n => parseInt(n, 10));
+                return new Date(y, (m || 1) - 1, dd || 1);
               };
               return (
                 <DatePicker
                   id="retirement_date"
                   placeholder="dd-mm-yyyy"
                   value={fromYMD(retirementDate)}
-                  onChange={(d) => setRetirementDate(toYMD(d))}
+                  onChange={d => setRetirementDate(toYMD(d))}
                 />
-              )
+              );
             })()}
             <input type="hidden" name="retirement_date" value={retirementDate} />
           </div>
@@ -246,11 +250,11 @@ export default function AddEmployeePage() {
             disabled={submitting}
             className="inline-flex items-center justify-center rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
           >
-            {submitting ? "Submitting..." : "Submit"}
+            {submitting ? 'Submitting...' : 'Submit'}
           </button>
           <button
             type="button"
-            onClick={() => router.push("/pages/hr")}
+            onClick={() => router.push('/pages/hr')}
             className="inline-flex items-center justify-center rounded border px-4 py-2"
           >
             Cancel
@@ -258,5 +262,5 @@ export default function AddEmployeePage() {
         </div>
       </form>
     </div>
-  )
+  );
 }

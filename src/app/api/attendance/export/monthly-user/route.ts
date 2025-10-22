@@ -1,31 +1,31 @@
-import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
- 
+import { NextRequest } from 'next/server';
+import { prisma } from '@/lib/prisma';
+
 function csvEscape(val: any): string {
-  if (val === null || val === undefined) return "";
+  if (val === null || val === undefined) return '';
   const s = String(val);
-  if (s.includes(",") || s.includes("\n") || s.includes('"')) {
+  if (s.includes(',') || s.includes('\n') || s.includes('"')) {
     return '"' + s.replace(/"/g, '""') + '"';
   }
   return s;
 }
- 
+
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
-    const year = Number(url.searchParams.get("year") || new Date().getFullYear());
-    const month = Number(url.searchParams.get("month") || new Date().getMonth() + 1); // 1-12
-    const employeeId = url.searchParams.get("employeeId");
+    const year = Number(url.searchParams.get('year') || new Date().getFullYear());
+    const month = Number(url.searchParams.get('month') || new Date().getMonth() + 1); // 1-12
+    const employeeId = url.searchParams.get('employeeId');
     if (!employeeId) {
-      return new Response(JSON.stringify({ error: "employeeId is required" }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'employeeId is required' }), { status: 400 });
     }
     if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
-      return new Response(JSON.stringify({ error: "Invalid year/month" }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'Invalid year/month' }), { status: 400 });
     }
- 
+
     const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
     const end = new Date(Date.UTC(year, month, 0, 23, 59, 59));
- 
+
     const rows: Array<any> = await prisma.$queryRaw`
       SELECT
         a.employee_id        AS employeeId,
@@ -45,51 +45,53 @@ export async function GET(req: NextRequest) {
         AND a.employee_id = ${employeeId}
       ORDER BY a.date ASC
     `;
- 
+
     const header = [
-      "employee_id",
-      "employee_name",
-      "date",
-      "in_time",
-      "out_time",
-      "shift_time",
-      "status",
-      "login_hours",
-      "total_hours",
-      "break_hours",
+      'employee_id',
+      'employee_name',
+      'date',
+      'in_time',
+      'out_time',
+      'shift_time',
+      'status',
+      'login_hours',
+      'total_hours',
+      'break_hours'
     ];
- 
+
     const lines: string[] = [];
-    lines.push(header.join(","));
+    lines.push(header.join(','));
     for (const r of rows) {
-      const dateISO = new Date(r.date).toISOString().split("T")[0];
-      const inT = r.inTime ? new Date(r.inTime).toISOString().substring(11, 19) : "";
-      const outT = r.outTime ? new Date(r.outTime).toISOString().substring(11, 19) : "";
-      lines.push([
-        csvEscape(r.employeeId),
-        csvEscape(r.employeeName || ""),
-        csvEscape(dateISO),
-        csvEscape(inT),
-        csvEscape(outT),
-        csvEscape(r.shiftTime || ""),
-        csvEscape(r.status || ""),
-        csvEscape(r.loginHours || ""),
-        csvEscape(r.totalHours || ""),
-        csvEscape(r.breakHours || ""),
-      ].join(","));
+      const dateISO = new Date(r.date).toISOString().split('T')[0];
+      const inT = r.inTime ? new Date(r.inTime).toISOString().substring(11, 19) : '';
+      const outT = r.outTime ? new Date(r.outTime).toISOString().substring(11, 19) : '';
+      lines.push(
+        [
+          csvEscape(r.employeeId),
+          csvEscape(r.employeeName || ''),
+          csvEscape(dateISO),
+          csvEscape(inT),
+          csvEscape(outT),
+          csvEscape(r.shiftTime || ''),
+          csvEscape(r.status || ''),
+          csvEscape(r.loginHours || ''),
+          csvEscape(r.totalHours || ''),
+          csvEscape(r.breakHours || '')
+        ].join(',')
+      );
     }
- 
-    const body = lines.join("\n");
-    const filename = `Monthly-Attendance-${employeeId}-${year}-${String(month).padStart(2, "0")}.csv`;
+
+    const body = lines.join('\n');
+    const filename = `Monthly-Attendance-${employeeId}-${year}-${String(month).padStart(2, '0')}.csv`;
     return new Response(body, {
       status: 200,
       headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename=${filename}`,
-        "Cache-Control": "no-store",
-      },
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename=${filename}`,
+        'Cache-Control': 'no-store'
+      }
     });
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: e?.message || "Export failed" }), { status: 500 });
+    return new Response(JSON.stringify({ error: e?.message || 'Export failed' }), { status: 500 });
   }
 }

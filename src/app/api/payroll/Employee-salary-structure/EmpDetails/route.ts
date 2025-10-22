@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
- 
+
 const prisma = new PrismaClient();
- 
+
 // GET all employees
 export async function GET(request: NextRequest) {
   try {
@@ -57,72 +57,84 @@ export async function GET(request: NextRequest) {
         Arrear_with_effect_from: true,
         Advanced_salary: true,
         advanced_salary_date: true,
-        Reimbursement_amount: true,
+        Reimbursement_amount: true
       },
       orderBy: {
-        Full_name: 'asc',
-      },
+        Full_name: 'asc'
+      }
     });
- 
+
     console.log(`Found ${employeesData.length} employees`);
-   
+
     // Convert BigInt to string for JSON serialization
     const employees = employeesData.map(emp => ({
       ...emp,
-      id: emp.id.toString(),
+      id: emp.id.toString()
     }));
- 
+
     return NextResponse.json({
       success: true,
       data: employees,
-      count: employees.length,
+      count: employees.length
     });
   } catch (error: any) {
-    return NextResponse.json({
-      success: false,
-      error: error.message,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message
+      },
+      { status: 500 }
+    );
   }
 }
- 
+
 // GET single employee by ID
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { id } = body;
- 
+
     if (!id) {
-      return NextResponse.json({
-        success: false,
-        error: 'Employee ID is required',
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Employee ID is required'
+        },
+        { status: 400 }
+      );
     }
- 
+
     const employeeData = await prisma.users.findUnique({
-      where: { id: BigInt(id) },
+      where: { id: BigInt(id) }
     });
- 
+
     if (!employeeData) {
-      return NextResponse.json({
-        success: false,
-        error: 'Employee not found',
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Employee not found'
+        },
+        { status: 404 }
+      );
     }
- 
+
     // Convert BigInt to string for JSON serialization
     const employee = {
       ...employeeData,
-      id: employeeData.id.toString(),
+      id: employeeData.id.toString()
     };
- 
+
     return NextResponse.json({
       success: true,
-      data: employee,
+      data: employee
     });
   } catch (error: any) {
-    return NextResponse.json({
-      success: false,
-      error: error.message,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message
+      },
+      { status: 500 }
+    );
   }
 }

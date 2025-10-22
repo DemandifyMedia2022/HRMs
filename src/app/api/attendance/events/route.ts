@@ -78,7 +78,14 @@ export async function GET(req: NextRequest) {
         start: `${dateISO}T00:00:00`,
         textColor: 'black',
         backgroundColor: 'transparent',
-        borderColor: (r.status === 'Present') ? 'green' : (r.status === 'Absent') ? 'red' : (r.status === 'Half-day') ? 'orange' : 'gray',
+        borderColor:
+          r.status === 'Present'
+            ? 'green'
+            : r.status === 'Absent'
+              ? 'red'
+              : r.status === 'Half-day'
+                ? 'orange'
+                : 'gray',
         extendedProps: {
           user: r.fullName || r.empName || 'Unknown',
           emp_code: String(r.employeeId),
@@ -90,8 +97,8 @@ export async function GET(req: NextRequest) {
           total_hours: r.totalHours ?? '00:00:00',
           break_hours: r.breakHours ?? '00:00:00',
           status: r.status ?? '',
-          clock_times: r.clockTimes ?? '[]',
-        },
+          clock_times: r.clockTimes ?? '[]'
+        }
       };
       const key = String(r.employeeId);
       if (!byUser[key]) byUser[key] = [];
@@ -124,7 +131,9 @@ export async function GET(req: NextRequest) {
       let cur = new Date(Math.max(start.getTime(), startOfYear.getTime()));
       const endClamp = new Date(Math.min(end.getTime(), endOfYear.getTime()));
       while (cur.getTime() <= endClamp.getTime()) {
-        const iso = new Date(Date.UTC(cur.getUTCFullYear(), cur.getUTCMonth(), cur.getUTCDate())).toISOString().split('T')[0];
+        const iso = new Date(Date.UTC(cur.getUTCFullYear(), cur.getUTCMonth(), cur.getUTCDate()))
+          .toISOString()
+          .split('T')[0];
         if (!leavesByUser[emp]) leavesByUser[emp] = [];
         leavesByUser[emp].push({ date: iso, leave_type: row.leaveType || 'Leave', user: row.fullName || '' });
         cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000);
@@ -136,7 +145,7 @@ export async function GET(req: NextRequest) {
       employeeId,
       employeeName: events[0]?.extendedProps?.user || 'Unknown',
       events,
-      leaves: leavesByUser[employeeId] || [],
+      leaves: leavesByUser[employeeId] || []
     }));
 
     // Fetch holidays/events from crud_events within the year window
@@ -171,7 +180,7 @@ export async function GET(req: NextRequest) {
           date: iso,
           event_name: h.eventName ?? 'Holiday',
           event_start: h.eventStart ?? null,
-          event_end: h.eventEnd ?? null,
+          event_end: h.eventEnd ?? null
         });
         // add 1 day in UTC
         cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000);

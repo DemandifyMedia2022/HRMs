@@ -1,4 +1,4 @@
-import type { Transporter } from "nodemailer";
+import type { Transporter } from 'nodemailer';
 
 export type MailOptions = {
   to: string[];
@@ -10,17 +10,17 @@ export type MailOptions = {
 };
 
 function guessSmtpHost(email: string | undefined) {
-  if (!email || !email.includes("@")) return undefined;
-  const domain = email.split("@")[1];
+  if (!email || !email.includes('@')) return undefined;
+  const domain = email.split('@')[1];
   if (!domain) return undefined;
   return `smtp.${domain}`; // e.g. smtp.hariteq.com
 }
 
 export async function sendMail(opts: MailOptions): Promise<{ ok: boolean; error?: string }> {
   try {
-    const nodemailer = await import("nodemailer").catch(() => null as any);
+    const nodemailer = await import('nodemailer').catch(() => null as any);
     if (!nodemailer) {
-      return { ok: false, error: "nodemailer not installed" };
+      return { ok: false, error: 'nodemailer not installed' };
     }
 
     const user = process.env.MAIL_USERNAME || process.env.SMTP_USER;
@@ -30,7 +30,7 @@ export async function sendMail(opts: MailOptions): Promise<{ ok: boolean; error?
     const enc = String(process.env.MAIL_ENCRYPTION || '').toLowerCase(); // '', 'ssl', 'tls', 'starttls'
 
     if (!user || !pass || !host) {
-      return { ok: false, error: "mailer env not configured" };
+      return { ok: false, error: 'mailer env not configured' };
     }
 
     const secure = port === 465 || enc === 'ssl' || enc === 'tls';
@@ -41,7 +41,7 @@ export async function sendMail(opts: MailOptions): Promise<{ ok: boolean; error?
       port,
       secure,
       requireTLS,
-      auth: { user, pass },
+      auth: { user, pass }
     });
 
     const fromAddr = process.env.MAIL_FROM_ADDRESS || user;
@@ -49,15 +49,15 @@ export async function sendMail(opts: MailOptions): Promise<{ ok: boolean; error?
     const from = opts.from || (fromName ? `${fromName} <${fromAddr}>` : fromAddr);
     const info = await transporter.sendMail({
       from,
-      to: opts.to.join(","),
+      to: opts.to.join(','),
       subject: opts.subject,
       text: opts.text,
       html: opts.html,
-      replyTo: opts.replyTo,
+      replyTo: opts.replyTo
     });
 
     return { ok: true };
   } catch (e: any) {
-    return { ok: false, error: e?.message || "send error" };
+    return { ok: false, error: e?.message || 'send error' };
   }
 }

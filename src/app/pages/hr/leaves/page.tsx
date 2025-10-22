@@ -1,196 +1,200 @@
-"use client"
+'use client';
 
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react"
-import Link from "next/link"
-import { SidebarConfig } from "@/components/sidebar-config"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import Link from 'next/link';
+import { SidebarConfig } from '@/components/sidebar-config';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Leave = {
-  l_id: number
-  leave_type: string
-  start_date: string
-  end_date: string
-  reason: string
-  HRapproval: string
-  HRrejectReason: string | null
-  Managerapproval: string
-  ManagerRejecjetReason: string | null
-  leaveregdate: string
-  added_by_user: string
-}
+  l_id: number;
+  leave_type: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  HRapproval: string;
+  HRrejectReason: string | null;
+  Managerapproval: string;
+  ManagerRejecjetReason: string | null;
+  leaveregdate: string;
+  added_by_user: string;
+};
 
 type ApiResponse = {
-  data: Leave[]
+  data: Leave[];
   pagination: {
-    page: number
-    pageSize: number
-    total: number
-    totalPages: number
-  }
-}
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+};
 
 export default function HRLeavesPage() {
-  const [leaveType, setLeaveType] = useState("")
-  const [month, setMonth] = useState("") // YYYY-MM
-  const [userName, setUserName] = useState("")
-  const [status, setStatus] = useState("") // HRapproval
+  const [leaveType, setLeaveType] = useState('');
+  const [month, setMonth] = useState(''); // YYYY-MM
+  const [userName, setUserName] = useState('');
+  const [status, setStatus] = useState(''); // HRapproval
 
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [rows, setRows] = useState<Leave[]>([])
-  const [totalPages, setTotalPages] = useState(1)
-  const [total, setTotal] = useState(0)
-  const [selected, setSelected] = useState<Leave | null>(null)
-  const [userInfo, setUserInfo] = useState<any | null>(null)
-  const [reviewLoading, setReviewLoading] = useState(false)
-  const [decision, setDecision] = useState<"approved" | "rejected" | "">("")
-  const [rejectReason, setRejectReason] = useState("")
-  const [flash, setFlash] = useState<string | null>(null)
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [rows, setRows] = useState<Leave[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [selected, setSelected] = useState<Leave | null>(null);
+  const [userInfo, setUserInfo] = useState<any | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [decision, setDecision] = useState<'approved' | 'rejected' | ''>('');
+  const [rejectReason, setRejectReason] = useState('');
+  const [flash, setFlash] = useState<string | null>(null);
 
   const qs = useMemo(() => {
-    const p = new URLSearchParams()
-    if (leaveType) p.set("leave_type", leaveType)
-    if (month) p.set("month", month)
-    if (userName) p.set("user_name", userName)
-    if (status) p.set("Leaves_Status", status)
-    p.set("page", String(page))
-    p.set("pageSize", String(pageSize))
-    return p.toString()
-  }, [leaveType, month, userName, status, page, pageSize])
+    const p = new URLSearchParams();
+    if (leaveType) p.set('leave_type', leaveType);
+    if (month) p.set('month', month);
+    if (userName) p.set('user_name', userName);
+    if (status) p.set('Leaves_Status', status);
+    p.set('page', String(page));
+    p.set('pageSize', String(pageSize));
+    return p.toString();
+  }, [leaveType, month, userName, status, page, pageSize]);
 
   async function load() {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/leaves?${qs}`, { cache: "no-store" })
+      const res = await fetch(`/api/leaves?${qs}`, { cache: 'no-store' });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body?.error || "Failed to load leaves")
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to load leaves');
       }
-      const data: ApiResponse = await res.json()
-      setRows(data.data)
-      setTotalPages(data.pagination.totalPages)
-      setTotal(data.pagination.total)
+      const data: ApiResponse = await res.json();
+      setRows(data.data);
+      setTotalPages(data.pagination.totalPages);
+      setTotal(data.pagination.total);
     } catch (e: any) {
-      setError(e?.message || "Failed to load leaves")
+      setError(e?.message || 'Failed to load leaves');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    load()
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qs])
+  }, [qs]);
 
   async function updateStatus(id: number, approve: boolean) {
     const payload: any = approve
-      ? { id, HRapproval: "approved", HRrejectReason: "" }
-      : { id, HRapproval: "rejected", HRrejectReason: "Rejected by HR" }
+      ? { id, HRapproval: 'approved', HRrejectReason: '' }
+      : { id, HRapproval: 'rejected', HRrejectReason: 'Rejected by HR' };
     try {
       const res = await fetch(`/api/leaves`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body?.error || "Failed to update status")
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to update status');
       }
-      await load()
+      await load();
     } catch (e) {
-      alert((e as any)?.message || "Failed to update status")
+      alert((e as any)?.message || 'Failed to update status');
     }
   }
 
   async function openReview(l: Leave) {
-    setSelected(l)
-    setDecision("")
-    setRejectReason("")
-    setUserInfo(null)
+    setSelected(l);
+    setDecision('');
+    setRejectReason('');
+    setUserInfo(null);
     try {
-      setReviewLoading(true)
-      const res = await fetch(`/api/hr/settlement/users?search=${encodeURIComponent(l.added_by_user)}&page=1&pageSize=1`, { cache: "no-store" })
+      setReviewLoading(true);
+      const res = await fetch(
+        `/api/hr/settlement/users?search=${encodeURIComponent(l.added_by_user)}&page=1&pageSize=1`,
+        { cache: 'no-store' }
+      );
       if (res.ok) {
-        const j = await res.json()
-        setUserInfo(j?.data?.[0] || null)
+        const j = await res.json();
+        setUserInfo(j?.data?.[0] || null);
       }
-    } catch {}
-    finally {
-      setReviewLoading(false)
+    } catch {
+    } finally {
+      setReviewLoading(false);
     }
   }
 
   async function submitReview() {
-    if (!selected || !decision) return
-    const payload: any = decision === "approved"
-      ? { id: selected.l_id, HRapproval: "approved", HRrejectReason: "" }
-      : { id: selected.l_id, HRapproval: "rejected", HRrejectReason: rejectReason || "Rejected by HR" }
+    if (!selected || !decision) return;
+    const payload: any =
+      decision === 'approved'
+        ? { id: selected.l_id, HRapproval: 'approved', HRrejectReason: '' }
+        : { id: selected.l_id, HRapproval: 'rejected', HRrejectReason: rejectReason || 'Rejected by HR' };
     try {
       const res = await fetch(`/api/leaves`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body?.error || "Failed to update status")
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to update status');
       }
-      setSelected(null)
-      await load()
-      setFlash("Status updated successfully")
-      setTimeout(() => setFlash(null), 3000)
+      setSelected(null);
+      await load();
+      setFlash('Status updated successfully');
+      setTimeout(() => setFlash(null), 3000);
     } catch (e: any) {
-      alert(e?.message || "Failed to update status")
+      alert(e?.message || 'Failed to update status');
     }
   }
 
   function resetFilters() {
-    setLeaveType("")
-    setMonth("")
-    setUserName("")
-    setStatus("")
-    setPage(1)
+    setLeaveType('');
+    setMonth('');
+    setUserName('');
+    setStatus('');
+    setPage(1);
   }
 
   const handleFiltersSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setPage(1)
-  }
+    event.preventDefault();
+    setPage(1);
+  };
 
   const formatDate = (value?: string | null) => {
-    if (!value) return "—"
-    const date = new Date(value)
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString()
-  }
+    if (!value) return '—';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
+  };
 
   const renderStatusBadge = (value?: string | null) => {
-    const text = (value || "Pending").toString()
-    const lower = text.toLowerCase()
+    const text = (value || 'Pending').toString();
+    const lower = text.toLowerCase();
     const classes =
-      lower === "approved"
-        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-        : lower === "rejected"
-        ? "border-destructive/50 bg-destructive/10 text-destructive"
-        : "border-amber-200 bg-amber-50 text-amber-700"
+      lower === 'approved'
+        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+        : lower === 'rejected'
+          ? 'border-destructive/50 bg-destructive/10 text-destructive'
+          : 'border-amber-200 bg-amber-50 text-amber-700';
     return (
       <Badge variant="outline" className={classes}>
         {text.charAt(0).toUpperCase() + text.slice(1)}
       </Badge>
-    )
-  }
+    );
+  };
 
-  const selectStatusValue = status || "all"
+  const selectStatusValue = status || 'all';
 
   return (
     <div className="p-6">
@@ -207,7 +211,6 @@ export default function HRLeavesPage() {
             <h1 className="text-2xl font-bold tracking-tight">All Employees Leaves</h1>
             <p className="text-sm text-muted-foreground">Review, filter, and action company-wide leave requests.</p>
           </div>
-          
         </div>
 
         <Card>
@@ -219,22 +222,29 @@ export default function HRLeavesPage() {
             <form className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5" onSubmit={handleFiltersSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="leave_type">Leave Type</Label>
-                <Input id="leave_type" value={leaveType} onChange={(e) => setLeaveType(e.target.value)} placeholder="e.g. Sick" />
+                <Input
+                  id="leave_type"
+                  value={leaveType}
+                  onChange={e => setLeaveType(e.target.value)}
+                  placeholder="e.g. Sick"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="filter_month">Month</Label>
-                <Input id="filter_month" type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
+                <Input id="filter_month" type="month" value={month} onChange={e => setMonth(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="user_name">User Name</Label>
-                <Input id="user_name" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Search by employee" />
+                <Input
+                  id="user_name"
+                  value={userName}
+                  onChange={e => setUserName(e.target.value)}
+                  placeholder="Search by employee"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="hr_status">HR Status</Label>
-                <Select
-                  value={selectStatusValue}
-                  onValueChange={(value) => setStatus(value === "all" ? "" : value)}
-                >
+                <Select value={selectStatusValue} onValueChange={value => setStatus(value === 'all' ? '' : value)}>
                   <SelectTrigger id="hr_status">
                     <SelectValue placeholder="Any status" />
                   </SelectTrigger>
@@ -284,62 +294,59 @@ export default function HRLeavesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading
-                  ? Array.from({ length: 5 }).map((_, index) => (
-                      <TableRow key={`skeleton-${index}`}>
-                        <TableCell colSpan={8}>
-                          <Skeleton className="h-6 w-full rounded" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  : rows.length === 0
-                  ? (
-                      <TableRow>
-                        <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
-                          No leave requests match the current filters.
-                        </TableCell>
-                      </TableRow>
-                    )
-                  : rows.map((l) => (
-                      <TableRow key={l.l_id}>
-                        <TableCell className="font-medium">{l.l_id}</TableCell>
-                        <TableCell>{l.leave_type}</TableCell>
-                        <TableCell>{formatDate(l.start_date)}</TableCell>
-                        <TableCell>{formatDate(l.end_date)}</TableCell>
-                        <TableCell className="flex flex-col gap-1">
-                          <span className="font-medium">{l.added_by_user}</span>
-                          <span className="text-xs text-muted-foreground">Submitted {formatDate(l.leaveregdate)}</span>
-                        </TableCell>
-                        <TableCell>{renderStatusBadge(l.Managerapproval)}</TableCell>
-                        <TableCell className="max-w-[240px] whitespace-normal text-sm text-muted-foreground">
-                          {l.reason || "—"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button size="sm" variant="outline" onClick={() => openReview(l)}>
-                            Review
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={`skeleton-${index}`}>
+                      <TableCell colSpan={8}>
+                        <Skeleton className="h-6 w-full rounded" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
+                      No leave requests match the current filters.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  rows.map(l => (
+                    <TableRow key={l.l_id}>
+                      <TableCell className="font-medium">{l.l_id}</TableCell>
+                      <TableCell>{l.leave_type}</TableCell>
+                      <TableCell>{formatDate(l.start_date)}</TableCell>
+                      <TableCell>{formatDate(l.end_date)}</TableCell>
+                      <TableCell className="flex flex-col gap-1">
+                        <span className="font-medium">{l.added_by_user}</span>
+                        <span className="text-xs text-muted-foreground">Submitted {formatDate(l.leaveregdate)}</span>
+                      </TableCell>
+                      <TableCell>{renderStatusBadge(l.Managerapproval)}</TableCell>
+                      <TableCell className="max-w-[240px] whitespace-normal text-sm text-muted-foreground">
+                        {l.reason || '—'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" variant="outline" onClick={() => openReview(l)}>
+                          Review
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
           <CardFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-muted-foreground">Page {page} of {totalPages}</div>
+            <div className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
                 Previous
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               >
                 Next
               </Button>
@@ -347,7 +354,12 @@ export default function HRLeavesPage() {
           </CardFooter>
         </Card>
 
-        <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null) }}>
+        <Dialog
+          open={!!selected}
+          onOpenChange={open => {
+            if (!open) setSelected(null);
+          }}
+        >
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>Review Leave Request</DialogTitle>
@@ -369,7 +381,9 @@ export default function HRLeavesPage() {
                   </div>
                   <div>
                     <div className="text-muted-foreground">Dates</div>
-                    <div>{formatDate(selected.start_date)} → {formatDate(selected.end_date)}</div>
+                    <div>
+                      {formatDate(selected.start_date)} → {formatDate(selected.end_date)}
+                    </div>
                   </div>
                   <div className="sm:col-span-2">
                     <div className="text-muted-foreground">Reason</div>
@@ -383,12 +397,30 @@ export default function HRLeavesPage() {
                     <Skeleton className="h-20 w-full" />
                   ) : userInfo ? (
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <div><span className="block text-muted-foreground">Full Name</span>{userInfo.Full_name || userInfo.name || "—"}</div>
-                      <div><span className="block text-muted-foreground">Email</span>{userInfo.email || "—"}</div>
-                      <div><span className="block text-muted-foreground">Emp Code</span>{userInfo.emp_code || "—"}</div>
-                      <div><span className="block text-muted-foreground">Department</span>{userInfo.department || "—"}</div>
-                      <div><span className="block text-muted-foreground">Job Role</span>{userInfo.job_role || "—"}</div>
-                      <div><span className="block text-muted-foreground">Company</span>{userInfo.company_name || "—"}</div>
+                      <div>
+                        <span className="block text-muted-foreground">Full Name</span>
+                        {userInfo.Full_name || userInfo.name || '—'}
+                      </div>
+                      <div>
+                        <span className="block text-muted-foreground">Email</span>
+                        {userInfo.email || '—'}
+                      </div>
+                      <div>
+                        <span className="block text-muted-foreground">Emp Code</span>
+                        {userInfo.emp_code || '—'}
+                      </div>
+                      <div>
+                        <span className="block text-muted-foreground">Department</span>
+                        {userInfo.department || '—'}
+                      </div>
+                      <div>
+                        <span className="block text-muted-foreground">Job Role</span>
+                        {userInfo.job_role || '—'}
+                      </div>
+                      <div>
+                        <span className="block text-muted-foreground">Company</span>
+                        {userInfo.company_name || '—'}
+                      </div>
                     </div>
                   ) : (
                     <div className="text-muted-foreground">No additional employee info</div>
@@ -402,8 +434,8 @@ export default function HRLeavesPage() {
                       <input
                         type="radio"
                         name="decision"
-                        checked={decision === "approved"}
-                        onChange={() => setDecision("approved")}
+                        checked={decision === 'approved'}
+                        onChange={() => setDecision('approved')}
                       />
                       Approve
                     </label>
@@ -411,13 +443,13 @@ export default function HRLeavesPage() {
                       <input
                         type="radio"
                         name="decision"
-                        checked={decision === "rejected"}
-                        onChange={() => setDecision("rejected")}
+                        checked={decision === 'rejected'}
+                        onChange={() => setDecision('rejected')}
                       />
                       Reject
                     </label>
                   </div>
-                  {decision === "rejected" ? (
+                  {decision === 'rejected' ? (
                     <div className="space-y-1">
                       <div className="text-muted-foreground">Reject Reason</div>
                       <textarea
@@ -431,8 +463,12 @@ export default function HRLeavesPage() {
                 </div>
 
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setSelected(null)}>Cancel</Button>
-                  <Button onClick={submitReview} disabled={!decision}>Submit</Button>
+                  <Button variant="outline" onClick={() => setSelected(null)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={submitReview} disabled={!decision}>
+                    Submit
+                  </Button>
                 </div>
               </div>
             ) : null}
@@ -440,5 +476,5 @@ export default function HRLeavesPage() {
         </Dialog>
       </div>
     </div>
-  )
+  );
 }

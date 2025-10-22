@@ -1,1 +1,1 @@
-export { POST, GET } from "../../essl/sync/route";
+export { POST, GET } from '../../essl/sync/route';

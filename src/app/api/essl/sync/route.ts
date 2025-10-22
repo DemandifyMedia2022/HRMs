@@ -48,30 +48,24 @@ export async function POST(request: NextRequest) {
     const response = await axios.post(serverUrl, xmlPostString, {
       headers: {
         'Content-Type': 'text/xml; charset=utf-8',
-        'SOAPAction': '"http://tempuri.org/GetTransactionsLog"',
-      },
+        SOAPAction: '"http://tempuri.org/GetTransactionsLog"'
+      }
     });
 
     // Check if response is XML
     if (!response.data.includes('<?xml')) {
-      return NextResponse.json(
-        { error: 'Non-XML response received', response: response.data },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Non-XML response received', response: response.data }, { status: 500 });
     }
 
     // Parse XML response
     const strDataList = extractStrDataList(response.data);
     if (!strDataList) {
-      return NextResponse.json(
-        { error: 'Failed to extract data from SOAP response' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to extract data from SOAP response' }, { status: 500 });
     }
 
     // Process attendance data
     const attendanceData = parseAttendanceData(strDataList);
-    
+
     // Store in database
     let insertedCount = 0;
     let updatedCount = 0;
@@ -119,16 +113,12 @@ export async function POST(request: NextRequest) {
         const workingHoursTime = secondsToTimeDate(workingSeconds);
         const breakHoursTime = secondsToTimeDate(breakSeconds);
 
-        const status = workingSeconds >= 8 * 3600 
-          ? 'Present' 
-          : workingSeconds >= 4 * 3600 
-            ? 'Half-day' 
-            : 'Absent';
+        const status = workingSeconds >= 8 * 3600 ? 'Present' : workingSeconds >= 4 * 3600 ? 'Half-day' : 'Absent';
 
         // Fetch employee name if exists
         const existingEmployee = await prisma.npAttendance.findFirst({
           where: { employeeId: employeeIdNum },
-          select: { empName: true },
+          select: { empName: true }
         });
 
         const employeeName = existingEmployee?.empName || 'Unknown';
@@ -137,8 +127,8 @@ export async function POST(request: NextRequest) {
         const existingRecord = await prisma.npAttendance.findFirst({
           where: {
             employeeId: employeeIdNum,
-            date: new Date(cycleDate),
-          },
+            date: new Date(cycleDate)
+          }
         });
 
         if (!existingRecord) {
@@ -154,8 +144,8 @@ export async function POST(request: NextRequest) {
               totalHours: totalHoursTime,
               loginHours: workingHoursTime,
               breakHours: breakHoursTime,
-              status,
-            },
+              status
+            }
           });
           insertedCount++;
         } else {
@@ -169,8 +159,8 @@ export async function POST(request: NextRequest) {
               totalHours: totalHoursTime,
               loginHours: workingHoursTime,
               breakHours: breakHoursTime,
-              status,
-            },
+              status
+            }
           });
           updatedCount++;
         }
@@ -181,15 +171,14 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Attendance data synchronized successfully',
       inserted: insertedCount,
-      updated: updatedCount,
+      updated: updatedCount
     });
-
   } catch (error: any) {
     console.error('ESSL Sync Error:', error);
     return NextResponse.json(
-      { 
-        error: 'Failed to sync attendance data', 
-        details: error.message 
+      {
+        error: 'Failed to sync attendance data',
+        details: error.message
       },
       { status: 500 }
     );
@@ -216,7 +205,7 @@ function parseAttendanceData(strDataList: string): Record<string, Record<string,
     const trimmedLine = line.trim();
     // Match pattern: employeeID followed by date-time
     const match = trimmedLine.match(/(\d+)\s+([\d\- :]+)/);
-    
+
     if (match) {
       const employeeID = match[1];
       const dateTime = match[2];
@@ -226,11 +215,11 @@ function parseAttendanceData(strDataList: string): Record<string, Record<string,
       const date = new Date(timestamp * 1000);
       let cycleStart = new Date(date);
       cycleStart.setHours(7, 0, 0, 0);
-      
+
       if (date < cycleStart) {
         cycleStart.setDate(cycleStart.getDate() - 1);
       }
-      
+
       const cycleDate = cycleStart.toISOString().split('T')[0];
 
       // Initialize nested objects if they don't exist
@@ -253,7 +242,7 @@ function formatSeconds(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-  
+
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
@@ -278,7 +267,7 @@ function parseHmsToSeconds(hms?: string): number {
   if (!hms) return 0;
   const parts = hms.split(':');
   if (parts.length !== 3) return 0;
-  const [h, m, s] = parts.map((p) => Number(p) || 0);
+  const [h, m, s] = parts.map(p => Number(p) || 0);
   return h * 3600 + m * 60 + s;
 }
 
@@ -290,7 +279,7 @@ function ensureDateTime(dateStr: string, timeStr?: string | null, fallbackTimes?
     hhmm = fallbackTimes[0];
   }
   if (!hhmm) return null;
-  const [hh, mm] = hhmm.split(':').map((v) => Number(v));
+  const [hh, mm] = hhmm.split(':').map(v => Number(v));
   if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
   const d = new Date(`${dateStr}T${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00`);
   return Number.isNaN(d.getTime()) ? null : d;
@@ -324,12 +313,15 @@ async function handleJsonAttendance(url: string) {
 
         const cycleDate = logDate; // In this mode, use plain date (no 7AM cycle)
         const cycleDateObj = new Date(`${cycleDate}T00:00:00`);
-        if (cycleDateObj < minAllowedDate) { skippedNon2025++; continue; }
+        if (cycleDateObj < minAllowedDate) {
+          skippedNon2025++;
+          continue;
+        }
 
         // Existing employee name from prior entries if available
         const existingEmployee = await prisma.npAttendance.findFirst({
           where: { employeeId: employeeIdNum },
-          select: { empName: true },
+          select: { empName: true }
         });
         const employeeName: string = existingEmployee?.empName || log['employee_name'] || 'Unknown';
 
@@ -363,13 +355,17 @@ async function handleJsonAttendance(url: string) {
 
         // Check if record exists
         const existingRecord = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeIdNum, date: new Date(cycleDate) },
+          where: { employeeId: employeeIdNum, date: new Date(cycleDate) }
         });
 
         if (existingRecord) {
           // Merge clock times
           const existingClockTimes = (() => {
-            try { return JSON.parse(existingRecord.clockTimes || '[]'); } catch { return []; }
+            try {
+              return JSON.parse(existingRecord.clockTimes || '[]');
+            } catch {
+              return [];
+            }
           })();
           const mergedClockTimes = Array.from(new Set([...(existingClockTimes || []), ...clockTimes])).sort();
 
@@ -381,8 +377,8 @@ async function handleJsonAttendance(url: string) {
               totalHours: totalHoursTime ?? existingRecord.totalHours,
               breakHours: breakHoursTime ?? existingRecord.breakHours,
               clockTimes: JSON.stringify(mergedClockTimes),
-              status,
-            },
+              status
+            }
           });
           updated++;
         } else {
@@ -397,8 +393,8 @@ async function handleJsonAttendance(url: string) {
               totalHours: totalHoursTime,
               breakHours: breakHoursTime,
               clockTimes: JSON.stringify(clockTimes),
-              status,
-            },
+              status
+            }
           });
           inserted++;
         }
@@ -414,7 +410,7 @@ async function handleJsonAttendance(url: string) {
       message: 'Attendance data processed from JSON',
       inserted,
       updated,
-      skippedNon2025,
+      skippedNon2025
     });
   } catch (e: any) {
     return NextResponse.json({ error: 'Error fetching attendance data', details: e.message }, { status: 500 });

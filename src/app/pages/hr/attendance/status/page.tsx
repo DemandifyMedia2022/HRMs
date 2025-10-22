@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SidebarConfig } from "@/components/sidebar-config";
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SidebarConfig } from '@/components/sidebar-config';
 
 type Issue = {
   id: number;
@@ -23,9 +23,9 @@ type Issue = {
 };
 
 export default function Page() {
-  const [status, setStatus] = useState<string>("all"); // pending/approved/rejected or 'all'
-  const [month, setMonth] = useState<string>(""); // YYYY-MM
-  const [search, setSearch] = useState<string>(""); // search by user name
+  const [status, setStatus] = useState<string>('all'); // pending/approved/rejected or 'all'
+  const [month, setMonth] = useState<string>(''); // YYYY-MM
+  const [search, setSearch] = useState<string>(''); // search by user name
   const [loading, setLoading] = useState(false);
   const [requests, setRequests] = useState<Issue[]>([]);
 
@@ -33,19 +33,19 @@ export default function Page() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (status && status !== "all") params.set("status", status);
-      if (month) params.set("month", month);
-      const res = await fetch(`/api/attendance/request-update?${params.toString()}`, { cache: "no-store" });
+      if (status && status !== 'all') params.set('status', status);
+      if (month) params.set('month', month);
+      const res = await fetch(`/api/attendance/request-update?${params.toString()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
       let data: Issue[] = json.data || [];
       if (search.trim()) {
         const q = search.trim().toLowerCase();
-        data = data.filter((r) => (r.added_by_user || r.name || "").toLowerCase().includes(q));
+        data = data.filter(r => (r.added_by_user || r.name || '').toLowerCase().includes(q));
       }
       setRequests(data);
-    } catch {}
-    finally {
+    } catch {
+    } finally {
       setLoading(false);
     }
   }
@@ -81,14 +81,28 @@ export default function Page() {
           </div>
           <div className="space-y-1">
             <div className="text-sm">Month</div>
-            <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
+            <Input type="month" value={month} onChange={e => setMonth(e.target.value)} />
           </div>
           <div className="space-y-1 md:col-span-2">
             <div className="text-sm">Search by user</div>
-            <Input placeholder="Type user name" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load()} />
+            <Input
+              placeholder="Type user name"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && load()}
+            />
           </div>
           <div className="md:col-span-4 flex items-center gap-2">
-            <Button variant="outline" onClick={() => { setStatus("all"); setMonth(""); setSearch(""); }}>Reset</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setStatus('all');
+                setMonth('');
+                setSearch('');
+              }}
+            >
+              Reset
+            </Button>
             <Button onClick={load}>Apply</Button>
           </div>
         </CardContent>
@@ -118,15 +132,15 @@ export default function Page() {
                   </tr>
                 </thead>
                 <tbody>
-                  {requests.map((r) => (
+                  {requests.map(r => (
                     <tr key={r.id} className="border-b last:border-0">
-                      <td className="py-2 pr-4">{r.added_by_user || r.name || ""}</td>
-                      <td className="py-2 pr-4">{r.Date_Attendance_Update?.slice(0, 10) || ""}</td>
-                      <td className="py-2 pr-4">{r.Attendance_status || ""}</td>
-                      <td className="py-2 pr-4">{r.Attendance_Approval || r.status || "pending"}</td>
-                      <td className="py-2 pr-4">{r.reason || ""}</td>
-                      <td className="py-2 pr-4">{r.Attendance_feedback || ""}</td>
-                      <td className="py-2 pr-4">{r.raisedate ? new Date(r.raisedate).toLocaleString() : ""}</td>
+                      <td className="py-2 pr-4">{r.added_by_user || r.name || ''}</td>
+                      <td className="py-2 pr-4">{r.Date_Attendance_Update?.slice(0, 10) || ''}</td>
+                      <td className="py-2 pr-4">{r.Attendance_status || ''}</td>
+                      <td className="py-2 pr-4">{r.Attendance_Approval || r.status || 'pending'}</td>
+                      <td className="py-2 pr-4">{r.reason || ''}</td>
+                      <td className="py-2 pr-4">{r.Attendance_feedback || ''}</td>
+                      <td className="py-2 pr-4">{r.raisedate ? new Date(r.raisedate).toLocaleString() : ''}</td>
                     </tr>
                   ))}
                 </tbody>

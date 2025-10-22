@@ -1,32 +1,32 @@
-import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 function asString(v: any): string | null {
-  return v === undefined || v === null ? null : String(v)
+  return v === undefined || v === null ? null : String(v);
 }
 function asInt(v: any): number | null {
-  if (v === undefined || v === null || v === "") return null
-  const n = Number(v)
-  return Number.isFinite(n) ? n : null
+  if (v === undefined || v === null || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 function asDate(v: any): Date | null {
-  if (!v) return null
+  if (!v) return null;
   try {
-    const d = new Date(v as any)
-    return isNaN(d.getTime()) ? null : d
+    const d = new Date(v as any);
+    return isNaN(d.getTime()) ? null : d;
   } catch {
-    return null
+    return null;
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => ({}))
-    const id = Number(body?.id)
-    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
+    const body = await req.json().catch(() => ({}));
+    const id = Number(body?.id);
+    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-    const del = await prisma.deleted_user_informations.findUnique({ where: { Deleted_User_ID: id } })
-    if (!del) return NextResponse.json({ error: "Deleted user not found" }, { status: 404 })
+    const del = await prisma.deleted_user_informations.findUnique({ where: { Deleted_User_ID: id } });
+    if (!del) return NextResponse.json({ error: 'Deleted user not found' }, { status: 404 });
 
     // Map deleted_user_informations back to users model
     const userPayload: any = {
@@ -54,8 +54,8 @@ export async function POST(req: Request) {
       department: asString((del as any).department),
       emp_address: asString((del as any).emp_address),
       email_verified_at: asDate((del as any).email_verified_at),
-      password: asString((del as any).password) || "",
-      type: asString((del as any).type) || "user",
+      password: asString((del as any).password) || '',
+      type: asString((del as any).type) || 'user',
       shift_time: asString((del as any).shift_time),
       remember_token: asString((del as any).remember_token),
       aadhaar_card: asString((del as any).aadhaar_card),
@@ -112,7 +112,10 @@ export async function POST(req: Request) {
       emergency_contact_name: asString((del as any).emergency_contact_name),
       emergency_relation: asString((del as any).emergency_relation),
       Tax_regime: asString((del as any).tax_regime),
-      Is_employees_Aadhar_and_PAN_number_linked: (del as any).is_employees_aadhar_and_pan_number_linked == null ? null : String((del as any).is_employees_aadhar_and_pan_number_linked),
+      Is_employees_Aadhar_and_PAN_number_linked:
+        (del as any).is_employees_aadhar_and_pan_number_linked == null
+          ? null
+          : String((del as any).is_employees_aadhar_and_pan_number_linked),
       PF_Number: asString((del as any).pf_number),
       UAN: asString((del as any).uan),
       Employee_PF_Contribution_limit: asString((del as any).employee_pf_contribution_limit),
@@ -142,20 +145,20 @@ export async function POST(req: Request) {
       advanced_salary_date: asDate((del as any).advanced_salary_date),
       Reimbursement_amount: asInt((del as any).reimbursement_amount),
       months: asInt((del as any).months),
-      status: asInt((del as any).status),
-    }
+      status: asInt((del as any).status)
+    };
 
     // Remove explicitly settlement-only fields by not copying them (already excluded above)
 
     await prisma.$transaction([
       prisma.users.create({ data: userPayload as any }),
-      prisma.deleted_user_informations.delete({ where: { Deleted_User_ID: id } }),
-    ])
+      prisma.deleted_user_informations.delete({ where: { Deleted_User_ID: id } })
+    ]);
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true });
   } catch (e: any) {
-    console.error("/api/hr/settlement/reinstate error:", e)
-    const msg = typeof e?.message === "string" ? e.message : "Failed to reinstate employee"
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('/api/hr/settlement/reinstate error:', e);
+    const msg = typeof e?.message === 'string' ? e.message : 'Failed to reinstate employee';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

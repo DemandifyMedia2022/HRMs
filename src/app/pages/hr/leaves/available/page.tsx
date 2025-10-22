@@ -1,63 +1,63 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { SidebarConfig } from "@/components/sidebar-config"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useEffect, useState } from 'react';
+import { SidebarConfig } from '@/components/sidebar-config';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Leave = {
-  l_id: number
-  leave_type: string
-  start_date: string
-  end_date: string
-  reason: string
-  HRapproval: string
-  Managerapproval: string
-}
+  l_id: number;
+  leave_type: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  HRapproval: string;
+  Managerapproval: string;
+};
 
 type AvailableResponse = {
-  approvedLeaves: Leave[]
-  LeaveApprovalData: Leave[]
-  usedPaidLeave: number
-  usedSickLeave: number
-  remainingPaidLeave: number
-  remainingSickLeave: number
-  totals: { totalPaidLeave: number; totalSickLeave: number }
-  user: string
-}
+  approvedLeaves: Leave[];
+  LeaveApprovalData: Leave[];
+  usedPaidLeave: number;
+  usedSickLeave: number;
+  remainingPaidLeave: number;
+  remainingSickLeave: number;
+  totals: { totalPaidLeave: number; totalSickLeave: number };
+  user: string;
+};
 
 export default function HRAvailableLeavePage() {
-  const [userName, setUserName] = useState("")
-  const [data, setData] = useState<AvailableResponse | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [userName, setUserName] = useState('');
+  const [data, setData] = useState<AvailableResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function load() {
-    if (!userName) return
-    setLoading(true)
-    setError(null)
+    if (!userName) return;
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/leaves/available?user_name=${encodeURIComponent(userName)}`, { cache: "no-store" })
+      const res = await fetch(`/api/leaves/available?user_name=${encodeURIComponent(userName)}`, { cache: 'no-store' });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body?.error || "Failed to load available leaves")
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to load available leaves');
       }
-      const json = await res.json()
-      setData(json)
+      const json = await res.json();
+      setData(json);
     } catch (e: any) {
-      setError(e?.message || "Failed to load available leaves")
+      setError(e?.message || 'Failed to load available leaves');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   useEffect(() => {
     // noop: wait for user input
-  }, [])
+  }, []);
 
   return (
     <div className="p-6">
@@ -65,7 +65,9 @@ export default function HRAvailableLeavePage() {
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-bold tracking-tight">Available Leave Details</h1>
-          <p className="text-sm text-muted-foreground">Lookup an employee to review their leave utilisation and balance.</p>
+          <p className="text-sm text-muted-foreground">
+            Lookup an employee to review their leave utilisation and balance.
+          </p>
         </div>
 
         <Card>
@@ -76,9 +78,9 @@ export default function HRAvailableLeavePage() {
           <CardContent>
             <form
               className="flex flex-col gap-4 sm:flex-row sm:items-end"
-              onSubmit={(e) => {
-                e.preventDefault()
-                load()
+              onSubmit={e => {
+                e.preventDefault();
+                load();
               }}
             >
               <div className="flex-1 space-y-2">
@@ -86,12 +88,12 @@ export default function HRAvailableLeavePage() {
                 <Input
                   id="user_name"
                   value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
+                  onChange={e => setUserName(e.target.value)}
                   placeholder="e.g. Jane Doe"
                 />
               </div>
               <Button type="submit" disabled={!userName || loading} className="sm:w-auto">
-                {loading ? "Loading..." : "View"}
+                {loading ? 'Loading...' : 'View'}
               </Button>
             </form>
             {error ? (
@@ -174,7 +176,7 @@ export default function HRAvailableLeavePage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.approvedLeaves.map((l) => (
+                      {data.approvedLeaves.map(l => (
                         <TableRow key={l.l_id}>
                           <TableCell>{l.leave_type}</TableCell>
                           <TableCell>{new Date(l.start_date).toLocaleDateString()}</TableCell>
@@ -207,7 +209,7 @@ export default function HRAvailableLeavePage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.LeaveApprovalData.map((l) => (
+                      {data.LeaveApprovalData.map(l => (
                         <TableRow key={l.l_id}>
                           <TableCell>{l.leave_type}</TableCell>
                           <TableCell>{new Date(l.start_date).toLocaleDateString()}</TableCell>
@@ -225,5 +227,5 @@ export default function HRAvailableLeavePage() {
         ) : null}
       </div>
     </div>
-  )
+  );
 }
