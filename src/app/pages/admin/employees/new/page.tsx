@@ -108,7 +108,7 @@ export default function AddEmployeePage() {
 
   return (
     <>
-    <SidebarConfig role="hr" />
+    <SidebarConfig role="admin" />
     <div className="p-6 space-y-4">
       <h1 className="text-2xl font-bold">Add Employee</h1>
       {error && <div className="text-sm text-red-600">{error}</div>}

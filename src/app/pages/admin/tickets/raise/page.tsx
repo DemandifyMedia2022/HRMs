@@ -95,7 +95,7 @@ export default function RaiseComplaintPage() {
 
   return (
     <>
-    <SidebarConfig role="user" />
+    <SidebarConfig role="admin" />
     <div className="p-6">
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex items-center justify-between">

@@ -1,203 +1,283 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
-import { SidebarConfig } from '@/components/sidebar-config';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { AlertCircle, BarChart3, CalendarRange, ListChecks, PlaneTakeoff, RefreshCcw, User } from "lucide-react"
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+import { Pie, PieChart, Cell } from "recharts"
 
 type Leave = {
-  l_id: number;
-  leave_type: string;
-  start_date: string;
-  end_date: string;
-  reason: string;
-  HRapproval: string;
-  Managerapproval: string;
-};
+  l_id: number
+  leave_type: string
+  start_date: string
+  end_date: string
+  reason: string
+  HRapproval: string
+  Managerapproval: string
+}
 
 type AvailableResponse = {
-  approvedLeaves: Leave[];
-  LeaveApprovalData: Leave[];
-  usedPaidLeave: number;
-  usedSickLeave: number;
-  remainingPaidLeave: number;
-  remainingSickLeave: number;
-  totals: { totalPaidLeave: number; totalSickLeave: number };
-  user: string;
-};
+  approvedLeaves: Leave[]
+  LeaveApprovalData: Leave[]
+  usedPaidLeave: number
+  usedSickLeave: number
+  remainingPaidLeave: number
+  remainingSickLeave: number
+  totals: { totalPaidLeave: number; totalSickLeave: number }
+  user: string
+}
 
-export default function HRAvailableLeavePage() {
-  const [userName, setUserName] = useState('');
-  const [data, setData] = useState<AvailableResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function HrAvailableLeavePage() {
+  const searchParams = useSearchParams()
+  const userFromQuery = useMemo(() => searchParams.get("user_name") || searchParams.get("added_by_user") || "", [searchParams])
 
-  async function load() {
-    if (!userName) return;
-    setLoading(true);
-    setError(null);
+  const [userName, setUserName] = useState<string>("")
+  const [data, setData] = useState<AvailableResponse | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function load(targetUser?: string) {
+    const u = (targetUser ?? userName).trim()
+    if (!u) return
+    setLoading(true)
+    setError(null)
     try {
-      const res = await fetch(`/api/leaves/available?user_name=${encodeURIComponent(userName)}`, { cache: 'no-store' });
+      const res = await fetch(`/api/leaves/available?user_name=${encodeURIComponent(u)}`, { cache: "no-store" })
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || 'Failed to load available leaves');
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body?.error || "Failed to load available leaves")
       }
-      const json = await res.json();
-      setData(json);
+      const json = (await res.json()) as AvailableResponse
+      setData(json)
     } catch (e: any) {
-      setError(e?.message || 'Failed to load available leaves');
+      setError(e?.message || "Failed to load available leaves")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   useEffect(() => {
-    // noop: wait for user input
-  }, []);
+    if (userFromQuery) {
+      setUserName(userFromQuery)
+      // auto-load when query param is present
+      load(userFromQuery)
+    }
+    else {
+      ;(async () => {
+        try {
+          const meRes = await fetch("/api/auth/me", { cache: "no-store" })
+          if (meRes.ok) {
+            const me = await meRes.json()
+            const candidate: string = me?.name || me?.email || ""
+            if (candidate) {
+              setUserName(candidate)
+              load(candidate)
+            }
+          }
+        } catch (e) {
+        }
+      })()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userFromQuery])
 
   return (
-    <div className="p-6">
-      <SidebarConfig role="hr" />
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold tracking-tight">Available Leave Details</h1>
-          <p className="text-sm text-muted-foreground">
-            Lookup an employee to review their leave utilisation and balance.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-primary-50 to-indigo-50 p-6">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+              
+              My Available Leave
+            </h1>
+            <p className="text-gray-600 mt-1">Track remaining balances, approvals, and leave history in one view.</p>
+          </div>
+          <Badge variant="secondary" className="text-sm px-4 py-2">HR Portal</Badge>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Search Employee</CardTitle>
-            <CardDescription>Use the user name as recorded in leave requests (`added_by_user`).</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              className="flex flex-col gap-4 sm:flex-row sm:items-end"
-              onSubmit={e => {
-                e.preventDefault();
-                load();
-              }}
-            >
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="user_name">User Name</Label>
-                <Input
-                  id="user_name"
-                  value={userName}
-                  onChange={e => setUserName(e.target.value)}
-                  placeholder="e.g. Jane Doe"
-                />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.8fr,1fr]">
+          <Card className="shadow-md border-0">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                
+                Check Leave Balance
+              </CardTitle>
+              <CardDescription>Enter a user name to view available leave or refresh user data.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 lg:grid-cols-[2fr,auto]">
+                <div className="space-y-2">
+                  <Label htmlFor="user-search" className="text-sm font-medium">Employee</Label>
+                  <Input
+                    id="user-search"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    placeholder="Search by user name"
+                  />
+                </div>
+                <div className="flex flex-wrap items-end gap-2">
+                  <Button
+                    type="button"
+                    className="min-w-[140px]"
+                    onClick={() => load()}
+                    disabled={loading || !userName.trim()}
+                  >
+                    <ListChecks className="w-4 h-4 mr-2" />
+                    View Leave
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => load(userName)}
+                    disabled={loading || !userName.trim()}
+                  >
+                    <RefreshCcw className="w-4 h-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
               </div>
-              <Button type="submit" disabled={!userName || loading} className="sm:w-auto">
-                {loading ? 'Loading...' : 'View'}
-              </Button>
-            </form>
-            {error ? (
-              <div className="mt-4 rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
 
-        {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-32 w-full rounded-md" />
-            ))}
-          </div>
-        ) : null}
+              {error && (
+                <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  <AlertCircle className="w-4 h-4 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+              )}
 
-        {!loading && data ? (
+              {loading && (
+                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                  <RefreshCcw className="w-4 h-4 animate-spin" />
+                  Loading leave data...
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm border-0 bg-white/70 backdrop-blur">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2 text-primary">
+                
+                Approved Leaves
+              </CardTitle>
+              <CardDescription>Summary of fully approved requests.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="text-3xl font-semibold text-gray-900">{data?.approvedLeaves.length ?? 0}</div>
+              <p className="text-sm text-muted-foreground">Leaves with both HR and manager approval.</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {data && (
           <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Paid Leave Summary</CardTitle>
-                  <CardDescription>{data.user}</CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    
+                    Paid Leave Usage
+                  </CardTitle>
+                  <CardDescription>Visual breakdown of paid leave consumption.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span>Total</span>
-                    <span className="font-semibold">{data.totals.totalPaidLeave}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Used</span>
-                    <span className="font-semibold text-amber-600">{data.usedPaidLeave}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Remaining</span>
-                    <span className="font-semibold text-emerald-600">{data.remainingPaidLeave}</span>
-                  </div>
+                <CardContent>
+                  <ChartContainer
+                    className="h-64"
+                    config={{
+                      Used: { label: "Used", color: "#5ea3f2" },
+                      Remaining: { label: "Remaining", color: "#125ca5" },
+                    }}
+                  >
+                    <PieChart>
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                      <Pie
+                        data={[
+                          { name: "Used", value: data.usedPaidLeave },
+                          { name: "Remaining", value: data.remainingPaidLeave },
+                        ]}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={60}
+                        outerRadius={90}
+                        strokeWidth={6}
+                      >
+                        <Cell fill="#5ea3f2" />
+                        <Cell fill="#125ca5" />
+                      </Pie>
+                      <ChartLegend content={<ChartLegendContent />} />
+                    </PieChart>
+                  </ChartContainer>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Sick Leave Summary</CardTitle>
-                  <CardDescription>{data.user}</CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    
+                    Sick Leave Usage
+                  </CardTitle>
+                  <CardDescription>Visual breakdown of sick leave consumption.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span>Total</span>
-                    <span className="font-semibold">{data.totals.totalSickLeave}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Used</span>
-                    <span className="font-semibold text-amber-600">{data.usedSickLeave}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Remaining</span>
-                    <span className="font-semibold text-emerald-600">{data.remainingSickLeave}</span>
-                  </div>
+                <CardContent>
+                  <ChartContainer
+                    className="h-64"
+                    config={{
+                      Used: { label: "Used", color: "#5ea3f2" },
+                      Remaining: { label: "Remaining", color: "#125ca5" },
+                    }}
+                  >
+                    <PieChart>
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                      <Pie
+                        data={[
+                          { name: "Used", value: data.usedSickLeave },
+                          { name: "Remaining", value: data.remainingSickLeave },
+                        ]}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={60}
+                        outerRadius={90}
+                        strokeWidth={6}
+                      >
+                        <Cell fill="#5ea3f2" />
+                        <Cell fill="#125ca5" />
+                      </Pie>
+                      <ChartLegend content={<ChartLegendContent />} />
+                    </PieChart>
+                  </ChartContainer>
                 </CardContent>
               </Card>
             </div>
 
-            <Card>
+            <Card className="shadow-lg border-0 bg-white/90 backdrop-blur">
               <CardHeader>
-                <CardTitle className="text-base">Approved Leaves</CardTitle>
-                <CardDescription>Leaves that were granted for the employee.</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  
+                  All Leaves
+                </CardTitle>
+                <CardDescription>Review every leave request and its approval status.</CardDescription>
               </CardHeader>
               <CardContent>
-                {data.approvedLeaves.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">No approved leaves recorded.</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Start</TableHead>
-                        <TableHead>End</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.approvedLeaves.map(l => (
-                        <TableRow key={l.l_id}>
-                          <TableCell>{l.leave_type}</TableCell>
-                          <TableCell>{new Date(l.start_date).toLocaleDateString()}</TableCell>
-                          <TableCell>{new Date(l.end_date).toLocaleDateString()}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">All Leave Requests</CardTitle>
-                <CardDescription>Comprehensive history of leave requests and approvals.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {data.LeaveApprovalData.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">No leave requests found.</div>
-                ) : (
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -205,13 +285,13 @@ export default function HRAvailableLeavePage() {
                         <TableHead>Start</TableHead>
                         <TableHead>End</TableHead>
                         <TableHead>HR</TableHead>
-                        <TableHead>Manager</TableHead>
+                        <TableHead>Mgr</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.LeaveApprovalData.map(l => (
+                      {data.LeaveApprovalData.map((l) => (
                         <TableRow key={l.l_id}>
-                          <TableCell>{l.leave_type}</TableCell>
+                          <TableCell className="font-medium">{l.leave_type}</TableCell>
                           <TableCell>{new Date(l.start_date).toLocaleDateString()}</TableCell>
                           <TableCell>{new Date(l.end_date).toLocaleDateString()}</TableCell>
                           <TableCell>{l.HRapproval}</TableCell>
@@ -220,12 +300,12 @@ export default function HRAvailableLeavePage() {
                       ))}
                     </TableBody>
                   </Table>
-                )}
+                </div>
               </CardContent>
             </Card>
           </div>
-        ) : null}
+        )}
       </div>
     </div>
-  );
+  )
 }

@@ -1,5 +1,58 @@
 'use client';
 
+const LABELS: Record<string, string> = {
+  f_campaign_name: 'Campaign',
+  f_lead: 'Lead',
+  f_resource_name: 'Resource Name',
+  f_data_source: 'Data Source',
+  f_salutation: 'Salutation',
+  f_first_name: 'First Name',
+  f_last_name: 'Last Name',
+  f_job_title: 'Job Title',
+  f_department: 'Department',
+  f_job_level: 'Job Level',
+  f_email_add: 'Email',
+  Secondary_Email: 'Secondary Email',
+  f_conatct_no: 'Contact Number',
+  f_company_name: 'Company Name',
+  f_website: 'Website',
+  f_address1: 'Address',
+  f_city: 'City',
+  f_state: 'State',
+  f_zip_code: 'ZIP Code',
+  f_country: 'Country',
+  f_emp_size: 'Employee Size',
+  f_industry: 'Industry',
+  f_sub_industry: 'Sub Industry',
+  f_revenue: 'Revenue',
+  f_revenue_link: 'Revenue Link',
+  f_profile_link: 'Profile Link',
+  f_company_link: 'Company Link',
+  f_address_link: 'Address Link',
+  f_cq1: 'CQ 1',
+  f_cq2: 'CQ 2',
+  f_cq3: 'CQ 3',
+  f_cq4: 'CQ 4',
+  f_cq5: 'CQ 5',
+  f_cq6: 'CQ 6',
+  f_cq7: 'CQ 7',
+  f_cq8: 'CQ 8',
+  f_cq9: 'CQ 9',
+  f_cq10: 'CQ 10',
+  f_asset_name1: 'Asset Name 1',
+  f_asset_name2: 'Asset Name 2',
+  f_call_recording: 'Call Recording',
+  f_dq_reason1: 'DQ Reason 1',
+  f_dq_reason2: 'DQ Reason 2',
+  f_dq_reason3: 'DQ Reason 3',
+  f_dq_reason4: 'DQ Reason 4',
+  f_call_links: 'Call Links',
+  f_date: 'Date',
+  added_by_user_id: 'Added By',
+};
+
+const prettyLabel = (key: string) => LABELS[key] ?? key.replace(/^f_/, '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
 import React, { useState, useEffect } from 'react';
 import { SidebarConfig } from '@/components/sidebar-config';
 import DialerModal from '@/components/dialer/dialer-modal';
@@ -9,6 +62,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { DateTimePicker } from '@/components/ui/date-picker-10';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const FIELDS = [
   'f_campaign_name',
@@ -60,6 +114,14 @@ const FIELDS = [
   'f_date',
   'added_by_user_id'
 ];
+
+const COUNTRY_CODES = ['+91', '+1', '+44', '+61', '+65'];
+const EMPTY = '__none__';
+const splitPhone = (v: string) => {
+  const code = COUNTRY_CODES.find(c => v?.startsWith(c)) || COUNTRY_CODES[0];
+  const local = v?.startsWith(code) ? v.slice(code.length) : v || '';
+  return { code, local };
+};
 
 function getCurrentUserName() {
   // TODO: Replace with your real authentication/session logic
@@ -246,48 +308,66 @@ export default function UserPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {FIELDS.filter(f => f !== 'added_by_user_id').map(f => (
                     <div key={f} className="space-y-2">
-                      <Label htmlFor={f}>{f.replace('f_', '').replace(/_/g, ' ')}</Label>
+                      <Label htmlFor={f}>{prettyLabel(f)}</Label>
                       {f === 'f_conatct_no' ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            id={f}
-                            value={formData[f] ?? ''}
-                            onChange={e => onChange(f, e.target.value)}
-                            type="tel"
-                          />
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="shrink-0"
-                            disabled={!formData[f]}
-                            onClick={() => {
-                              const ext = typeof window !== 'undefined' ? localStorage.getItem('extension') : null;
-                              if (!ext) {
-                                setSipOpen(true);
-                                return;
-                              }
-                              setDialNumber(String(formData[f] || ''));
-                              setDialOpen(true);
-                            }}
-                          >
-                            Call
-                          </Button>
-                        </div>
+                        (() => {
+                          const { code, local } = splitPhone(String(formData[f] || ''));
+                          return (
+                            <div className="flex items-center gap-2">
+                              <Select
+                                value={code}
+                                onValueChange={(cc) => {
+                                  onChange(f, `${cc}${local}`);
+                                }}
+                              >
+                                <SelectTrigger className="w-[120px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {COUNTRY_CODES.map(cc => (
+                                    <SelectItem key={cc} value={cc}>{cc}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                id={f}
+                                value={local}
+                                onChange={(e) => onChange(f, `${code}${e.target.value}`)}
+                                inputMode="tel"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="shrink-0"
+                                disabled={!formData[f]}
+                                onClick={() => {
+                                  const ext = typeof window !== 'undefined' ? localStorage.getItem('extension') : null;
+                                  if (!ext) { setSipOpen(true); return }
+                                  setDialNumber(String(formData[f] || ''));
+                                  setDialOpen(true);
+                                }}
+                              >
+                                Call
+                              </Button>
+                            </div>
+                          );
+                        })()
                       ) : f === 'f_campaign_name' ? (
                         <div className="flex items-center gap-2">
-                          <select
-                            id={f}
-                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            value={formData[f] ?? ''}
-                            onChange={e => onChange(f, e.target.value)}
+                          <Select
+                            value={(formData[f] || '') || EMPTY}
+                            onValueChange={(v) => onChange(f, v === EMPTY ? '' : v)}
                           >
-                            <option value="">Select campaign...</option>
-                            {campaigns.map(c => (
-                              <option key={c.id} value={c.f_campaign_name}>
-                                {c.f_campaign_name}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger id={f} className="w-full">
+                              <SelectValue placeholder="Select campaign..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={EMPTY}>Select campaign...</SelectItem>
+                              {campaigns.map(c => (
+                                <SelectItem key={c.id} value={c.f_campaign_name}>{c.f_campaign_name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <Button
                             type="button"
                             size="sm"
@@ -309,14 +389,14 @@ export default function UserPage() {
                         <Input
                           id={f}
                           value={formData[f] ?? ''}
-                          onChange={e => onChange(f, e.target.value)}
+                          onChange={(e) => onChange(f, e.target.value)}
                           type={f.includes('email') ? 'email' : 'text'}
                         />
                       )}
                     </div>
                   ))}
-                  <input type="hidden" name="added_by_user_id" value={formData.added_by_user_id ?? ''} />
                 </div>
+                <input type="hidden" name="added_by_user_id" value={formData.added_by_user_id ?? ''} />
 
                 <div className="flex items-center gap-3 pt-4 border-t">
                   <Button type="submit" disabled={loading || authDept.toLowerCase() !== 'operation'}>

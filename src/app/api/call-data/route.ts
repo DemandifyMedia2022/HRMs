@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 import mysql from 'mysql2/promise';
 import { NextResponse } from 'next/server';
 
-const DB_NAME = process.env.DB_NAME || 'newhrmsreactdb';
+const DB_NAME = process.env.DB_NAME || 'demandkb_lms1';
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || '127.0.0.1',

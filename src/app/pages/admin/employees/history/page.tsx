@@ -123,13 +123,14 @@ export default function Page() {
 
   return (
     <>
-    <SidebarConfig role="hr" />
-    <div className="min-h-screen  p-6">
+    <SidebarConfig role="admin" />
+    <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <History className="w-8 h-8 text-primary" />
               Settlement History
             </h1>
             <p className="text-gray-600 mt-1">View archived employee records and reinstate if needed</p>

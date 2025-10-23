@@ -15,6 +15,8 @@ export type DatePickerProps = {
   className?: string;
   value?: Date | undefined;
   onChange?: (date: Date | undefined) => void;
+  disabled?: boolean;
+  triggerClassName?: string;
 };
 
 export function DatePicker({
@@ -23,7 +25,9 @@ export function DatePicker({
   placeholder = 'Select date',
   className,
   value,
-  onChange
+  onChange,
+  disabled = false,
+  triggerClassName,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [date, setDate] = React.useState<Date | undefined>(value);
@@ -47,7 +51,12 @@ export function DatePicker({
       ) : null}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" id={id} className="w-48 justify-between font-normal">
+          <Button
+            variant="outline"
+            id={id}
+            disabled={disabled}
+            className={(triggerClassName ?? 'w-48 justify-between font-normal')}
+          >
             {date ? date.toLocaleDateString() : placeholder}
             <ChevronDownIcon className="size-4" />
           </Button>

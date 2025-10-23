@@ -11,8 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { Search, Users, Building2, Briefcase, MapPin, CreditCard, FileText, Shield, ChevronLeft, ChevronRight, CheckCircle2, User, Mail, Phone, Heart } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { DatePicker } from "@/components/ui/date-picker"
+import { SidebarConfig } from "@/components/sidebar-config"
 
 type User = {
   id: number
@@ -355,6 +355,7 @@ export default function EmployeeDetailsPage() {
 
   return (
     <>
+    <SidebarConfig role="admin" />  
     <div className="min-h-screen  p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}

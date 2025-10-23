@@ -116,16 +116,16 @@ export default function HREmployeeSettlementPage() {
     return (first + second).toUpperCase() || first.toUpperCase() || "--"
   }
 
-  return (  
+  return (
     <>
-    <SidebarConfig role="hr" />
-    <div className="min-h-screen p-6">
+    <SidebarConfig role="admin" />
+    <div className="min-h-screen  p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-              
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <UserX className="w-8 h-8 text-primary" />
               Employee Settlement
             </h1>
             <p className="text-gray-600 mt-1">Manage employee resignations and archival</p>
