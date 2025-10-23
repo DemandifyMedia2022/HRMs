@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Search, Users, Building2, Briefcase, MapPin, CreditCard, FileText, Shield, ChevronLeft, ChevronRight, CheckCircle2, User, Mail, Phone, Calendar, Heart } from "lucide-react"
 
 type User = {
   id: number
@@ -280,85 +282,224 @@ export default function EmployeeDetailsPage() {
   }
 
   return (
-    <div className="p-6 grid grid-cols-1 gap-6">
-      <div className="border rounded p-4 space-y-3">
-        <div className="text-xl font-semibold">Employees</div>
-        <Input placeholder="Search name or code" value={search} onChange={(e) => setSearch(e.target.value)} />
-        <div className="flex gap-8 flex-wrap text-sm">
-          {departments.length === 0 ? (
-            <span className="text-gray-500">No departments</span>
-          ) : (
-            departments.map((d) => (
-              <Button key={d} variant={deptFilter === d ? "default" : "outline"} onClick={() => setDeptFilter(d)} className="px-4 py-4 h-auto text-xs">
-                {d}
-              </Button>
-            ))
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <Users className="w-8 h-8 text-blue-600" />
+              Employee Management
+            </h1>
+            <p className="text-gray-600 mt-1">Manage and view employee details</p>
+          </div>
+          <Badge variant="secondary" className="text-sm px-4 py-2">
+            {employees.length} Employees
+          </Badge>
         </div>
-        <div className="max-h-[60vh] overflow-auto">
-          {loading ? (
-            <div className="p-2 text-sm">Loading...</div>
-          ) : employees.length === 0 ? (
-            <div className="p-2 text-sm">No employees</div>
-          ) : (
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {pagedEmployees.map((u) => (
-                  <Card
-                    key={u.id}
-                    onClick={() => setSelected(u)}
-                    className={`w-full p-3 cursor-pointer hover:shadow-sm transition ${selected?.id === u.id ? "ring-2 ring-gray-900" : ""}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarFallback>{getInitials(u)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-semibold flex items-center gap-2">
-                          {pickDisplayName(u)}
-                          {u.department ? <Badge variant="secondary" className="text-[10px]">{u.department}</Badge> : null}
+
+        {/* Search & Filter Section */}
+        <Card className="shadow-lg border-0">
+          {/* <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Search className="w-5 h-5 text-blue-600" />
+              Search & Filter
+            </CardTitle>
+          </CardHeader> */}
+          <CardContent className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input 
+                placeholder="Search by name or employee code..." 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 h-12"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Filter by Department</Label>
+              <div className="flex gap-2 flex-wrap">
+                {departments.length === 0 ? (
+                  <span className="text-gray-500 text-sm">No departments</span>
+                ) : (
+                  departments.map((d) => (
+                    <Button 
+                      key={d} 
+                      variant={deptFilter === d ? "default" : "outline"} 
+                      onClick={() => setDeptFilter(d)} 
+                      className="h-9"
+                      size="sm"
+                    >
+                      <Building2 className="w-3 h-3 mr-2" />
+                      {d}
+                    </Button>
+                  ))
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        {/* Employee List */}
+        <Card className="shadow-lg border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-600" />
+              Employee Directory
+            </CardTitle>
+            <CardDescription>Select an employee to view and edit details</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-4">Loading employees...</p>
+                </div>
+              </div>
+            ) : employees.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-600">No employees found</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {pagedEmployees.map((u) => (
+                    <Card
+                      key={u.id}
+                      onClick={() => setSelected(u)}
+                      className={`cursor-pointer transition-all duration-200 hover:shadow-xl hover:-translate-y-1 ${
+                        selected?.id === u.id 
+                          ? "ring-2 ring-primary shadow-xl bg-blue-50" 
+                          : "hover:border-blue-300"
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <Avatar className="w-12 h-12 ring-2 ring-blue-100">
+                            <AvatarFallback className="bg-primary text-white font-semibold">
+                              {getInitials(u)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-gray-900 truncate">
+                              {pickDisplayName(u)}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                              <Badge variant="outline" className="text-[10px] px-2">
+                                {u.emp_code || "N/A"}
+                              </Badge>
+                            </div>
+                            {u.department && (
+                              <div className="mt-2">
+                                <Badge variant="secondary" className="text-[10px]">
+                                  <Building2 className="w-3 h-3 mr-1" />
+                                  {u.department}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                          {selected?.id === u.id && (
+                            <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                          )}
                         </div>
-                        <div className="text-xs text-gray-600">Employee Code: {u.emp_code || "-"}</div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setPageNum((p) => Math.max(1, p - 1))} 
+                    disabled={pageNum <= 1}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Previous
+                  </Button>
+                  <div className="text-sm text-gray-600">
+                    Page <span className="font-semibold">{pageNum}</span> of <span className="font-semibold">{totalPages}</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setPageNum((p) => Math.min(totalPages, p + 1))} 
+                    disabled={pageNum >= totalPages}
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <Button variant="outline" className="px-3 py-1 h-auto disabled:opacity-50" onClick={() => setPageNum((p) => Math.max(1, p - 1))} disabled={pageNum <= 1}>Prev</Button>
-                <div>Page {pageNum} of {totalPages}</div>
-                <Button variant="outline" className="px-3 py-1 h-auto disabled:opacity-50" onClick={() => setPageNum((p) => Math.min(totalPages, p + 1))} disabled={pageNum >= totalPages}>Next</Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Employee Details */}
+        <Card className="shadow-lg border-0">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600" />
+                  Employee Details
+                </CardTitle>
+                <CardDescription>
+                  {selected ? `Viewing details for ${pickDisplayName(selected)}` : "Select an employee to view details"}
+                </CardDescription>
               </div>
+              {flash && (
+                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 px-4 py-2">
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  {flash}
+                </Badge>
+              )}
             </div>
-          )}
-        </div>
-      </div>
+          </CardHeader>
+          <CardContent>
+            {!selected ? (
+              <div className="text-center py-12">
+                <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-600">Select an employee from the list above to view and edit their details</p>
+              </div>
+            ) : (
+              <Tabs value={tab} onValueChange={setTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 h-auto gap-2">
+                  <TabsTrigger value="basic" className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span className="hidden sm:inline">Basic</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="family" className="flex items-center gap-2">
+                    <Heart className="w-4 h-4" />
+                    <span className="hidden sm:inline">Family</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="employment" className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4" />
+                    <span className="hidden sm:inline">Employment</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="position" className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <span className="hidden sm:inline">Position</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="bank" className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    <span className="hidden sm:inline">Bank</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="other" className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    <span className="hidden sm:inline">Other</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="insurance" className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    <span className="hidden sm:inline">Insurance</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="documents" className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    <span className="hidden sm:inline">Documents</span>
+                  </TabsTrigger>
+                </TabsList>
 
-      <div className="border rounded p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="text-xl font-semibold">Employee Details</div>
-          {flash ? <div className="text-sm px-3 py-1 rounded bg-green-100 text-green-700">{flash}</div> : null}
-        </div>
-        {!selected ? (
-          <div className="text-sm text-gray-600">Select an employee to view details</div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex gap-2 flex-wrap text-sm">
-              {[
-                ["basic", "Basic Info"],
-                ["family", "Family"],
-                ["employment", "Employment"],
-                ["position", "Position"],
-                ["bank", "Bank"],
-                ["other", "Other"],
-                ["insurance", "Health Insurance"],
-                ["documents", "Documents"],
-              ].map(([k, label]) => (
-                <button key={k} onClick={() => setTab(String(k))} className={`px-2 py-1 rounded border ${tab === k ? "bg-gray-900 text-white" : ""}`}>{label}</button>
-              ))}
-            </div>
-
-            {tab === "basic" && (
+                <TabsContent value="basic" className="mt-6">
               <form key={`${selected.id}-basic`} className="grid grid-cols-1 sm:grid-cols-2 gap-3" onSubmit={saveSection}>
                 <div className="space-y-1"><Label htmlFor="Prefix">Prefix</Label><Input id="Prefix" name="Prefix" defaultValue={selected.Prefix || ""} placeholder="Prefix" /></div>
                 <div className="space-y-1"><Label htmlFor="Full_name">Full name</Label><Input id="Full_name" name="Full_name" defaultValue={selected.Full_name || selected.name || ""} placeholder="Full name" /></div>
@@ -373,9 +514,9 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-1"><Label htmlFor="Biometric_id">Biometric ID</Label><Input id="Biometric_id" name="Biometric_id" defaultValue={selected.Biometric_id || ""} placeholder="Biometric ID" /></div>
                 <div className="sm:col-span-2 flex justify-end"><Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Basic Info"}</Button></div>
               </form>
-            )}
+                </TabsContent>
 
-            {tab === "family" && (
+                <TabsContent value="family" className="mt-6">
               <form key={`${selected.id}-family`} className="grid grid-cols-1 sm:grid-cols-2 gap-3" onSubmit={saveSection}>
                 <div className="space-y-1"><Label htmlFor="father_name">Father name</Label><Input id="father_name" name="father_name" defaultValue={selected.father_name || ""} placeholder="Father name" /></div>
                 <div className="space-y-1"><Label htmlFor="father_dob">Father DOB</Label><Input id="father_dob" type="date" name="father_dob" defaultValue={toDateInput(selected.father_dob)} /></div>
@@ -410,9 +551,9 @@ export default function EmployeeDetailsPage() {
                 <div className="hidden sm:block" />
                 <div className="sm:col-span-2 flex justify-end"><Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Family"}</Button></div>
               </form>
-            )}
+                </TabsContent>
 
-            {tab === "employment" && (
+                <TabsContent value="employment" className="mt-6">
               <form key={`${selected.id}-employment`} className="grid grid-cols-1 sm:grid-cols-2 gap-3" onSubmit={saveSection}>
                 <div className="space-y-1"><Label htmlFor="department">Department</Label><Input id="department" name="department" defaultValue={selected.department || ""} placeholder="Department" /></div>
                 <div className="space-y-1"><Label htmlFor="employment_status">Employment status</Label><Input id="employment_status" name="employment_status" defaultValue={selected.employment_status || ""} placeholder="Employment status" /></div>
@@ -421,9 +562,9 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-1"><Label htmlFor="retirement_date">Retirement date</Label><Input id="retirement_date" name="retirement_date" defaultValue={selected.retirement_date || ""} placeholder="YYYY-MM-DD" /></div>
                 <div className="sm:col-span-2 flex justify-end"><Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Employment"}</Button></div>
               </form>
-            )}
+                </TabsContent>
 
-            {tab === "position" && (
+                <TabsContent value="position" className="mt-6">
               <form key={`${selected.id}-position`} className="grid grid-cols-1 sm:grid-cols-2 gap-3" onSubmit={saveSection}>
                 <div className="space-y-1"><Label htmlFor="company_name">Company name</Label><Input id="company_name" name="company_name" defaultValue={selected.company_name || ""} placeholder="Company name" /></div>
                 <div className="space-y-1"><Label htmlFor="Business_unit">Business unit</Label><Input id="Business_unit" name="Business_unit" defaultValue={selected.Business_unit || ""} placeholder="Business unit" /></div>
@@ -432,9 +573,9 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-1"><Label htmlFor="Functional_manager">Functional manager</Label><Input id="Functional_manager" name="Functional_manager" defaultValue={selected.Functional_manager || ""} placeholder="Functional manager" /></div>
                 <div className="sm:col-span-2 flex justify-end"><Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Position"}</Button></div>
               </form>
-            )}
+                </TabsContent>
 
-            {tab === "bank" && (
+                <TabsContent value="bank" className="mt-6">
               <form key={`${selected.id}-bank`} className="grid grid-cols-1 sm:grid-cols-2 gap-3" onSubmit={saveSection}>
                 <div className="space-y-1"><Label htmlFor="salary_pay_mode">Salary pay mode</Label><Input id="salary_pay_mode" name="salary_pay_mode" defaultValue={selected.salary_pay_mode || ""} placeholder="Salary pay mode" /></div>
                 <div className="space-y-1"><Label htmlFor="bank_name">Bank name</Label><Input id="bank_name" name="bank_name" defaultValue={selected.bank_name || ""} placeholder="Bank name" /></div>
@@ -449,9 +590,9 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-1"><Label htmlFor="reimbursement_account_no">Reimbursement account no</Label><Input id="reimbursement_account_no" name="reimbursement_account_no" defaultValue={selected.reimbursement_account_no || ""} placeholder="Reimbursement account no" /></div>
                 <div className="sm:col-span-2 flex justify-end"><Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Bank"}</Button></div>
               </form>
-            )}
+                </TabsContent>
 
-            {tab === "other" && (
+                <TabsContent value="other" className="mt-6">
               <form key={`${selected.id}-other`} className="grid grid-cols-1 sm:grid-cols-2 gap-3" onSubmit={saveSection}>
                 <div className="space-y-1"><Label htmlFor="pan_card_no">PAN card no</Label><Input id="pan_card_no" name="pan_card_no" defaultValue={selected.pan_card_no || ""} placeholder="PAN card no" /></div>
                 <div className="space-y-1"><Label htmlFor="adhar_card_no">Aadhar card no</Label><Input id="adhar_card_no" name="adhar_card_no" defaultValue={selected.adhar_card_no || ""} placeholder="Aadhar card no" /></div>
@@ -463,9 +604,9 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-1"><Label htmlFor="emergency_relation">Emergency relation</Label><Input id="emergency_relation" name="emergency_relation" defaultValue={selected.emergency_relation || ""} placeholder="Emergency relation" /></div>
                 <div className="sm:col-span-2 flex justify-end"><Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Other"}</Button></div>
               </form>
-            )}
+                </TabsContent>
 
-            {tab === "insurance" && (
+                <TabsContent value="insurance" className="mt-6">
               <form key={`${selected.id}-insurance`} className="grid grid-cols-1 sm:grid-cols-2 gap-3" onSubmit={saveSection}>
                 <div className="space-y-1"><Label htmlFor="insurance_company">Insurance company</Label><Input id="insurance_company" name="insurance_company" defaultValue={selected.insurance_company || ""} placeholder="Insurance company" /></div>
                 <div className="space-y-1"><Label htmlFor="assured_sum">Assured sum</Label><Input id="assured_sum" name="assured_sum" defaultValue={selected.assured_sum || ""} placeholder="Assured sum" /></div>
@@ -476,9 +617,9 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-1"><Label htmlFor="insuree_code">Insuree code</Label><Input id="insuree_code" name="insuree_code" defaultValue={selected.insuree_code || ""} placeholder="Insuree code" /></div>
                 <div className="sm:col-span-2 flex justify-end"><Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Insurance"}</Button></div>
               </form>
-            )}
+                </TabsContent>
 
-            {tab === "documents" && (
+                <TabsContent value="documents" className="mt-6">
               <form key={`${selected.id}-documents`} className="space-y-4" onSubmit={uploadDocuments} encType="multipart/form-data">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -578,22 +719,11 @@ export default function EmployeeDetailsPage() {
                   <Button type="submit" disabled={saving}>{saving ? "Uploading..." : "Upload Documents"}</Button>
                 </div>
               </form>
+                </TabsContent>
+              </Tabs>
             )}
-
-            {(() => {
-              const order = ["basic","family","employment","position","bank","other","insurance","documents"]
-              const idx = order.indexOf(tab)
-              const canPrev = idx > 0
-              const canNext = idx >= 0 && idx < order.length - 1
-              return (
-                <div className="flex gap-2 justify-start pt-2">
-                  <Button variant="outline" size="sm" disabled={!canPrev} onClick={() => canPrev && setTab(order[idx-1])}>Previous</Button>
-                  <Button variant="default" size="sm" disabled={!canNext} onClick={() => canNext && setTab(order[idx+1])}>Next</Button>
-                </div>
-              )
-            })()}
-          </div>
-        )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

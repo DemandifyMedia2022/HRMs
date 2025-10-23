@@ -1,8 +1,16 @@
 "use client"
- 
+
 import { useState } from "react"
 import { useRouter } from "next/navigation"
- 
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { AlertCircle, CalendarDays, CalendarRange, NotebookPen, User, PlaneTakeoff, ArrowLeft } from "lucide-react"
+
 export default function NewLeavePage() {
   const router = useRouter()
   const [leaveType, setLeaveType] = useState("")
@@ -12,11 +20,18 @@ export default function NewLeavePage() {
   const [addedByUser, setAddedByUser] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
- 
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
+
+    if (!leaveType) {
+      setError("Leave type is required")
+      setSubmitting(false)
+      return
+    }
+
     try {
       const res = await fetch("/api/leaves", {
         method: "POST",
@@ -41,83 +56,152 @@ export default function NewLeavePage() {
       setSubmitting(false)
     }
   }
- 
+
   return (
-    <div className="p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-4">New Leave Request</h1>
-      {error && (
-        <div className="mb-4 text-sm text-red-600">{error}</div>
-      )}
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm mb-1">Leave Type</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            value={leaveType}
-            onChange={(e) => setLeaveType(e.target.value)}
-            placeholder="Sick / Casual / Annual"
-            required
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-primary-50 to-indigo-50 p-6">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
           <div>
-            <label className="block text-sm mb-1">Start Date</label>
-            <input
-              type="date"
-              className="w-full border rounded px-3 py-2"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              required
-            />
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <PlaneTakeoff className="w-8 h-8 text-primary" />
+              New Leave Request
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Submit your leave request with complete details for a quicker response.
+            </p>
           </div>
-          <div>
-            <label className="block text-sm mb-1">End Date</label>
-            <input
-              type="date"
-              className="w-full border rounded px-3 py-2"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              required
-            />
-          </div>
+          <Badge variant="secondary" className="text-sm px-4 py-2">Employee Portal</Badge>
         </div>
-        <div>
-          <label className="block text-sm mb-1">Reason</label>
-          <textarea
-            className="w-full border rounded px-3 py-2"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Reason for leave"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm mb-1">Added By (Your Name)</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            value={addedByUser}
-            onChange={(e) => setAddedByUser(e.target.value)}
-            placeholder="Enter your name"
-            required
-          />
-        </div>
-        <div className="flex gap-3 pt-2">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="inline-flex items-center justify-center rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
-          >
-            {submitting ? "Submitting..." : "Submit"}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/pages/hr")}
-            className="inline-flex items-center justify-center rounded border px-4 py-2"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
+
+        {error && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="flex items-start gap-3 pt-4">
+              <AlertCircle className="w-5 h-5 text-red-600 mt-1" />
+              <div>
+                <p className="text-sm font-medium text-red-800">{error}</p>
+                <p className="text-xs text-red-600">Please review the information and try again.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className="shadow-lg border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <NotebookPen className="w-5 h-5 text-primary" />
+              Leave Details
+            </CardTitle>
+            <CardDescription>Provide accurate information to ensure smooth processing.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={onSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Leave Type</Label>
+                <Select
+                  value={leaveType}
+                  onValueChange={(value) => setLeaveType(value)}
+                >
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Select leave type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Sick Leave(Full Day)">Sick Leave (Full Day)</SelectItem>
+                    <SelectItem value="Unpaid Leave">Unpaid Leave</SelectItem>
+                    <SelectItem value="Paid Leave">Paid Leave</SelectItem>
+                    <SelectItem value="Work From Home">Work From Home</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                    Start Date
+                  </Label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <CalendarRange className="w-4 h-4 text-muted-foreground" />
+                    End Date
+                  </Label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-muted-foreground" />
+                  Reason
+                </Label>
+                <Textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Reason for leave"
+                  className="min-h-[140px]"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  Added By (Your Name)
+                </Label>
+                <Input
+                  value={addedByUser}
+                  onChange={(e) => setAddedByUser(e.target.value)}
+                  placeholder="Enter your name"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 pt-4">
+                <Button type="submit" disabled={submitting} className="min-w-[160px]">
+                  {submitting ? "Submitting..." : "Submit"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push("/pages/hr")}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-primary text-lg flex items-center gap-2">
+              <PlaneTakeoff className="w-5 h-5" />
+              Tips for Quick Approval
+            </CardTitle>
+            <CardDescription>Help approvers act on your request faster.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="text-sm text-primary/80 space-y-2 list-disc list-inside">
+              <li>Ensure start and end dates are accurate and within your leave balance.</li>
+              <li>Provide a concise yet clear reason for the leave.</li>
+              <li>Submit requests at least one working day in advance when possible.</li>
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

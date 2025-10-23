@@ -4,6 +4,23 @@ import { useEffect, useMemo, useState, type ChangeEvent } from "react"
  
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 type Leave = {
   l_id: number
@@ -33,7 +50,7 @@ export default function HRLeavesPage() {
   const [leaveType, setLeaveType] = useState("")
   const [month, setMonth] = useState("") // YYYY-MM
   const [userName, setUserName] = useState("")
-  const [status, setStatus] = useState("") // HRapproval
+  const [status, setStatus] = useState("all") // HRapproval filter; 'all' means no filter
 
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -54,7 +71,7 @@ export default function HRLeavesPage() {
     if (leaveType) p.set("leave_type", leaveType)
     if (month) p.set("month", month)
     if (userName) p.set("user_name", userName)
-    if (status) p.set("Leaves_Status", status)
+    if (status && status !== "all") p.set("Leaves_Status", status)
     p.set("page", String(page))
     p.set("pageSize", String(pageSize))
     return p.toString()
@@ -151,7 +168,7 @@ export default function HRLeavesPage() {
     setLeaveType("")
     setMonth("")
     setUserName("")
-    setStatus("")
+    setStatus("all")
     setPage(1)
   }
 
@@ -166,30 +183,35 @@ export default function HRLeavesPage() {
 
       <div className="border rounded p-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-          <div>
-            <label className="block text-sm mb-1">Leave Type</label>
-            <input className="w-full border rounded px-3 py-2" value={leaveType} onChange={(e) => setLeaveType(e.target.value)} />
+          <div className="space-y-1">
+            <Label htmlFor="filter-leave-type">Leave Type</Label>
+            <Input id="filter-leave-type" value={leaveType} onChange={(e) => setLeaveType(e.target.value)} />
           </div>
-          <div>
-            <label className="block text-sm mb-1">Month</label>
-            <input type="month" className="w-full border rounded px-3 py-2" value={month} onChange={(e) => setMonth(e.target.value)} />
+          <div className="space-y-1">
+            <Label htmlFor="filter-month">Month</Label>
+            <Input id="filter-month" type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
           </div>
-          <div>
-            <label className="block text-sm mb-1">User Name</label>
-            <input className="w-full border rounded px-3 py-2" value={userName} onChange={(e) => setUserName(e.target.value)} />
+          <div className="space-y-1">
+            <Label htmlFor="filter-user">User Name</Label>
+            <Input id="filter-user" value={userName} onChange={(e) => setUserName(e.target.value)} />
           </div>
-          <div>
-            <label className="block text-sm mb-1">HR Status</label>
-            <select className="w-full border rounded px-3 py-2" value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="">All</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
+          <div className="space-y-1">
+            <Label>HR Status</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-end gap-2">
-            <button onClick={() => { setPage(1); load() }} className="rounded border px-4 py-2">Apply</button>
-            <button onClick={resetFilters} className="rounded border px-4 py-2">Reset</button>
+            <Button variant="outline" onClick={() => { setPage(1); load() }}>Apply</Button>
+            <Button variant="outline" onClick={resetFilters}>Reset</Button>
           </div>
         </div>
       </div>
@@ -197,49 +219,49 @@ export default function HRLeavesPage() {
       <div className="border rounded p-4">
         <div className="text-sm text-muted-foreground mb-2">Total: {total}</div>
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="text-left">
-              <tr>
-                <th className="py-2 pr-4">ID</th>
-                <th className="py-2 pr-4">Type</th>
-                <th className="py-2 pr-4">Start</th>
-                <th className="py-2 pr-4">End</th>
-                <th className="py-2 pr-4">User</th>
-                <th className="py-2 pr-4">Manager Status</th>
-                <th className="py-2 pr-4">Reason</th>
-                <th className="py-2 pr-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[60px]">ID</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Start</TableHead>
+                <TableHead>End</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Manager Status</TableHead>
+                <TableHead>Reason</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {loading ? (
-                <tr><td className="py-4" colSpan={8}>Loading...</td></tr>
+                <TableRow><TableCell colSpan={8} className="py-4">Loading...</TableCell></TableRow>
               ) : rows.length === 0 ? (
-                <tr><td className="py-4" colSpan={8}>No records found</td></tr>
+                <TableRow><TableCell colSpan={8} className="py-4">No records found</TableCell></TableRow>
               ) : (
                 rows.map((l) => (
-                  <tr key={l.l_id} className="border-t">
-                    <td className="py-2 pr-4">{l.l_id}</td>
-                    <td className="py-2 pr-4">{l.leave_type}</td>
-                    <td className="py-2 pr-4">{new Date(l.start_date).toLocaleDateString()}</td>
-                    <td className="py-2 pr-4">{new Date(l.end_date).toLocaleDateString()}</td>
-                    <td className="py-2 pr-4">{l.added_by_user}</td>
-                    <td className="py-2 pr-4">{l.Managerapproval}</td>
-                    <td className="py-2 pr-4">{l.reason}</td>
-                    <td className="py-2 pr-4">
+                  <TableRow key={l.l_id}>
+                    <TableCell>{l.l_id}</TableCell>
+                    <TableCell>{l.leave_type}</TableCell>
+                    <TableCell>{new Date(l.start_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(l.end_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{l.added_by_user}</TableCell>
+                    <TableCell>{l.Managerapproval}</TableCell>
+                    <TableCell className="max-w-[240px] truncate" title={l.reason}>{l.reason}</TableCell>
+                    <TableCell>
                       <Button size="sm" onClick={() => openReview(l)}>Approve</Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         <div className="flex items-center justify-between mt-4">
           <div className="text-sm">Page {page} of {totalPages}</div>
           <div className="space-x-2">
-            <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="rounded border px-3 py-1 disabled:opacity-50">Prev</button>
-            <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="rounded border px-3 py-1 disabled:opacity-50">Next</button>
+            <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</Button>
+            <Button variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
           </div>
         </div>
       </div>

@@ -2,6 +2,17 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export default function AddEmployeePage() {
   const router = useRouter()
@@ -12,6 +23,15 @@ export default function AddEmployeePage() {
   const [optError, setOptError] = useState<string | null>(null)
   const [deptOptions, setDeptOptions] = useState<string[]>([])
   const [buOptions, setBuOptions] = useState<string[]>([])
+  const [prefix, setPrefix] = useState("")
+  const [gender, setGender] = useState("")
+  const [bloodGroup, setBloodGroup] = useState("")
+  const [employmentType, setEmploymentType] = useState("")
+  const [employmentStatus, setEmploymentStatus] = useState("")
+  const [company, setCompany] = useState("")
+  const [businessUnit, setBusinessUnit] = useState("")
+  const [department, setDepartment] = useState("")
+  const [roleType, setRoleType] = useState("")
 
   useEffect(() => {
     let abort = false
@@ -93,214 +113,249 @@ export default function AddEmployeePage() {
       <form onSubmit={onSubmit} className="space-y-6" encType="multipart/form-data">
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm mb-1">Join Date</label>
-            <input name="join_date" type="date" className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="join_date">Join Date</Label>
+            <Input id="join_date" name="join_date" type="date" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Prefix</label>
-            <select name="Prefix" className="w-full border rounded px-3 py-2">
-              <option value="">Select</option>
-              <option value="Mr.">Mr.</option>
-              <option value="Ms.">Ms.</option>
-              <option value="Mrs.">Mrs.</option>
-              <option value="Dr.">Dr.</option>
-              <option value="Prof.">Prof.</option>
-            </select>
+            <Label>Prefix</Label>
+            <Select value={prefix} onValueChange={setPrefix}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Mr.">Mr.</SelectItem>
+                <SelectItem value="Ms.">Ms.</SelectItem>
+                <SelectItem value="Mrs.">Mrs.</SelectItem>
+                <SelectItem value="Dr.">Dr.</SelectItem>
+                <SelectItem value="Prof.">Prof.</SelectItem>
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="Prefix" value={prefix} />
           </div>
           <div>
-            <label className="block text-sm mb-1">Name</label>
-            <input name="name" required className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" name="name" required />
           </div>
           <div>
-            <label className="block text-sm mb-1">Full Name</label>
-            <input name="full_name" className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="full_name">Full Name</Label>
+            <Input id="full_name" name="full_name" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Gender</label>
-            <select name="gender" className="w-full border rounded px-3 py-2">
-              <option value="">Select</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
+            <Label>Gender</Label>
+            <Select value={gender} onValueChange={setGender}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Male">Male</SelectItem>
+                <SelectItem value="Female">Female</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="gender" value={gender} />
           </div>
           <div>
-            <label className="block text-sm mb-1">Employee Code</label>
-            <input name="emp_code" className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="emp_code">Employee Code</Label>
+            <Input id="emp_code" name="emp_code" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Blood Group</label>
-            <select name="blood_group" className="w-full border rounded px-3 py-2">
-              <option value="">Select</option>
-              <option value="A+">A+</option>
-              <option value="A-">A-</option>
-              <option value="B+">B+</option>
-              <option value="B-">B-</option>
-              <option value="AB+">AB+</option>
-              <option value="AB-">AB-</option>
-              <option value="O+">O+</option>
-              <option value="O-">O-</option>
-            </select>
+            <Label>Blood Group</Label>
+            <Select value={bloodGroup} onValueChange={setBloodGroup}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="A+">A+</SelectItem>
+                <SelectItem value="A-">A-</SelectItem>
+                <SelectItem value="B+">B+</SelectItem>
+                <SelectItem value="B-">B-</SelectItem>
+                <SelectItem value="AB+">AB+</SelectItem>
+                <SelectItem value="AB-">AB-</SelectItem>
+                <SelectItem value="O+">O+</SelectItem>
+                <SelectItem value="O-">O-</SelectItem>
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="blood_group" value={bloodGroup} />
           </div>
           <div>
-            <label className="block text-sm mb-1">Nationality</label>
-            <input name="nationality" className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="nationality">Nationality</Label>
+            <Input id="nationality" name="nationality" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Email</label>
-            <input name="email" type="email" required className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" name="email" type="email" required />
           </div>
           <div>
-            <label className="block text-sm mb-1">Personal Email</label>
-            <input name="personal_email" type="email" className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="personal_email">Personal Email</Label>
+            <Input id="personal_email" name="personal_email" type="email" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Contact No</label>
-            <input name="contact_no" className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="contact_no">Contact No</Label>
+            <Input id="contact_no" name="contact_no" />
           </div>
           <div>
-            <label className="block text-sm mb-1">DOB</label>
-            <input name="dob" type="date" className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="dob">DOB</Label>
+            <Input id="dob" name="dob" type="date" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Retirement Date</label>
-            <input name="retirement_date" type="date" className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="retirement_date">Retirement Date</Label>
+            <Input id="retirement_date" name="retirement_date" type="date" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Employment Type</label>
-            <select name="employment_type" className="w-full border rounded px-3 py-2">
-              <option value="">Select</option>
-              <option value="Consultant">Consultant</option>
-              <option value="Contractual">Contractual</option>
-              <option value="Permanent">Permanent</option>
-              <option value="Trainee">Trainee</option>
-              <option value="Wages">Wages</option>
-            </select>
+            <Label>Employment Type</Label>
+            <Select value={employmentType} onValueChange={setEmploymentType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Consultant">Consultant</SelectItem>
+                <SelectItem value="Contractual">Contractual</SelectItem>
+                <SelectItem value="Permanent">Permanent</SelectItem>
+                <SelectItem value="Trainee">Trainee</SelectItem>
+                <SelectItem value="Wages">Wages</SelectItem>
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="employment_type" value={employmentType} />
           </div>
           <div>
-            <label className="block text-sm mb-1">Employment Status</label>
-            <select name="employment_status" className="w-full border rounded px-3 py-2">
-              <option value="">Select</option>
-              <option value="Probation">Probation</option>
-              <option value="Confirmed">Confirmed</option>
-              <option value="Resigned">Resigned</option>
-              <option value="Relieved">Relieved</option>
-              <option value="Settled">Settled</option>
-            </select>
+            <Label>Employment Status</Label>
+            <Select value={employmentStatus} onValueChange={setEmploymentStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Probation">Probation</SelectItem>
+                <SelectItem value="Confirmed">Confirmed</SelectItem>
+                <SelectItem value="Resigned">Resigned</SelectItem>
+                <SelectItem value="Relieved">Relieved</SelectItem>
+                <SelectItem value="Settled">Settled</SelectItem>
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="employment_status" value={employmentStatus} />
           </div>
           <div>
-            <label className="block text-sm mb-1">Company</label>
-            <select name="company" className="w-full border rounded px-3 py-2">
-              <option value="">Select</option>
-              <option value="Demandify Media">Demandify Media</option>
-              <option value="Gnosis Dtata Marketing">Gnosis Dtata Marketing</option>
-            </select>
+            <Label>Company</Label>
+            <Select value={company} onValueChange={setCompany}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Demandify Media">Demandify Media</SelectItem>
+                <SelectItem value="Gnosis Dtata Marketing">Gnosis Dtata Marketing</SelectItem>
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="company" value={company} />
           </div>
           <div>
-            <label className="block text-sm mb-1">Business Unit</label>
-            <select name="Business_unit" className="w-full border rounded px-3 py-2" disabled={optLoading}>
-              <option value="">{optLoading ? "Loading..." : "Select"}</option>
-              {buOptions.map((bu) => (
-                <option key={bu} value={bu}>{bu}</option>
-              ))}
-            </select>
+            <Label>Business Unit</Label>
+            <Select value={businessUnit} onValueChange={setBusinessUnit}>
+              <SelectTrigger disabled={optLoading}>
+                <SelectValue placeholder={optLoading ? "Loading..." : "Select"} />
+              </SelectTrigger>
+              <SelectContent>
+                {buOptions.map((bu) => (
+                  <SelectItem key={bu} value={bu}>{bu}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="Business_unit" value={businessUnit} />
             {optError ? <div className="text-xs text-red-600 mt-1">{optError}</div> : null}
           </div>
           <div>
-            <label className="block text-sm mb-1">Job Role</label>
-            <input name="job_role" className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="job_role">Job Role</Label>
+            <Input id="job_role" name="job_role" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Department</label>
-            <select name="department" className="w-full border rounded px-3 py-2" disabled={optLoading}>
-              <option value="">{optLoading ? "Loading..." : "Select"}</option>
-              {deptOptions.map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
+            <Label>Department</Label>
+            <Select value={department} onValueChange={setDepartment}>
+              <SelectTrigger disabled={optLoading}>
+                <SelectValue placeholder={optLoading ? "Loading..." : "Select"} />
+              </SelectTrigger>
+              <SelectContent>
+                {deptOptions.map((d) => (
+                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="department" value={department} />
             {optError ? <div className="text-xs text-red-600 mt-1">{optError}</div> : null}
           </div>
           <div>
-            <label className="block text-sm mb-1">Reporting Manager</label>
-            <input name="reporting_manager" className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="reporting_manager">Reporting Manager</Label>
+            <Input id="reporting_manager" name="reporting_manager" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Functional Manager</label>
-            <input name="Functional_manager" className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="Functional_manager">Functional Manager</Label>
+            <Input id="Functional_manager" name="Functional_manager" />
           </div>
           <div className="md:col-span-3">
-            <label className="block text-sm mb-1">Employee Address</label>
-            <textarea name="emp_address" className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="emp_address">Employee Address</Label>
+            <Textarea id="emp_address" name="emp_address" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Role Type</label>
-            <select name="type" className="w-full border rounded px-3 py-2">
-              <option value="">Select</option>
-              <option value="Manager">Manager</option>
-              <option value="HR">HR</option>
-              <option value="Quality">Quality</option>
-              <option value="IT">IT</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Sales">Sales</option>
-              <option value="Operation Agent">Operation Agent</option>
-            </select>
+            <Label>Role Type</Label>
+            <Select value={roleType} onValueChange={setRoleType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Manager">Manager</SelectItem>
+                <SelectItem value="HR">HR</SelectItem>
+                <SelectItem value="Quality">Quality</SelectItem>
+                <SelectItem value="IT">IT</SelectItem>
+                <SelectItem value="Marketing">Marketing</SelectItem>
+                <SelectItem value="Sales">Sales</SelectItem>
+                <SelectItem value="Operation Agent">Operation Agent</SelectItem>
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="type" value={roleType} />
           </div>
           <div>
-            <label className="block text-sm mb-1">Password</label>
-            <input name="password" type="password" required className="w-full border rounded px-3 py-2" />
+            <Label htmlFor="password">Password</Label>
+            <Input id="password" name="password" type="password" required />
           </div>
         </section>
 
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm mb-1">Aadhaar Card</label>
-            <input name="aadhaar_card" type="file" accept="image/*,.pdf" className="w-full" />
+            <Label htmlFor="aadhaar_card">Aadhaar Card</Label>
+            <Input id="aadhaar_card" name="aadhaar_card" type="file" accept="image/*,.pdf" className="w-full" />
           </div>
           <div>
-            <label className="block text-sm mb-1">PAN Card</label>
-            <input name="pan_card" type="file" accept="image/*,.pdf" className="w-full" />
+            <Label htmlFor="pan_card">PAN Card</Label>
+            <Input id="pan_card" name="pan_card" type="file" accept="image/*,.pdf" className="w-full" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Marksheet</label>
-            <input name="marksheet" type="file" accept="image/*,.pdf" className="w-full" />
+            <Label htmlFor="marksheet">Marksheet</Label>
+            <Input id="marksheet" name="marksheet" type="file" accept="image/*,.pdf" className="w-full" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Certifications</label>
-            <input name="certifications" type="file" accept="image/*,.pdf" className="w-full" />
+            <Label htmlFor="certifications">Certifications</Label>
+            <Input id="certifications" name="certifications" type="file" accept="image/*,.pdf" className="w-full" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Bank Passbook</label>
-            <input name="bankpassbook" type="file" accept="image/*,.pdf" className="w-full" />
+            <Label htmlFor="bankpassbook">Bank Passbook</Label>
+            <Input id="bankpassbook" name="bankpassbook" type="file" accept="image/*,.pdf" className="w-full" />
           </div>
           <div>
-            <label className="block text-sm mb-1">Relieving Letter</label>
-            <input name="relieving_letter" type="file" accept="image/*,.pdf" className="w-full" />
+            <Label htmlFor="relieving_letter">Relieving Letter</Label>
+            <Input id="relieving_letter" name="relieving_letter" type="file" accept="image/*,.pdf" className="w-full" />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm mb-1">Pay Slips (multiple)</label>
-            <input name="pay_slips" type="file" multiple accept="image/*,.pdf" className="w-full" />
+            <Label htmlFor="pay_slips">Pay Slips (multiple)</Label>
+            <Input id="pay_slips" name="pay_slips" type="file" multiple accept="image/*,.pdf" className="w-full" />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm mb-1">Bank Statements (multiple)</label>
-            <input name="bank_statements" type="file" multiple accept="image/*,.pdf" className="w-full" />
+            <Label htmlFor="bank_statements">Bank Statements (multiple)</Label>
+            <Input id="bank_statements" name="bank_statements" type="file" multiple accept="image/*,.pdf" className="w-full" />
           </div>
         </section>
 
         <div className="flex gap-3 pt-2">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="inline-flex items-center justify-center rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
-          >
+          <Button type="submit" disabled={submitting}>
             {submitting ? "Submitting..." : "Submit"}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/pages/hr")}
-            className="inline-flex items-center justify-center rounded border px-4 py-2"
-          >
-            Cancel
-          </button>
+          </Button>
+          <Button type="button" variant="outline" onClick={() => router.push("/pages/hr")}>Cancel</Button>
         </div>
       </form>
     </div>

@@ -57,6 +57,16 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
          
         ],
       },
+
+      {
+        title: "Raise Ticket",
+        url: "#",
+        icon: IconFolder,
+        children: [
+          { title: "Raise Complaints", url: "/pages/admin/RaiseComplaint", icon: IconTicket },
+          { title: "Raise Tickets", url: "/pages/admin/RaiseComplaint/Raise-Tickets", icon: IconTicket },
+        ],
+      },
       {
         title: "Payroll",
         url: "#",
@@ -121,7 +131,17 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
           { title: "Salary structure", url: "#", icon: IconFileDescription },
         ],
       },
-      { title: "Raise Ticket", url: "#", icon: IconTicket },
+
+      {
+        title: "Raise Ticket",
+        url: "#",
+        icon: IconFolder,
+        children: [
+          { title: "Raise Complaints", url: "/pages/user/RaiseComplaint", icon: IconTicket },
+          { title: "Raise Tickets", url: "/pages/user/RaiseComplaint/Raise-Tickets", icon: IconTicket },
+        ],
+      },
+      
     ],
     navSecondary: [
       { title: "Settings", url: "#", icon: IconSettings },
@@ -157,6 +177,16 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
           { title: "New Leave", url: "/pages/hr/leaves/new", icon: IconListDetails },
           { title: "Available Leaves", url: "/pages/hr/leaves/available", icon: IconReport },
           { title: "All Leaves", url: "/pages/hr/leaves", icon: IconListDetails },
+        ],
+      },
+
+      {
+        title: "Raise Ticket",
+        url: "#",
+        icon: IconFolder,
+        children: [
+          { title: "Raise Complaints", url: "/pages/hr/RaiseComplaint", icon: IconTicket },
+          { title: "Raise Tickets", url: "/pages/hr/RaiseComplaint/Raise-Tickets", icon: IconTicket },
         ],
       },
       {
