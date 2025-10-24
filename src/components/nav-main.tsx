@@ -26,6 +26,7 @@ export function NavMain({
     title: string
     url: string
     icon?: Icon
+    className?: string
     children?: { title: string; url: string; icon?: Icon }[]
   }[]
 }) {
@@ -74,7 +75,7 @@ export function NavMain({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <SidebarMenuButton tooltip={item.title} asChild isActive={isActive} className={activeCls}>
+                  <SidebarMenuButton tooltip={item.title} asChild isActive={isActive} className={`${activeCls} ${item.className || ''}`}>
                     <Link href={item.url}>
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>

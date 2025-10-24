@@ -66,7 +66,7 @@ interface PayrollDetailsModalProps {
 export function PayrollDetailsModal({ isOpen, onClose, employee }: PayrollDetailsModalProps) {
   if (!employee) return null
 
-  const InfoRow = ({ label, value }: { label: string; value: any }) => (
+  const InfoRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
     <div className="grid grid-cols-2 gap-4 py-2 border-b">
       <div className="font-medium text-sm text-muted-foreground">{label}</div>
       <div className="text-sm">{value || 'N/A'}</div>

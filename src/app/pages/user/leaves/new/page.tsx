@@ -29,20 +29,19 @@ export default function NewLeavePage() {
           added_by_user: addedByUser,
         }),
       })
-      if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data?.error || "Failed to submit leave")
       }
       router.push("/pages/hr")
       router.refresh()
-    } catch (err: any) {
-      setError(err?.message || "Something went wrong")
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error("Something went wrong")
+      setError(error.message)
     } finally {
       setSubmitting(false)
     }
   }
  
-  return (
     <div className="p-6 max-w-2xl">
       <h1 className="text-2xl font-bold mb-4">New Leave Request</h1>
       {error && (

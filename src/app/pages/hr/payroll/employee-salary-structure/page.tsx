@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { SidebarConfig } from "@/components/sidebar-config"
 import { PayrollDetailsModal } from "@/components/payroll-details-modal"
 import { Button } from "@/components/ui/button"
-import { IconEye, IconRefresh, IconPencil } from "@tabler/icons-react"
+import { Input } from "@/components/ui/input"
+import { IconEye, IconRefresh, IconPencil, IconSearch, IconUsers } from "@tabler/icons-react"
 import Link from "next/link"
 import {
   Card,
@@ -74,6 +75,7 @@ export default function EmployeeSalaryPage() {
   const [loading, setLoading] = useState(true)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const fetchEmployees = async () => {
     try {
@@ -108,105 +110,156 @@ export default function EmployeeSalaryPage() {
     setIsModalOpen(true)
   }
 
+  // Filter employees based on search query
+  const filteredEmployees = useMemo(() => {
+    if (!searchQuery.trim()) return employees
+    
+    const query = searchQuery.toLowerCase()
+    return employees.filter((employee) => {
+      return (
+        employee.Full_name?.toLowerCase().includes(query) ||
+        employee.emp_code?.toLowerCase().includes(query) ||
+        employee.company_name?.toLowerCase().includes(query) ||
+        employee.department?.toLowerCase().includes(query) ||
+        employee.email?.toLowerCase().includes(query)
+      )
+    })
+  }, [employees, searchQuery])
+
   return (
     <>
       <SidebarConfig role="hr" />
-      <div className="flex flex-1 flex-col">
-        <div className="@container/main flex flex-1 flex-col gap-2">
-          <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-            <div className="px-4 lg:px-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight">Employee Salary Structure</h1>
-                  <p className="text-muted-foreground">
-                    View and manage employee salary details and payroll information
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={fetchEmployees}
-                  disabled={loading}
-                >
-                  <IconRefresh className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                </Button>
-              </div>
+      <div className="flex flex-1 flex-col gap-6 p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+        {/* Enhanced Header */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                Employee Salary Structure
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                View and manage employee salary details and payroll information
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchEmployees}
+              disabled={loading}
+              className="hover:bg-primary hover:text-primary-foreground transition-colors"
+            >
+              <IconRefresh className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+        </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>All Employees</CardTitle>
-                  <CardDescription>
-                    {employees.length} employees found
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="flex items-center justify-center h-32">
-                      <div className="text-muted-foreground">Loading employees...</div>
-                    </div>
-                  ) : (
-                    <div className="rounded-md border">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[80px]">ID</TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Emp Code</TableHead>
-                            <TableHead>Company</TableHead>
-                            <TableHead>Department</TableHead>
-                            <TableHead className="text-right w-[150px]">Action</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {employees.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={6} className="text-center text-muted-foreground">
-                                No employees found
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            employees.map((employee) => (
-                              <TableRow key={employee.id}>
-                                <TableCell className="font-medium">
-                                  {employee.id}
-                                </TableCell>
-                                <TableCell>{employee.Full_name || 'N/A'}</TableCell>
-                                <TableCell>{employee.emp_code || 'N/A'}</TableCell>
-                                <TableCell>{employee.company_name || 'N/A'}</TableCell>
-                                <TableCell>{employee.department || 'N/A'}</TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex gap-2 justify-end">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleViewClick(employee)}
-                                    >
-                                      <IconEye className="h-4 w-4 mr-1" />
-                                      View
-                                    </Button>
-                                    <Link href={`update-emp-salary-structure/${employee.id}`}>
-                                      <Button
-                                        size="sm"
-                                        variant="default"
-                                      >
-                                        <IconPencil className="h-4 w-4 mr-1" />
-                                        Update
-                                      </Button>
-                                    </Link>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+        {/* Stats Banner */}
+        <div className="bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+              <IconUsers className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-green-900 dark:text-green-100">
+                Total Employees: {employees.length}
+              </h3>
+              <p className="text-sm text-green-700 dark:text-green-300">
+                {searchQuery ? `Showing ${filteredEmployees.length} matching results` : 'All employee salary structures'}
+              </p>
             </div>
           </div>
         </div>
+
+        {/* Main Content Card */}
+        <Card className="border-slate-200 dark:border-slate-700">
+          <CardHeader className="border-b border-slate-200 dark:border-slate-700">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <CardTitle className="text-xl">Employee Records</CardTitle>
+                <CardDescription className="mt-1">
+                  {filteredEmployees.length} employee{filteredEmployees.length !== 1 ? 's' : ''} {searchQuery ? 'found' : 'total'}
+                </CardDescription>
+              </div>
+              {/* Search Bar */}
+              <div className="relative w-full md:w-80">
+                <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, code, company, department..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 bg-white dark:bg-slate-800"
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="text-muted-foreground">Loading employees...</div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+                      <TableHead className="w-[80px] font-semibold">ID</TableHead>
+                      <TableHead className="font-semibold">Name</TableHead>
+                      <TableHead className="font-semibold">Emp Code</TableHead>
+                      <TableHead className="font-semibold">Company</TableHead>
+                      <TableHead className="font-semibold">Department</TableHead>
+                      <TableHead className="text-right font-semibold">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredEmployees.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-muted-foreground h-32">
+                          {searchQuery ? 'No employees found matching your search' : 'No employees found'}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredEmployees.map((employee) => (
+                        <TableRow key={employee.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                          <TableCell className="font-medium text-primary">
+                            {employee.id}
+                          </TableCell>
+                          <TableCell className="font-medium">{employee.Full_name || 'N/A'}</TableCell>
+                          <TableCell>{employee.emp_code || 'N/A'}</TableCell>
+                          <TableCell>{employee.company_name || 'N/A'}</TableCell>
+                          <TableCell>{employee.department || 'N/A'}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleViewClick(employee)}
+                                className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors"
+                              >
+                                <IconEye className="h-4 w-4 mr-1" />
+                                View
+                              </Button>
+                              <Link href={`update-emp-salary-structure/${employee.id}`}>
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90"
+                                >
+                                  <IconPencil className="h-4 w-4 mr-1" />
+                                  Update
+                                </Button>
+                              </Link>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <PayrollDetailsModal

@@ -1,35 +1,51 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/auth'
- 
+
 // Define protected routes and their required roles
-const protectedRoutes = {
-  '/': ['admin', 'hr', 'user'],
+const protectedRoutes: Record<string, readonly string[]> = {
   '/pages/admin': ['admin'],
   '/pages/hr': ['hr'],
   '/pages/user': ['user'],
 }
- 
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
- 
+
   // Allow public routes and auth API endpoints
-  if (pathname === '/' || pathname.startsWith('/api/auth')) {
+  if (pathname === '/') {
+    // If already logged in, send to respective dashboard
+    const token = request.cookies.get('access_token')?.value
+    if (token) {
+      try {
+        const user = verifyToken(token)
+        const url = request.nextUrl.clone()
+        if (user.role === 'admin') url.pathname = '/pages/admin'
+        else if (user.role === 'hr') url.pathname = '/pages/hr'
+        else url.pathname = '/pages/user'
+        return NextResponse.redirect(url)
+      } catch {
+        // fall through to show public home if token invalid
+      }
+    }
     return NextResponse.next()
   }
- 
+  if (pathname.startsWith('/api/auth')) {
+    return NextResponse.next()
+  }
+
   // Check if route is protected
-  const isProtectedRoute = Object.keys(protectedRoutes).some(route =>
-    pathname.startsWith(route)
-  )
- 
-  if (!isProtectedRoute) {
+  // Match the most specific route first by sorting keys by length desc
+  const protectedRouteKeys = Object.keys(protectedRoutes).sort((a, b) => b.length - a.length)
+  const matchedProtectedRoute = protectedRouteKeys.find(route => pathname.startsWith(route))
+
+  if (!matchedProtectedRoute) {
     return NextResponse.next()
   }
- 
+
   // Get token from cookies
   const token = request.cookies.get('access_token')?.value
- 
+
   if (!token) {
     // Redirect to login if no token
     const url = request.nextUrl.clone()
@@ -37,42 +53,31 @@ export function middleware(request: NextRequest) {
     url.searchParams.set('redirect', pathname)
     return NextResponse.redirect(url)
   }
- 
+
   try {
     // Verify token
     const user = verifyToken(token)
    
-    // Check role-based access
-    for (const [route, allowedRoles] of Object.entries(protectedRoutes)) {
-      if (pathname.startsWith(route)) {
-        if (!allowedRoles.includes(user.role)) {
-          // Redirect to appropriate dashboard based on user's role
-          const url = request.nextUrl.clone()
-          if (user.role === 'admin') {
-            url.pathname = '/pages/admin'
-          } else if (user.role === 'hr') {
-            url.pathname = '/pages/hr'
-          } else {
-            url.pathname = '/pages/user'
-          }
-          return NextResponse.redirect(url)
-        }
-       
-        // Additional check: Users can only access their own department's data
-        // This prevents users from different departments accessing each other's dashboards
-        if (user.role === 'user' && pathname.startsWith('/pages/user')) {
-          // Store user department in header for API routes to use
-          const response = NextResponse.next()
-          response.headers.set('x-user-department', user.department || '')
-          response.headers.set('x-user-id', user.id.toString())
-          response.headers.set('x-user-role', user.role)
-          return response
-        }
-       
-        break
-      }
+    // Check role-based access for the matched route only
+    const allowedRoles = protectedRoutes[matchedProtectedRoute]
+    if (!allowedRoles.includes(user.role)) {
+      // Rewrite to Access Denied to render denial page without bouncing via '/'
+      const url = request.nextUrl.clone()
+      url.pathname = '/access-denied'
+      return NextResponse.rewrite(url)
     }
- 
+
+    // Additional check: Users can only access their own department's data
+    // This prevents users from different departments accessing each other's dashboards
+    if (user.role === 'user' && pathname.startsWith('/pages/user')) {
+      // Store user department in header for API routes to use
+      const response = NextResponse.next()
+      response.headers.set('x-user-department', user.department || '')
+      response.headers.set('x-user-id', user.id.toString())
+      response.headers.set('x-user-role', user.role)
+      return response
+    }
+
     return NextResponse.next()
   } catch (error) {
     // Invalid token - redirect to login
@@ -84,7 +89,7 @@ export function middleware(request: NextRequest) {
     return response
   }
 }
- 
+
 export const config = {
   matcher: [
     /*

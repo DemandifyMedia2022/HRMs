@@ -3,12 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { requireRoles } from "@/lib/middleware";
 
 // PUT /api/users/:id - Update user (admin only)
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = requireRoles(req, "admin");
   if (auth instanceof NextResponse) return auth;
 
   try {
-    const id = Number(params.id);
+    const { id: idStr } = await params;
+    const id = Number(idStr);
     if (!Number.isFinite(id)) return NextResponse.json({ message: "Invalid id" }, { status: 400 });
 
     const body = await req.json();
@@ -38,12 +39,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE /api/users/:id - Delete user (admin only)
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = requireRoles(req, "admin");
   if (auth instanceof NextResponse) return auth;
 
   try {
-    const id = Number(params.id);
+    const { id: idStr } = await params;
+    const id = Number(idStr);
     if (!Number.isFinite(id)) return NextResponse.json({ message: "Invalid id" }, { status: 400 });
 
     await (prisma as any).users.delete({ where: { id } });

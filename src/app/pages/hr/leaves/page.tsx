@@ -65,8 +65,8 @@ export default function HRLeavesPage() {
       setRows(data.data)
       setTotalPages(data.pagination.totalPages)
       setTotal(data.pagination.total)
-    } catch (e: any) {
-      setError(e?.message || "Failed to load leaves")
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load leaves")
     } finally {
       setLoading(false)
     }
@@ -78,9 +78,9 @@ export default function HRLeavesPage() {
   }, [qs])
 
   async function updateStatus(id: number, approve: boolean) {
-    const payload: any = approve
-      ? { id, HRapproval: "approved", HRrejectReason: "" }
-      : { id, HRapproval: "rejected", HRrejectReason: "Rejected by HR" }
+    const payload = approve
+      ? { id, HRapproval: "approved" as const, HRrejectReason: "" }
+      : { id, HRapproval: "rejected" as const, HRrejectReason: "Rejected by HR" }
     try {
       const res = await fetch(`/api/leaves`, {
         method: "PATCH",
@@ -93,7 +93,7 @@ export default function HRLeavesPage() {
       }
       await load()
     } catch (e) {
-      alert((e as any)?.message || "Failed to update status")
+      alert(e instanceof Error ? e.message : "Failed to update status")
     }
   }
 

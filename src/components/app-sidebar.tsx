@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useSidebarConfig, type SidebarData, type UserRole } from "@/components/sidebar-config"
 import {
+  IconCalendar,
   IconChartBar,
   IconDashboard,
   IconDatabase,
@@ -63,7 +64,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconSettings,
         children: [
           { title: "Paylip", url: "#", icon: IconReport },
-          { title: "My Salary Structure", url: "#", icon: IconFileDescription },
+          { title: "My Salary Structure", url: "/pages/hr/payroll/my-salary-structure", icon: IconFileDescription },
           { title: "Employee Salary Structure", url: "#", icon: IconFileDescription },
           { title: "Tax", url: "#", icon: IconReport },
         ],
@@ -117,8 +118,8 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: "#",
         icon: IconFolder,
         children: [
-          { title: "Payslip", url: "#", icon: IconReport },
-          { title: "Salary structure", url: "#", icon: IconFileDescription },
+          { title: "Payslip", url: "/pages/user/payroll/payslip", icon: IconReport },
+          { title: "Salary structure", url: "/pages/user/payroll/salary-structure", icon: IconFileDescription },
         ],
       },
       { title: "Raise Ticket", url: "#", icon: IconTicket },
@@ -160,17 +161,26 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         ],
       },
       {
+        title: "Events",
+        url: "#",
+        icon: IconCalendar,
+        children: [
+          { title: "Add Events", url: "/pages/hr/events", icon: IconCalendar },
+        
+        ],
+      },
+      {
         title: "Payroll",
         url: "#",
         icon: IconReport,
         children: [
-          { title: "Paylip", url: "#", icon: IconReport },
-          { title: "My Salary Structure", url: "#", icon: IconFileDescription },
+          { title: "Paylip", url: "/pages/hr/payroll/payslip", icon: IconReport },
+          { title: "My Salary Structure", url: "/pages/hr/payroll/my-salary-structure", icon: IconFileDescription },
           { title: "Employee Salary Structure", url: "/pages/hr/payroll/employee-salary-structure", icon: IconFileDescription },
-          { title: "Tax", url: "#", icon: IconReport },
+          { title: "Tax", url: "/pages/hr/payroll/tax", icon: IconReport },
         ],
       },
-      { title: "Bank Challan", url: "#", icon: IconFileDescription },
+      { title: "Bank Challan", url: "/pages/hr/bank-challan", icon: IconFileDescription },
       {
         title: "Employee Details",
         url: "#",
@@ -187,7 +197,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
       
     ],
     documents: [
-      { name: "Letter Generation", url: "#", icon: IconFileWord },
+      { name: "Letter Generation", url: "/pages/hr/letter-generation", icon: IconFileWord },
       { name: "Employee Handbook", url: "#", icon: IconFileDescription },
       { name: "Reports", url: "#", icon: IconReport },
     ],

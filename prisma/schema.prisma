@@ -766,3 +766,17 @@ model tax_setting {
   taxable                String? @db.VarChar(255)
   component              String? @db.VarChar(255)
 }
+
+model income_tax_slabs {
+  id             Int     @id @default(autoincrement())
+  category       String  @db.VarChar(50)  // 'individual', 'senior-citizen', 'super-senior-citizen'
+  serial         Int
+  tax_regime     String  @db.VarChar(10)  // 'OLD' or 'NEW'
+  lower_limit    Int
+  upper_limit    Int
+  tax_percentage Decimal @db.Decimal(5, 2)
+  created_at     DateTime? @default(now()) @db.Timestamp(0)
+  updated_at     DateTime? @default(now()) @updatedAt @db.Timestamp(0)
+
+  @@map("income_tax_slabs")
+}

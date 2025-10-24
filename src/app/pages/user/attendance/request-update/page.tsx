@@ -37,7 +37,7 @@ export default function Page() {
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
       setMyRequests(json.data || []);
-    } catch (e: any) {
+    } catch {
       // ignore
     } finally {
       setLoading(false);
@@ -68,8 +68,8 @@ export default function Page() {
       setDesired("");
       setReason("");
       await loadMine();
-    } catch (e: any) {
-      setMessage(e?.message || "Failed");
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Failed");
     } finally {
       setSubmitting(false);
     }
