@@ -588,7 +588,7 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-1"><Label htmlFor="Biometric_id">Biometric ID</Label><Input id="Biometric_id" name="Biometric_id" defaultValue={selected.Biometric_id || ""} placeholder="Biometric ID" /></div>
                 </fieldset>
                 <div className="sm:col-span-2 flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Stop Editing" : "Edit"}</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Cancel" : "Edit"}</Button>
                   <Button type="submit" disabled={!isEditing || saving}>{saving ? "Saving..." : "Save Basic Info"}</Button>
                 </div>
               </form>
@@ -630,7 +630,7 @@ export default function EmployeeDetailsPage() {
                 <div className="hidden sm:block" />
                 </fieldset>
                 <div className="sm:col-span-2 flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Stop Editing" : "Edit"}</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Cancel" : "Edit"}</Button>
                   <Button type="submit" disabled={!isEditing || saving}>{saving ? "Saving..." : "Save Family"}</Button>
                 </div>
               </form>
@@ -646,7 +646,7 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-1"><Label htmlFor="retirement_date">Retirement date</Label><DatePickerField id="retirement_date" name="retirement_date" defaultValue={selected.retirement_date} disabled={!isEditing} placeholder="Select date" /></div>
                 </fieldset>
                 <div className="sm:col-span-2 flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Stop Editing" : "Edit"}</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Cancel" : "Edit"}</Button>
                   <Button type="submit" disabled={!isEditing || saving}>{saving ? "Saving..." : "Save Employment"}</Button>
                 </div>
               </form>
@@ -662,7 +662,7 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-1"><Label htmlFor="Functional_manager">Functional manager</Label><Input id="Functional_manager" name="Functional_manager" defaultValue={selected.Functional_manager || ""} placeholder="Functional manager" /></div>
                 </fieldset>
                 <div className="sm:col-span-2 flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Stop Editing" : "Edit"}</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Cancel" : "Edit"}</Button>
                   <Button type="submit" disabled={!isEditing || saving}>{saving ? "Saving..." : "Save Position"}</Button>
                 </div>
               </form>
@@ -684,7 +684,7 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-1"><Label htmlFor="reimbursement_account_no">Reimbursement account no</Label><Input id="reimbursement_account_no" name="reimbursement_account_no" defaultValue={selected.reimbursement_account_no || ""} placeholder="Reimbursement account no" /></div>
                 </fieldset>
                 <div className="sm:col-span-2 flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Stop Editing" : "Edit"}</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Cancel" : "Edit"}</Button>
                   <Button type="submit" disabled={!isEditing || saving}>{saving ? "Saving..." : "Save Bank"}</Button>
                 </div>
               </form>
@@ -703,7 +703,7 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-1"><Label htmlFor="emergency_relation">Emergency relation</Label><Input id="emergency_relation" name="emergency_relation" defaultValue={selected.emergency_relation || ""} placeholder="Emergency relation" /></div>
                 </fieldset>
                 <div className="sm:col-span-2 flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Stop Editing" : "Edit"}</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Cancel" : "Edit"}</Button>
                   <Button type="submit" disabled={!isEditing || saving}>{saving ? "Saving..." : "Save Other"}</Button>
                 </div>
               </form>
@@ -721,7 +721,7 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-1"><Label htmlFor="insuree_code">Insuree code</Label><Input id="insuree_code" name="insuree_code" defaultValue={selected.insuree_code || ""} placeholder="Insuree code" /></div>
                 </fieldset>
                 <div className="sm:col-span-2 flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Stop Editing" : "Edit"}</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsEditing((v) => !v)}>{isEditing ? "Cancel" : "Edit"}</Button>
                   <Button type="submit" disabled={!isEditing || saving}>{saving ? "Saving..." : "Save Insurance"}</Button>
                 </div>
               </form>

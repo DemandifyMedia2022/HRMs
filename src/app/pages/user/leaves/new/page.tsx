@@ -15,9 +15,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 const leaveOptions = [
   'Casual Leave',
   'Sick Leave',
-  'Privileged Leave',
-  'Maternity Leave',
-  'Paternity Leave',
+  'Paid Leave',
   'Comp-Off',
   'WFH'
 ];

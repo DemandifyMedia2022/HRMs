@@ -229,14 +229,14 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: '#',
         icon: IconReport,
         children: [
-          { title: 'Paylip', url: '/pages/hr/payslip', icon: IconReport },
+          { title: 'Payslip', url: '/pages/hr/payroll/payslip', icon: IconReport },
           { title: 'My Salary Structure', url: '/pages/hr/payroll/my-salary-structure', icon: IconFileDescription },
           {
             title: 'Employee Salary Structure',
             url: '/pages/hr/payroll/employee-salary-structure',
             icon: IconFileDescription
           },
-          { title: 'Tax', url: '/pages/hr/payroll/tax', icon: IconReport }
+          { title: 'Employee Expenses', url: '/pages/hr/payroll/tax', icon: IconReport }
         ]
       },
       {
