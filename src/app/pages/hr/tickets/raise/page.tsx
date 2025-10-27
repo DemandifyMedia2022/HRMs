@@ -167,7 +167,7 @@ export default function RaiseComplaintPage() {
                     onChange={(e) => setDepartment(e.target.value) }
                     readOnly
                     required
-                    className="capitalize "
+                    className="uppercase"
                     placeholder="Department"
                   />
                 </div>

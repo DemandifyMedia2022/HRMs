@@ -55,21 +55,21 @@ export function SidebarConfigProvider({ children }: { children: React.ReactNode 
   const [dataOverrides, setDataOverrides] = useState<Partial<SidebarData> | undefined>(undefined);
 
   const setConfig = React.useCallback((cfg: SidebarConfig) => {
-    console.log('🔧 SidebarConfigProvider setConfig called with:', {
-      role: cfg.role,
-      hasData: !!cfg.data,
-      userData: cfg.data?.user
-    });
+    // console.log('🔧 SidebarConfigProvider setConfig called with:', {
+    //   role: cfg.role,
+    //   hasData: !!cfg.data,
+    //   userData: cfg.data?.user
+    // });
     setRole(cfg.role);
     setDataOverrides(cfg.data);
   }, []);
 
   const value = useMemo<Ctx>(() => {
-    console.log('📦 SidebarConfigProvider context value updated:', {
-      role,
-      hasDataOverrides: !!dataOverrides,
-      userInOverrides: dataOverrides?.user
-    });
+    // console.log('📦 SidebarConfigProvider context value updated:', {
+    //   role,
+    //   hasDataOverrides: !!dataOverrides,
+    //   userInOverrides: dataOverrides?.user
+    // });
     return {
       role,
       dataOverrides,
@@ -92,7 +92,7 @@ export function SidebarConfig({ role, data }: SidebarConfig) {
   const { user, loading } = useAuth();
 
   React.useEffect(() => {
-    console.log('🔄 SidebarConfig effect triggered with:', { role, data, loading, hasAuthUser: !!user });
+    // console.log('🔄 SidebarConfig effect triggered with:', { role, data, loading, hasAuthUser: !!user });
     // Build user block from auth if not provided, so we don't show stale placeholder
     const merged: Partial<SidebarData> | undefined = ((): Partial<SidebarData> | undefined => {
       const base = data ? { ...data } : {};

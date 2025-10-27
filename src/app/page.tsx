@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -102,6 +103,11 @@ export default function HomePage() {
                   placeholder="••••••••"
                   required
                 />
+              </div>
+              <div className="flex justify-end">
+                <Button asChild variant="link" className="px-0 text-sm">
+                  <Link href="/forgot-password">Forgot password?</Link>
+                </Button>
               </div>
               {error && <p className="text-sm text-red-600">{error}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
