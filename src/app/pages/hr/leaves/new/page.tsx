@@ -102,16 +102,7 @@ export default function NewLeavePage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="added_by">Added By (Your Name)</Label>
-                  <Input
-                    id="added_by"
-                    value={addedByUser}
-                    onChange={e => setAddedByUser(e.target.value)}
-                    placeholder="Enter your name"
-                    required
-                  />
-                </div>
+                
               </div>
 
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

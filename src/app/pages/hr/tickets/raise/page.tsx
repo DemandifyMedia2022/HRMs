@@ -164,9 +164,11 @@ export default function RaiseComplaintPage() {
                   </Label>
                   <Input
                     value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
+                    onChange={(e) => setDepartment(e.target.value) }
                     readOnly
                     required
+                    className="capitalize "
+                    placeholder="Department"
                   />
                 </div>
               </div>

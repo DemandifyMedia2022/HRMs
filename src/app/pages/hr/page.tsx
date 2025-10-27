@@ -260,7 +260,7 @@ export default function AdminPage() {
                   <CardDescription>Latest pending (3)</CardDescription>
                 </div>
                 <Button asChild size="sm" variant="outline">
-                  <Link href="/pages/admin/leaves">View All</Link>
+                  <Link href="/pages/hr/leaves">View All</Link>
                 </Button>
               </div>
             </CardHeader>

@@ -70,10 +70,11 @@ function PageWithSidebar({ children }: { children: React.ReactNode }) {
 export function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isHomePage = pathname === '/';
+  const isAccessDenied = pathname === '/access-denied';
 
   return (
     <SidebarConfigProvider>
-      {isHomePage ? children : <PageWithSidebar>{children}</PageWithSidebar>}
+      {isHomePage || isAccessDenied ? children : <PageWithSidebar>{children}</PageWithSidebar>}
     </SidebarConfigProvider>
   );
 }
