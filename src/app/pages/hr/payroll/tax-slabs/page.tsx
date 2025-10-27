@@ -1,65 +1,65 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import Link from "next/link"
-import { SidebarConfig } from "@/components/sidebar-config"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { IconCheck, IconBriefcase, IconGift, IconReceipt, IconFileText, IconChartBar } from "@tabler/icons-react"
+import { useState } from 'react';
+import Link from 'next/link';
+import { SidebarConfig } from '@/components/sidebar-config';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { IconCheck, IconBriefcase, IconGift, IconReceipt, IconFileText, IconChartBar } from '@tabler/icons-react';
 
 type SlabCard = {
-  id: string
-  title: string
-  status: string
-  link: string
-  isCreated: boolean
-  icon: React.ComponentType<{ className?: string }>
-  description: string
-}
+  id: string;
+  title: string;
+  status: string;
+  link: string;
+  isCreated: boolean;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+};
 
 export default function TaxSlabsPage() {
-  const [financialYear, setFinancialYear] = useState("2024-2025")
+  const [financialYear, setFinancialYear] = useState('2024-2025');
 
   const slabs: SlabCard[] = [
     {
-      id: "1",
-      title: "Labour Welfare Fund",
-      status: "Created",
-      link: "/pages/hr/payroll/tax-slabs/labour-welfare-details",
+      id: '1',
+      title: 'Labour Welfare Fund',
+      status: 'Created',
+      link: '/pages/hr/payroll/tax-slabs/labour-welfare-details',
       isCreated: true,
       icon: IconBriefcase,
-      description: "Configure labour welfare fund slabs and rates"
+      description: 'Configure labour welfare fund slabs and rates'
     },
     {
-      id: "2",
-      title: "Bonus (Minimum Wages)",
-      status: "Created",
-      link: "/pages/hr/payroll/bonus",
+      id: '2',
+      title: 'Bonus (Minimum Wages)',
+      status: 'Created',
+      link: '/pages/hr/payroll/bonus',
       isCreated: true,
       icon: IconGift,
-      description: "Set up minimum wage slabs for bonus calculations"
+      description: 'Set up minimum wage slabs for bonus calculations'
     },
     {
-      id: "3",
-      title: "Professional Tax",
-      status: "Created",
-      link: "/pages/hr/payroll/tax-slabs/professional-tax",
+      id: '3',
+      title: 'Professional Tax',
+      status: 'Created',
+      link: '/pages/hr/payroll/tax-slabs/professional-tax',
       isCreated: true,
       icon: IconReceipt,
-      description: "Define professional tax slabs and brackets"
+      description: 'Define professional tax slabs and brackets'
     },
     {
-      id: "4",
-      title: "Income Tax",
-      status: "Created",
-      link: "/pages/hr/payroll/tax-slabs/slabs-details",
+      id: '4',
+      title: 'Income Tax',
+      status: 'Created',
+      link: '/pages/hr/payroll/tax-slabs/slabs-details',
       isCreated: true,
       icon: IconFileText,
-      description: "Manage income tax slabs and rate structures"
-    },
-  ]
+      description: 'Manage income tax slabs and rate structures'
+    }
+  ];
 
   return (
     <>
@@ -85,15 +85,13 @@ export default function TaxSlabsPage() {
                 <IconChartBar className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-primary dark:text-primary mb-1">
-                  Tax Slab Configuration
-                </h3>
+                <h3 className="font-semibold text-primary dark:text-primary mb-1">Tax Slab Configuration</h3>
                 <p className="text-sm text-primary dark:text-primary">
                   Review and configure all tax slabs to ensure accurate salary calculations
                 </p>
               </div>
             </div>
-            
+
             <div className="space-y-2 min-w-[220px]">
               <Label htmlFor="financialYear" className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Financial Year
@@ -115,16 +113,16 @@ export default function TaxSlabsPage() {
         {/* Enhanced Slabs Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {slabs.map((slab, index) => {
-            const Icon = slab.icon
+            const Icon = slab.icon;
             return (
-              <Card 
-                key={slab.id} 
+              <Card
+                key={slab.id}
                 className="group relative overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 {/* Background Gradient on Hover */}
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
+
                 <CardHeader className="pb-3 relative z-10">
                   <div className="flex items-start gap-3">
                     <div className="p-2.5 bg-primary/10 dark:bg-primary/20 rounded-lg group-hover:bg-primary/20 dark:group-hover:bg-primary/30 transition-colors">
@@ -137,18 +135,16 @@ export default function TaxSlabsPage() {
                     </div>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="space-y-4 relative z-10">
-                  <p className="text-xs text-muted-foreground leading-relaxed min-h-[2.5rem]">
-                    {slab.description}
-                  </p>
-                  
+                  <p className="text-xs text-muted-foreground leading-relaxed min-h-[2.5rem]">{slab.description}</p>
+
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-xs font-medium rounded-full">
                       <IconCheck className="h-3 w-3" />
                       {slab.status}
                     </span>
-                    <Link 
+                    <Link
                       href={slab.link}
                       className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary/80 transition-colors group-hover:gap-2"
                     >
@@ -160,10 +156,10 @@ export default function TaxSlabsPage() {
                   </div>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
       </div>
     </>
-  )
+  );
 }

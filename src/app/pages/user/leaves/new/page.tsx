@@ -12,13 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DatePicker } from '@/components/ui/date-picker';
 
-const leaveOptions = [
-  'Casual Leave',
-  'Sick Leave',
-  'Paid Leave',
-  'Comp-Off',
-  'WFH'
-];
+const leaveOptions = ['Casual Leave', 'Sick Leave', 'Paid Leave', 'Comp-Off', 'WFH'];
 
 const toYMD = (d?: Date | null) =>
   d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : '';
@@ -102,7 +96,6 @@ export default function NewLeavePage() {
                     </SelectContent>
                   </Select>
                 </div>
-                
               </div>
 
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

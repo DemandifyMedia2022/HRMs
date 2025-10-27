@@ -92,7 +92,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: '#',
         icon: IconUsers,
         children: [
-          { title: 'All Employees', url: '/pages/admin/employees/employee-details', icon: IconUsers  },
+          { title: 'All Employees', url: '/pages/admin/employees/employee-details', icon: IconUsers },
           { title: 'Add Employee', url: '/pages/admin/employees/new', icon: IconPlus },
           { title: 'Employee Settlement', url: '/pages/admin/employees/settlement', icon: IconUserCheck },
           { title: 'Settlement History', url: '/pages/admin/employees/history', icon: IconHistory }
@@ -156,8 +156,6 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
           { title: 'Ticket Status', url: '/pages/user/tickets/status', icon: IconFileDescription }
         ]
       }
-      
-      
     ],
     navSecondary: [{ title: ' Notifications', url: '/pages/notifications', icon: IconNotification }],
     documents: [

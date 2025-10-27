@@ -2,13 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ empCode: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ empCode: string }> }) {
   try {
     const { empCode } = await params;
-    
+
     const cookies = request.cookies;
     const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
 
@@ -32,7 +29,7 @@ export async function GET(
 
     // Fetch user
     const user = await prisma.users.findFirst({
-      where: { emp_code: empCode },
+      where: { emp_code: empCode }
     });
 
     if (!user) {
@@ -51,7 +48,7 @@ export async function GET(
       { num: 12, short: 'Dec' },
       { num: 1, short: 'Jan' },
       { num: 2, short: 'Feb' },
-      { num: 3, short: 'Mar' },
+      { num: 3, short: 'Mar' }
     ];
 
     const now = new Date();
@@ -67,15 +64,12 @@ export async function GET(
     // Preload TDS values
     const monthlyTDS: Record<string, number> = {};
     for (const month of fiscalMonths) {
-      const monthYear =
-        month.num >= 4
-          ? new Date(fiscalYear, month.num - 1)
-          : new Date(fiscalYear + 1, month.num - 1);
+      const monthYear = month.num >= 4 ? new Date(fiscalYear, month.num - 1) : new Date(fiscalYear + 1, month.num - 1);
 
       if (monthYear <= currentFiscalMonth) {
         const investmentDeclaration = await prisma.investment_declaration.findFirst({
           where: { emp_code: empCode },
-          select: { TDS_this_month1: true },
+          select: { TDS_this_month1: true }
         });
         monthlyTDS[month.short] = parseFloat(investmentDeclaration?.TDS_this_month1 || '0');
       } else {
@@ -90,7 +84,7 @@ export async function GET(
       PF: parseFloat(String(user.PF_Monthly_Contribution || '0')),
       ESI: user.Employee_Esic_Monthly ? parseFloat(String(user.Employee_Esic_Monthly)) : 0,
       'PROF. TAX': 0,
-      TDS: 0,
+      TDS: 0
     };
 
     const report: Record<string, Record<string, number>> = {};
@@ -104,9 +98,7 @@ export async function GET(
       for (const month of fiscalMonths) {
         let value = 0;
         const monthYear =
-          month.num >= 4
-            ? new Date(fiscalYear, month.num - 1)
-            : new Date(fiscalYear + 1, month.num - 1);
+          month.num >= 4 ? new Date(fiscalYear, month.num - 1) : new Date(fiscalYear + 1, month.num - 1);
 
         if (monthYear <= currentFiscalMonth) {
           if (label === 'PROF. TAX') {
@@ -133,10 +125,7 @@ export async function GET(
     // Calculate actual earnings based on attendance
     let totalEarnings = 0;
     for (const month of fiscalMonths) {
-      const monthYear =
-        month.num >= 4
-          ? new Date(fiscalYear, month.num - 1)
-          : new Date(fiscalYear + 1, month.num - 1);
+      const monthYear = month.num >= 4 ? new Date(fiscalYear, month.num - 1) : new Date(fiscalYear + 1, month.num - 1);
 
       if (monthYear <= currentFiscalMonth) {
         const totalDays = new Date(monthYear.getFullYear(), month.num, 0).getDate();
@@ -146,38 +135,39 @@ export async function GET(
             employeeId: parseInt(empCode) || 0,
             date: {
               gte: new Date(monthYear.getFullYear(), month.num - 1, 1),
-              lt: new Date(monthYear.getFullYear(), month.num, 1),
-            },
-          },
+              lt: new Date(monthYear.getFullYear(), month.num, 1)
+            }
+          }
         });
 
-        let presentDays = attendance.filter((a) => a.status === 'Present').length;
+        let presentDays = attendance.filter(a => a.status === 'Present').length;
 
         const holidays = await prisma.crud_events.findMany({
           where: {
             event_date: {
               gte: new Date(monthYear.getFullYear(), month.num - 1, 1),
-              lt: new Date(monthYear.getFullYear(), month.num, 1),
-            },
-          },
+              lt: new Date(monthYear.getFullYear(), month.num, 1)
+            }
+          }
         });
-        const holidayDates = holidays.map((h) => h.event_date?.toISOString().split('T')[0]).filter((d): d is string => d !== undefined);
+        const holidayDates = holidays
+          .map(h => h.event_date?.toISOString().split('T')[0])
+          .filter((d): d is string => d !== undefined);
 
         const halfDays =
-          attendance.filter(
-            (a) => a.status === 'Half-day' && !holidayDates.includes(a.date.toISOString().split('T')[0])
-          ).length * 0.5;
+          attendance.filter(a => a.status === 'Half-day' && !holidayDates.includes(a.date.toISOString().split('T')[0]))
+            .length * 0.5;
 
         const allDates: string[] = [];
         for (let day = 1; day <= totalDays; day++) {
           allDates.push(new Date(monthYear.getFullYear(), month.num - 1, day).toISOString().split('T')[0]);
         }
 
-        const existingDates = attendance.map((a) => a.date.toISOString().split('T')[0]);
-        const missingDates = allDates.filter((d) => !existingDates.includes(d));
+        const existingDates = attendance.map(a => a.date.toISOString().split('T')[0]);
+        const missingDates = allDates.filter(d => !existingDates.includes(d));
 
-        let absentDays = attendance.filter((a) => a.status === 'Absent').length + missingDates.length;
-        const holidayCount = missingDates.filter((d) => holidayDates.includes(d)).length;
+        let absentDays = attendance.filter(a => a.status === 'Absent').length + missingDates.length;
+        const holidayCount = missingDates.filter(d => holidayDates.includes(d)).length;
         absentDays -= holidayCount;
         presentDays += holidayDates.length;
 
@@ -188,9 +178,9 @@ export async function GET(
             HRapproval: 'Approved',
             Managerapproval: 'Approved',
             leave_type: {
-              in: ['Paid Leave', 'Sick Leave(HalfDay)', 'Sick Leave(FullDay)', 'work From Home'],
-            },
-          },
+              in: ['Paid Leave', 'Sick Leave(HalfDay)', 'Sick Leave(FullDay)', 'work From Home']
+            }
+          }
         });
 
         let totalPaidLeaveDays = 0;
@@ -224,7 +214,7 @@ export async function GET(
         }
 
         presentDays += totalPaidLeaveDays;
-        absentDays -= paidLeaveDates.filter((d) => missingDates.includes(d)).length;
+        absentDays -= paidLeaveDates.filter(d => missingDates.includes(d)).length;
         absentDays = Math.max(absentDays, 0);
 
         let payDays = totalDays - absentDays - halfDays + totalSickLeaveDays;
@@ -265,10 +255,7 @@ export async function GET(
     let esiTotal = 0;
 
     for (const month of fiscalMonths) {
-      const monthYear =
-        month.num >= 4
-          ? new Date(fiscalYear, month.num - 1)
-          : new Date(fiscalYear + 1, month.num - 1);
+      const monthYear = month.num >= 4 ? new Date(fiscalYear, month.num - 1) : new Date(fiscalYear + 1, month.num - 1);
 
       if (monthYear <= currentFiscalMonth) {
         basicTotal += report['BASIC'][month.short] || 0;
@@ -285,10 +272,7 @@ export async function GET(
 
     // Calculate Professional Tax
     for (const month of fiscalMonths) {
-      const monthYear =
-        month.num >= 4
-          ? new Date(fiscalYear, month.num - 1)
-          : new Date(fiscalYear + 1, month.num - 1);
+      const monthYear = month.num >= 4 ? new Date(fiscalYear, month.num - 1) : new Date(fiscalYear + 1, month.num - 1);
 
       if (monthYear <= currentFiscalMonth) {
         const totalEarning = report['Total Earnings'][month.short] || 0;
@@ -324,7 +308,7 @@ export async function GET(
     }
 
     report['PROF. TAX']['Total'] = Object.values(report['PROF. TAX'])
-      .filter((v) => typeof v === 'number')
+      .filter(v => typeof v === 'number')
       .reduce((a, b) => a + b, 0);
 
     // Calculate Total Deductions
@@ -333,10 +317,7 @@ export async function GET(
     const deductionsLabels = ['PF', 'ESI', 'PROF. TAX', 'TDS'];
 
     for (const month of fiscalMonths) {
-      const monthYear =
-        month.num >= 4
-          ? new Date(fiscalYear, month.num - 1)
-          : new Date(fiscalYear + 1, month.num - 1);
+      const monthYear = month.num >= 4 ? new Date(fiscalYear, month.num - 1) : new Date(fiscalYear + 1, month.num - 1);
 
       if (monthYear <= currentFiscalMonth) {
         let monthlyDeduction = 0;
@@ -356,10 +337,7 @@ export async function GET(
     let netTotal = 0;
 
     for (const month of fiscalMonths) {
-      const monthYear =
-        month.num >= 4
-          ? new Date(fiscalYear, month.num - 1)
-          : new Date(fiscalYear + 1, month.num - 1);
+      const monthYear = month.num >= 4 ? new Date(fiscalYear, month.num - 1) : new Date(fiscalYear + 1, month.num - 1);
 
       if (monthYear <= currentFiscalMonth) {
         const totalEarning = report['Total Earnings'][month.short] || 0;
@@ -380,11 +358,11 @@ export async function GET(
       data: {
         user: {
           Full_name: user.Full_name,
-          emp_code: user.emp_code,
+          emp_code: user.emp_code
         },
-        fiscalMonths: fiscalMonths.map((m) => m.short),
-        report,
-      },
+        fiscalMonths: fiscalMonths.map(m => m.short),
+        report
+      }
     });
   } catch (error: any) {
     console.error('Error fetching annual report:', error);

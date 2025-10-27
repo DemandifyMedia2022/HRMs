@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/db"
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
@@ -39,29 +39,29 @@ export async function GET(req: NextRequest) {
         Remaining_Tax1: true,
         TDS_subsequent_month1: true,
         TDS_this_month1: true,
-        Total_Tax1: true,
-      },
-    })
+        Total_Tax1: true
+      }
+    });
 
     // Format the data to ensure user_id is a string
     const formattedData = result.map((item: any) => ({
       ...item,
-      user_id: item.user_id?.toString() || "",
-    }))
+      user_id: item.user_id?.toString() || ''
+    }));
 
     return NextResponse.json({
       success: true,
-      data: formattedData,
-    })
+      data: formattedData
+    });
   } catch (error: any) {
-    console.error("Error fetching tax estimations:", error)
+    console.error('Error fetching tax estimations:', error);
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetch tax estimations",
-        error: error.message,
+        message: 'Failed to fetch tax estimations',
+        error: error.message
       },
       { status: 500 }
-    )
+    );
   }
 }

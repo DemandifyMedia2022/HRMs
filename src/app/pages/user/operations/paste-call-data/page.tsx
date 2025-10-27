@@ -48,10 +48,15 @@ const LABELS: Record<string, string> = {
   f_dq_reason4: 'DQ Reason 4',
   f_call_links: 'Call Links',
   f_date: 'Date',
-  added_by_user_id: 'Added By',
+  added_by_user_id: 'Added By'
 };
 
-const prettyLabel = (key: string) => LABELS[key] ?? key.replace(/^f_/, '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+const prettyLabel = (key: string) =>
+  LABELS[key] ??
+  key
+    .replace(/^f_/, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
 
 import React, { useState, useEffect } from 'react';
 import { SidebarConfig } from '@/components/sidebar-config';
@@ -316,7 +321,7 @@ export default function UserPage() {
                             <div className="flex items-center gap-2">
                               <Select
                                 value={code}
-                                onValueChange={(cc) => {
+                                onValueChange={cc => {
                                   onChange(f, `${cc}${local}`);
                                 }}
                               >
@@ -325,14 +330,16 @@ export default function UserPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                   {COUNTRY_CODES.map(cc => (
-                                    <SelectItem key={cc} value={cc}>{cc}</SelectItem>
+                                    <SelectItem key={cc} value={cc}>
+                                      {cc}
+                                    </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
                               <Input
                                 id={f}
                                 value={local}
-                                onChange={(e) => onChange(f, `${code}${e.target.value}`)}
+                                onChange={e => onChange(f, `${code}${e.target.value}`)}
                                 inputMode="tel"
                               />
                               <Button
@@ -342,7 +349,10 @@ export default function UserPage() {
                                 disabled={!formData[f]}
                                 onClick={() => {
                                   const ext = typeof window !== 'undefined' ? localStorage.getItem('extension') : null;
-                                  if (!ext) { setSipOpen(true); return }
+                                  if (!ext) {
+                                    setSipOpen(true);
+                                    return;
+                                  }
                                   setDialNumber(String(formData[f] || ''));
                                   setDialOpen(true);
                                 }}
@@ -355,8 +365,8 @@ export default function UserPage() {
                       ) : f === 'f_campaign_name' ? (
                         <div className="flex items-center gap-2">
                           <Select
-                            value={(formData[f] || '') || EMPTY}
-                            onValueChange={(v) => onChange(f, v === EMPTY ? '' : v)}
+                            value={formData[f] || '' || EMPTY}
+                            onValueChange={v => onChange(f, v === EMPTY ? '' : v)}
                           >
                             <SelectTrigger id={f} className="w-full">
                               <SelectValue placeholder="Select campaign..." />
@@ -364,7 +374,9 @@ export default function UserPage() {
                             <SelectContent>
                               <SelectItem value={EMPTY}>Select campaign...</SelectItem>
                               {campaigns.map(c => (
-                                <SelectItem key={c.id} value={c.f_campaign_name}>{c.f_campaign_name}</SelectItem>
+                                <SelectItem key={c.id} value={c.f_campaign_name}>
+                                  {c.f_campaign_name}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -389,7 +401,7 @@ export default function UserPage() {
                         <Input
                           id={f}
                           value={formData[f] ?? ''}
-                          onChange={(e) => onChange(f, e.target.value)}
+                          onChange={e => onChange(f, e.target.value)}
                           type={f.includes('email') ? 'email' : 'text'}
                         />
                       )}

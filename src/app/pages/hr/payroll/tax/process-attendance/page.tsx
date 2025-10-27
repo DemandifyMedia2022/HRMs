@@ -1,57 +1,68 @@
-"use client"
+'use client';
 
-import { useMemo, useState, useEffect } from 'react'
-import { SidebarConfig } from '@/components/sidebar-config'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
+import { useMemo, useState, useEffect } from 'react';
+import { SidebarConfig } from '@/components/sidebar-config';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import Link from 'next/link';
+import { Search, Download, Eye, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import Link from 'next/link'
-import { Search, Download, Eye, Edit, ChevronLeft, ChevronRight } from 'lucide-react'
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent
+} from '@/components/ui/chart';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  AreaChart,
+  Area
+} from 'recharts';
 
 interface ProcessAttendanceData {
-  id: number
-  Full_name: string
-  emp_code: string
-  company_name: string
-  job_role: string
-  pay_days: number
-  net_pay: number
-  arrear_days: number
+  id: number;
+  Full_name: string;
+  emp_code: string;
+  company_name: string;
+  job_role: string;
+  pay_days: number;
+  net_pay: number;
+  arrear_days: number;
 }
 
 function OverviewPie({ data, month }: { data: ProcessAttendanceData[]; month: string }) {
   const { totalNet, totalDeduction, avgPerEmployee } = useMemo(() => {
-    const totalNet = data.reduce((s, d) => s + (d.net_pay || 0), 0)
+    const totalNet = data.reduce((s, d) => s + (d.net_pay || 0), 0);
     const daysInMonth = (() => {
-      const [y, m] = month.split('-').map(Number)
-      return new Date(y, m, 0).getDate()
-    })()
+      const [y, m] = month.split('-').map(Number);
+      return new Date(y, m, 0).getDate();
+    })();
     const estDeductions = data.reduce((sum, d) => {
-      const paid = Math.max(1, Number(d.pay_days || 0))
-      const perDay = (Number(d.net_pay || 0)) / paid
-      const unpaid = Math.max(0, daysInMonth - paid)
-      return sum + perDay * unpaid
-    }, 0)
-    const avgPerEmployee = data.length ? Math.round(totalNet / data.length) : 0
-    return { totalNet, totalDeduction: Math.max(0, Math.round(estDeductions)), avgPerEmployee }
-  }, [data, month])
+      const paid = Math.max(1, Number(d.pay_days || 0));
+      const perDay = Number(d.net_pay || 0) / paid;
+      const unpaid = Math.max(0, daysInMonth - paid);
+      return sum + perDay * unpaid;
+    }, 0);
+    const avgPerEmployee = data.length ? Math.round(totalNet / data.length) : 0;
+    return { totalNet, totalDeduction: Math.max(0, Math.round(estDeductions)), avgPerEmployee };
+  }, [data, month]);
 
-  const colors = ['var(--chart-1)', 'var(--chart-5)']
+  const colors = ['var(--chart-1)', 'var(--chart-5)'];
   const dataset = [
     { name: 'Net Salary', value: totalNet },
-    { name: 'Est. Deductions (Leaves)', value: totalDeduction },
-  ]
+    { name: 'Est. Deductions (Leaves)', value: totalDeduction }
+  ];
 
   return (
     <ChartContainer config={{ value: { label: 'Amount', color: colors[0] } }}>
@@ -67,14 +78,16 @@ function OverviewPie({ data, month }: { data: ProcessAttendanceData[]; month: st
             <ChartLegend content={<ChartLegendContent />} />
           </PieChart>
         </ResponsiveContainer>
-        <div className="mt-2 text-sm text-muted-foreground">Avg per employee: ₹{avgPerEmployee.toLocaleString('en-IN')}</div>
+        <div className="mt-2 text-sm text-muted-foreground">
+          Avg per employee: ₹{avgPerEmployee.toLocaleString('en-IN')}
+        </div>
       </div>
     </ChartContainer>
-  )
+  );
 }
 
 function SalaryTrend({ trend }: { trend: { label: string; total: number }[] }) {
-  if (!trend.length) return null
+  if (!trend.length) return null;
   return (
     <ChartContainer config={{ total: { label: 'Total Net', color: 'var(--primary)' } }}>
       <ResponsiveContainer width="100%" height={240}>
@@ -86,103 +99,112 @@ function SalaryTrend({ trend }: { trend: { label: string; total: number }[] }) {
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="label" tickFormatter={(v) => v.split('-').reverse().join('/')} interval={0} minTickGap={8} tickLine={false} axisLine={false} />
-          <YAxis tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} tickLine={false} axisLine={false} />
+          <XAxis
+            dataKey="label"
+            tickFormatter={v => v.split('-').reverse().join('/')}
+            interval={0}
+            minTickGap={8}
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} tickLine={false} axisLine={false} />
           <Area type="monotone" dataKey="total" stroke="var(--primary)" fill="url(#salTrend)" />
           <ChartTooltip content={<ChartTooltipContent />} />
         </AreaChart>
       </ResponsiveContainer>
     </ChartContainer>
-  )
+  );
 }
 
 export default function ProcessAttendancePage() {
-  const [data, setData] = useState<ProcessAttendanceData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
+  const [data, setData] = useState<ProcessAttendanceData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [month, setMonth] = useState(() => {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  })
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
 
-  const [trend, setTrend] = useState<{ label: string; total: number }[]>([])
+  const [trend, setTrend] = useState<{ label: string; total: number }[]>([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
     totalCount: 0,
-    limit: 10,
-  })
+    limit: 10
+  });
 
   const fetchData = async (page = 1) => {
     try {
-      setLoading(true)
+      setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
         month,
-        ...(search && { search }),
-      })
+        ...(search && { search })
+      });
 
-      const response = await fetch(`/api/payroll/process-attendance?${params}`)
-      const result = await response.json()
+      const response = await fetch(`/api/payroll/process-attendance?${params}`);
+      const result = await response.json();
 
       if (result.success) {
-        setData(result.data)
-        setPagination(result.pagination)
+        setData(result.data);
+        setPagination(result.pagination);
       } else {
-        console.error('Failed to fetch data:', result.error)
+        console.error('Failed to fetch data:', result.error);
       }
     } catch (error) {
-      console.error('Error fetching data:', error)
+      console.error('Error fetching data:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchData(pagination.currentPage)
-  }, [])
+    fetchData(pagination.currentPage);
+  }, []);
 
   useEffect(() => {
     // fetch last 6 months totals for trend chart
-    ;(async () => {
+    (async () => {
       try {
-        const base = new Date(`${month}-01`)
-        const months: string[] = []
+        const base = new Date(`${month}-01`);
+        const months: string[] = [];
         for (let i = 5; i >= 0; i--) {
-          const d = new Date(base)
-          d.setMonth(d.getMonth() - i)
-          const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-          months.push(m)
+          const d = new Date(base);
+          d.setMonth(d.getMonth() - i);
+          const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          months.push(m);
         }
         const results = await Promise.all(
-          months.map(async (m) => {
-            const params = new URLSearchParams({ page: '1', month: m })
-            const res = await fetch(`/api/payroll/process-attendance?${params}`, { cache: 'no-store' })
-            const json = await res.json()
-            const total = json?.success ? (json.data as ProcessAttendanceData[]).reduce((s: number, d: any) => s + (d.net_pay || 0), 0) : 0
-            return { label: m, total }
+          months.map(async m => {
+            const params = new URLSearchParams({ page: '1', month: m });
+            const res = await fetch(`/api/payroll/process-attendance?${params}`, { cache: 'no-store' });
+            const json = await res.json();
+            const total = json?.success
+              ? (json.data as ProcessAttendanceData[]).reduce((s: number, d: any) => s + (d.net_pay || 0), 0)
+              : 0;
+            return { label: m, total };
           })
-        )
-        setTrend(results)
+        );
+        setTrend(results);
       } catch {
-        setTrend([])
+        setTrend([]);
       }
-    })()
-  }, [month])
+    })();
+  }, [month]);
 
   const handleFilter = (e: React.FormEvent) => {
-    e.preventDefault()
-    fetchData(1)
-  }
+    e.preventDefault();
+    fetchData(1);
+  };
 
   const handleDownloadCSV = () => {
     const params = new URLSearchParams({
       month,
       ...(search && { search }),
-      download: 'csv',
-    })
-    window.location.href = `/api/payroll/process-attendance?${params}`
-  }
+      download: 'csv'
+    });
+    window.location.href = `/api/payroll/process-attendance?${params}`;
+  };
 
   return (
     <>
@@ -237,7 +259,7 @@ export default function ProcessAttendancePage() {
                     type="month"
                     id="month"
                     value={month}
-                    onChange={(e) => setMonth(e.target.value)}
+                    onChange={e => setMonth(e.target.value)}
                     className="w-full"
                   />
                 </div>
@@ -250,7 +272,7 @@ export default function ProcessAttendancePage() {
                       type="text"
                       id="search"
                       value={search}
-                      onChange={(e) => setSearch(e.target.value)}
+                      onChange={e => setSearch(e.target.value)}
                       placeholder="Name or Code..."
                       className="pl-10 w-full"
                     />
@@ -320,12 +342,24 @@ export default function ProcessAttendancePage() {
                             <TableCell className="text-center">{item.arrear_days}</TableCell>
                             <TableCell className="text-center">
                               <div className="flex gap-2 justify-center">
-                                <Button asChild size="sm" variant="outline" className="h-8 w-8 p-0" title="View Annual Report">
+                                <Button
+                                  asChild
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 w-8 p-0"
+                                  title="View Annual Report"
+                                >
                                   <Link href={`/pages/hr/payroll/salary-report/${item.emp_code}`}>
                                     <Eye className="h-4 w-4" />
                                   </Link>
                                 </Button>
-                                <Button asChild size="sm" variant="outline" className="h-8 w-8 p-0" title="Edit Attendance">
+                                <Button
+                                  asChild
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 w-8 p-0"
+                                  title="Edit Attendance"
+                                >
                                   <Link href={`/pages/hr/payroll/tax/edit-attendance/${item.emp_code}`}>
                                     <Edit className="h-4 w-4" />
                                   </Link>
@@ -347,7 +381,12 @@ export default function ProcessAttendancePage() {
 
                 {pagination.totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 mt-6">
-                    <Button onClick={() => fetchData(pagination.currentPage - 1)} disabled={pagination.currentPage === 1} variant="outline" size="sm">
+                    <Button
+                      onClick={() => fetchData(pagination.currentPage - 1)}
+                      disabled={pagination.currentPage === 1}
+                      variant="outline"
+                      size="sm"
+                    >
                       <ChevronLeft className="h-4 w-4 mr-1" />
                       Previous
                     </Button>
@@ -367,10 +406,9 @@ export default function ProcessAttendancePage() {
                 )}
 
                 <div className="mt-4 text-sm text-muted-foreground text-center">
-                  Showing {data.length > 0 ? (pagination.currentPage - 1) * pagination.limit + 1 : 0} to {Math.min(
-                    pagination.currentPage * pagination.limit,
-                    pagination.totalCount
-                  )} of {pagination.totalCount} employees
+                  Showing {data.length > 0 ? (pagination.currentPage - 1) * pagination.limit + 1 : 0} to{' '}
+                  {Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} of{' '}
+                  {pagination.totalCount} employees
                 </div>
               </>
             )}
@@ -378,7 +416,7 @@ export default function ProcessAttendancePage() {
         </Card>
       </div>
     </>
-  )
+  );
 }
 
 function ChartEmployees({ data }: { data: ProcessAttendanceData[] }) {
@@ -386,29 +424,26 @@ function ChartEmployees({ data }: { data: ProcessAttendanceData[] }) {
     const top = [...data]
       .sort((a, b) => b.net_pay - a.net_pay)
       .slice(0, 8)
-      .map((d) => ({ name: d.Full_name, pay: d.net_pay }))
+      .map(d => ({ name: d.Full_name, pay: d.net_pay }));
 
-    return top
-  }, [data])
+    return top;
+  }, [data]);
 
-  if (!dataset.length) return null
+  if (!dataset.length) return null;
 
   return (
     <div className="mt-2">
-      <ChartContainer
-        config={{ pay: { label: 'Net Pay', color: 'var(--chart-1)' } }}
-        className="aspect-[3/1]"
-      >
+      <ChartContainer config={{ pay: { label: 'Net Pay', color: 'var(--chart-1)' } }} className="aspect-[3/1]">
         <ResponsiveContainer>
           <BarChart data={dataset} margin={{ left: 12, right: 12, top: 8 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" hide interval={0} />
-            <YAxis tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+            <YAxis tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
             <Bar dataKey="pay" fill="var(--color-pay)" radius={[4, 4, 0, 0]} />
             <ChartTooltip content={<ChartTooltipContent nameKey="pay" />} />
           </BarChart>
         </ResponsiveContainer>
       </ChartContainer>
     </div>
-  )
+  );
 }

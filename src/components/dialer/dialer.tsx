@@ -1,15 +1,23 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import React, { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
-export default function Dialer({ number, userName, autoHangupOnUnmount = true }: { number?: string; userName?: string; autoHangupOnUnmount?: boolean }) {
-  const [status, setStatus] = useState<string>("Idle");
-  const statusRef = useRef<string>("Idle");
-  const [currentNumber, setCurrentNumber] = useState<string>(number || "");
+export default function Dialer({
+  number,
+  userName,
+  autoHangupOnUnmount = true
+}: {
+  number?: string;
+  userName?: string;
+  autoHangupOnUnmount?: boolean;
+}) {
+  const [status, setStatus] = useState<string>('Idle');
+  const statusRef = useRef<string>('Idle');
+  const [currentNumber, setCurrentNumber] = useState<string>(number || '');
   const [lastDialed, setLastDialed] = useState<string | null>(
-    typeof window !== "undefined" ? localStorage.getItem("lastDialedNumber") : null
+    typeof window !== 'undefined' ? localStorage.getItem('lastDialedNumber') : null
   );
 
   const uaRef = useRef<any>(null);
@@ -43,58 +51,61 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
 
     async function initUA() {
       try {
-        const username = typeof window !== "undefined" ? localStorage.getItem("extension") || "" : "";
-        const password = typeof window !== "undefined" ? localStorage.getItem("sip_password") || "" : "";
+        const username = typeof window !== 'undefined' ? localStorage.getItem('extension') || '' : '';
+        const password = typeof window !== 'undefined' ? localStorage.getItem('sip_password') || '' : '';
 
         if (!username || !password) {
-          setStatus("Missing SIP credentials in localStorage (extension, sip_password)");
+          setStatus('Missing SIP credentials in localStorage (extension, sip_password)');
           return;
         }
 
         // Reuse window-scoped UA if already created; bind handlers per component instance
-        const JsSIP = (await import("jssip")).default;
+        const JsSIP = (await import('jssip')).default;
         // @ts-ignore
         const existingUA = typeof window !== 'undefined' ? (window as any).__sipUA : null;
         let ua: any = existingUA;
         let created = false;
         if (!ua) {
-          const socket = new JsSIP.WebSocketInterface("wss://pbx2.telxio.com.sg:8089/ws");
+          const socket = new JsSIP.WebSocketInterface('wss://pbx2.telxio.com.sg:8089/ws');
           ua = new JsSIP.UA({
             uri: `sip:${username}@pbx2.telxio.com.sg`,
             password,
             sockets: [socket],
             register: true,
             session_timers: true,
-            session_timers_refresh_method: "UPDATE",
+            session_timers_refresh_method: 'UPDATE',
             connection_recovery_min_interval: 2,
-            connection_recovery_max_interval: 30,
+            connection_recovery_max_interval: 30
           });
           created = true;
         }
 
-        JsSIP.debug.enable("JsSIP:*");
+        JsSIP.debug.enable('JsSIP:*');
         // Bind handlers once per component instance
         if (!uaBoundRef.current) {
-          const onRegistered = () => mounted && setStatus("Registered");
-          const onRegistrationFailed = (e: any) => mounted && setStatus(`Registration failed: ${e?.cause || "unknown"}`);
+          const onRegistered = () => mounted && setStatus('Registered');
+          const onRegistrationFailed = (e: any) =>
+            mounted && setStatus(`Registration failed: ${e?.cause || 'unknown'}`);
           const onNewRTCSession = (data: any) => {
             sessionRef.current = data.session;
             const s = sessionRef.current;
-            if (s.direction === "incoming") {
-              setStatus("Incoming call");
+            if (s.direction === 'incoming') {
+              setStatus('Incoming call');
             }
 
-            s.on("progress", () => {
+            s.on('progress', () => {
               if (!mounted) return;
               if (sessionRef.current !== s) return; // ignore stale events
               try {
                 const inProg = typeof s.isInProgress === 'function' ? !!s.isInProgress() : true;
-                if (inProg) setStatus("Ringing...");
+                if (inProg) setStatus('Ringing...');
               } catch {
-                setStatus("Ringing...");
+                setStatus('Ringing...');
               }
               // Start/refresh a ringing watchdog (auto-end after 35s to match common SIP timer B)
-              try { if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number); } catch {}
+              try {
+                if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number);
+              } catch {}
               ringingTimerRef.current = setTimeout(() => {
                 try {
                   if (sessionRef.current && statusRef.current === 'Ringing...') {
@@ -106,13 +117,15 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
               }, 35_000) as unknown as NodeJS.Timeout;
             });
 
-            s.on("accepted", () => {
+            s.on('accepted', () => {
               if (!mounted) return;
               if (sessionRef.current !== s) return;
-              setStatus("In Call");
+              setStatus('In Call');
               answerTimeRef.current = new Date().toISOString();
               // Clear ringing watchdog
-              try { if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number); } catch {}
+              try {
+                if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number);
+              } catch {}
               ringingTimerRef.current = null;
               // Start duration ticker
               try {
@@ -129,28 +142,36 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
                 // Build a mixed stream from peer connection tracks (remote + local if available)
                 const pc: RTCPeerConnection | undefined = (s as any).connection;
                 const tracks: MediaStreamTrack[] = [];
-                try { pc?.getReceivers?.().forEach(r => r.track && tracks.push(r.track)); } catch {}
-                try { pc?.getSenders?.().forEach(sd => sd.track && tracks.push(sd.track)); } catch {}
+                try {
+                  pc?.getReceivers?.().forEach(r => r.track && tracks.push(r.track));
+                } catch {}
+                try {
+                  pc?.getSenders?.().forEach(sd => sd.track && tracks.push(sd.track));
+                } catch {}
                 const mix = new MediaStream(tracks.filter(Boolean));
                 if (mix.getTracks().length && typeof MediaRecorder !== 'undefined') {
                   const rec = new MediaRecorder(mix, { mimeType: 'audio/webm;codecs=opus' });
                   recorderRef.current = rec;
                   recordChunksRef.current = [];
-                  rec.ondataavailable = (e) => { if (e.data && e.data.size) recordChunksRef.current?.push(e.data); };
+                  rec.ondataavailable = e => {
+                    if (e.data && e.data.size) recordChunksRef.current?.push(e.data);
+                  };
                   rec.start(1000);
                 }
               } catch {}
             });
             // Confirmed (both sides established)
-            s.on("confirmed", () => {
+            s.on('confirmed', () => {
               if (!mounted) return;
               if (sessionRef.current !== s) return;
-              setStatus("In Call");
+              setStatus('In Call');
               // Ensure timer started even if 'accepted' path was skipped/missed
               if (!answerTimeRef.current) {
                 try {
                   answerTimeRef.current = new Date().toISOString();
-                  try { if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number); } catch {}
+                  try {
+                    if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number);
+                  } catch {}
                   setDurationSec(0);
                   durationTimerRef.current = setInterval(() => {
                     try {
@@ -163,16 +184,20 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
             });
 
             // Remote party explicitly hangs up
-            s.on("bye", () => {
+            s.on('bye', () => {
               if (!mounted) return;
-              setStatus("Ended");
+              setStatus('Ended');
               removeRemoteAudio();
-              void finalizeRecordingAndLog("completed");
+              void finalizeRecordingAndLog('completed');
               setMuted(false);
               setOnHold(false);
-              try { if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number); } catch {}
+              try {
+                if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number);
+              } catch {}
               ringingTimerRef.current = null;
-              try { if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number); } catch {}
+              try {
+                if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number);
+              } catch {}
               durationTimerRef.current = null;
               setDurationSec(0);
               sessionRef.current = null;
@@ -180,93 +205,124 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
             // Outgoing call canceled or remote rejected during setup
             // Some stacks emit 'cancel' when caller cancels; treat as end
             try {
-              s.on("cancel", () => {
+              s.on('cancel', () => {
                 if (!mounted) return;
                 if (sessionRef.current !== s) return;
-                setStatus("Ended");
+                setStatus('Ended');
                 removeRemoteAudio();
-                try { if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number); } catch {}
+                try {
+                  if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number);
+                } catch {}
                 ringingTimerRef.current = null;
-                try { if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number); } catch {}
+                try {
+                  if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number);
+                } catch {}
                 durationTimerRef.current = null;
                 setDurationSec(0);
                 sessionRef.current = null;
               });
             } catch {}
-            s.on("muted", () => { if (mounted) setMuted(true); });
-            s.on("unmuted", () => { if (mounted) setMuted(false); });
-            s.on("hold", () => { if (mounted) setOnHold(true); });
-            s.on("unhold", () => { if (mounted) setOnHold(false); });
-            s.on("ended", () => {
+            s.on('muted', () => {
+              if (mounted) setMuted(true);
+            });
+            s.on('unmuted', () => {
+              if (mounted) setMuted(false);
+            });
+            s.on('hold', () => {
+              if (mounted) setOnHold(true);
+            });
+            s.on('unhold', () => {
+              if (mounted) setOnHold(false);
+            });
+            s.on('ended', () => {
               if (!mounted) return;
               if (sessionRef.current !== s) return;
-              setStatus("Ended");
+              setStatus('Ended');
               removeRemoteAudio();
-              void finalizeRecordingAndLog("completed");
+              void finalizeRecordingAndLog('completed');
               setMuted(false);
               setOnHold(false);
-              try { if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number); } catch {}
+              try {
+                if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number);
+              } catch {}
               ringingTimerRef.current = null;
               // Clear duration and session
-              try { if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number); } catch {}
+              try {
+                if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number);
+              } catch {}
               durationTimerRef.current = null;
               setDurationSec(0);
               sessionRef.current = null;
             });
-            s.on("failed", (d: any) => {
+            s.on('failed', (d: any) => {
               if (!mounted) return;
               if (sessionRef.current !== s) return;
-              setStatus(`Failed: ${d?.cause || "unknown"}`);
+              setStatus(`Failed: ${d?.cause || 'unknown'}`);
               removeRemoteAudio();
-              void finalizeRecordingAndLog("failed", d?.cause);
+              void finalizeRecordingAndLog('failed', d?.cause);
               setMuted(false);
               setOnHold(false);
-              try { if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number); } catch {}
+              try {
+                if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number);
+              } catch {}
               ringingTimerRef.current = null;
-              try { if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number); } catch {}
+              try {
+                if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number);
+              } catch {}
               durationTimerRef.current = null;
               setDurationSec(0);
               sessionRef.current = null;
             });
-            s.on("terminated", () => {
+            s.on('terminated', () => {
               if (!mounted) return;
               if (sessionRef.current !== s) return;
-              setStatus("Terminated");
+              setStatus('Terminated');
               removeRemoteAudio();
-              void finalizeRecordingAndLog("terminated");
+              void finalizeRecordingAndLog('terminated');
               setMuted(false);
               setOnHold(false);
-              try { if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number); } catch {}
+              try {
+                if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number);
+              } catch {}
               ringingTimerRef.current = null;
-              try { if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number); } catch {}
+              try {
+                if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number);
+              } catch {}
               durationTimerRef.current = null;
               setDurationSec(0);
               sessionRef.current = null;
             });
 
-            s.connection && (s.connection.ontrack = (event: any) => {
-              const audio = getOrCreateRemoteAudio();
-              const streams: MediaStream[] = (event && event.streams) || [];
-              if (streams[0]) {
-                audio.srcObject = streams[0];
-                audio.play().catch(() => {});
-                // Start recorder when we actually have remote media
-                try {
-                  const pc: RTCPeerConnection | undefined = (s as any).connection;
-                  const tracks: MediaStreamTrack[] = [];
-                  try { pc?.getReceivers?.().forEach(r => r.track && tracks.push(r.track)); } catch {}
-                  try { pc?.getSenders?.().forEach(sd => sd.track && tracks.push(sd.track)); } catch {}
-                  const mix = new MediaStream(tracks.filter(Boolean));
-                  if (!recorderRef.current && mix.getTracks().length && typeof MediaRecorder !== 'undefined') {
-                    const rec = new MediaRecorder(mix, { mimeType: 'audio/webm;codecs=opus' });
-                    recorderRef.current = rec;
-                    recordChunksRef.current = [];
-                    rec.ondataavailable = (e) => { if (e.data && e.data.size) recordChunksRef.current?.push(e.data); };
-                    rec.start(1000);
-                  }
-                } catch {}
-              }
-            });
+            s.connection &&
+              (s.connection.ontrack = (event: any) => {
+                const audio = getOrCreateRemoteAudio();
+                const streams: MediaStream[] = (event && event.streams) || [];
+                if (streams[0]) {
+                  audio.srcObject = streams[0];
+                  audio.play().catch(() => {});
+                  // Start recorder when we actually have remote media
+                  try {
+                    const pc: RTCPeerConnection | undefined = (s as any).connection;
+                    const tracks: MediaStreamTrack[] = [];
+                    try {
+                      pc?.getReceivers?.().forEach(r => r.track && tracks.push(r.track));
+                    } catch {}
+                    try {
+                      pc?.getSenders?.().forEach(sd => sd.track && tracks.push(sd.track));
+                    } catch {}
+                    const mix = new MediaStream(tracks.filter(Boolean));
+                    if (!recorderRef.current && mix.getTracks().length && typeof MediaRecorder !== 'undefined') {
+                      const rec = new MediaRecorder(mix, { mimeType: 'audio/webm;codecs=opus' });
+                      recorderRef.current = rec;
+                      recordChunksRef.current = [];
+                      rec.ondataavailable = e => {
+                        if (e.data && e.data.size) recordChunksRef.current?.push(e.data);
+                      };
+                      rec.start(1000);
+                    }
+                  } catch {}
+                }
+              });
             // Also watch peer connection state to proactively end UI
             try {
               const pc: RTCPeerConnection | undefined = (s as any).connection;
@@ -277,7 +333,9 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
                   if (st === 'disconnected' || st === 'failed' || st === 'closed') {
                     setStatus(st === 'failed' ? 'Failed' : 'Ended');
                     removeRemoteAudio();
-                    try { if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number); } catch {}
+                    try {
+                      if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number);
+                    } catch {}
                     durationTimerRef.current = null;
                     setDurationSec(0);
                     setMuted(false);
@@ -291,7 +349,9 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
                   if (ist === 'failed' || ist === 'disconnected' || ist === 'closed') {
                     setStatus(ist === 'failed' ? 'Failed' : 'Ended');
                     removeRemoteAudio();
-                    try { if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number); } catch {}
+                    try {
+                      if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number);
+                    } catch {}
                     durationTimerRef.current = null;
                     setDurationSec(0);
                     setMuted(false);
@@ -302,9 +362,9 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
               }
             } catch {}
           };
-          ua.on("registered", onRegistered);
-          ua.on("registrationFailed", onRegistrationFailed);
-          ua.on("newRTCSession", onNewRTCSession);
+          ua.on('registered', onRegistered);
+          ua.on('registrationFailed', onRegistrationFailed);
+          ua.on('newRTCSession', onNewRTCSession);
           uaHandlerRefs.current = { onRegistered, onRegistrationFailed, onNewRTCSession };
           uaBoundRef.current = true;
         }
@@ -330,15 +390,21 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
 
     // Listen for global logout and credentials updates
     function onSipLogout() {
-      try { sessionRef.current?.terminate?.(); } catch {}
-      try { uaRef.current?.stop?.(); } catch {}
+      try {
+        sessionRef.current?.terminate?.();
+      } catch {}
+      try {
+        uaRef.current?.stop?.();
+      } catch {}
       // @ts-ignore
       if (typeof window !== 'undefined') (window as any).__sipUA = null;
       setStatus('Logged out');
     }
     async function onSipCredsUpdated() {
       // Restart UA with new credentials
-      try { uaRef.current?.stop?.(); } catch {}
+      try {
+        uaRef.current?.stop?.();
+      } catch {}
       // @ts-ignore
       if (typeof window !== 'undefined') (window as any).__sipUA = null;
       await initUA();
@@ -359,9 +425,13 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
         // If no active session but UI shows in-progress states, reset
         if (!hasSession && (st === 'Ringing...' || st === 'In Call' || st === 'Ending...')) {
           setStatus('Idle');
-          try { if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number); } catch {}
+          try {
+            if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number);
+          } catch {}
           ringingTimerRef.current = null;
-          try { if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number); } catch {}
+          try {
+            if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number);
+          } catch {}
           durationTimerRef.current = null;
           setDurationSec(0);
           setMuted(false);
@@ -376,9 +446,13 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
             if ((ended || (!inProg && !established)) && (st === 'Ringing...' || st === 'In Call')) {
               setStatus(ended ? 'Ended' : 'No Answer');
               removeRemoteAudio();
-              try { if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number); } catch {}
+              try {
+                if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number);
+              } catch {}
               ringingTimerRef.current = null;
-              try { if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number); } catch {}
+              try {
+                if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number);
+              } catch {}
               durationTimerRef.current = null;
               setDurationSec(0);
               setMuted(false);
@@ -396,16 +470,28 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
         window.removeEventListener('sip-logout', onSipLogout as any);
         window.removeEventListener('sip-credentials-updated', onSipCredsUpdated as any);
       }
-      try { if (reconcileTimerRef.current) clearInterval(reconcileTimerRef.current as unknown as number); } catch {}
+      try {
+        if (reconcileTimerRef.current) clearInterval(reconcileTimerRef.current as unknown as number);
+      } catch {}
       reconcileTimerRef.current = null;
       // Remove our UA listeners to prevent duplicate handlers and ensure fresh bindings on next mount
       try {
         const ua = uaRef.current;
         const refs = uaHandlerRefs.current;
         if (ua && refs) {
-          try { ua.off ? ua.off('registered', refs.onRegistered) : ua.removeListener?.('registered', refs.onRegistered); } catch {}
-          try { ua.off ? ua.off('registrationFailed', refs.onRegistrationFailed) : ua.removeListener?.('registrationFailed', refs.onRegistrationFailed); } catch {}
-          try { ua.off ? ua.off('newRTCSession', refs.onNewRTCSession) : ua.removeListener?.('newRTCSession', refs.onNewRTCSession); } catch {}
+          try {
+            ua.off ? ua.off('registered', refs.onRegistered) : ua.removeListener?.('registered', refs.onRegistered);
+          } catch {}
+          try {
+            ua.off
+              ? ua.off('registrationFailed', refs.onRegistrationFailed)
+              : ua.removeListener?.('registrationFailed', refs.onRegistrationFailed);
+          } catch {}
+          try {
+            ua.off
+              ? ua.off('newRTCSession', refs.onNewRTCSession)
+              : ua.removeListener?.('newRTCSession', refs.onNewRTCSession);
+          } catch {}
         }
       } catch {}
       uaHandlerRefs.current = null;
@@ -425,30 +511,32 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
   }, [autoHangupOnUnmount]);
 
   function getOrCreateRemoteAudio(): HTMLAudioElement {
-    let audio = document.getElementById("remote-audio") as HTMLAudioElement | null;
+    let audio = document.getElementById('remote-audio') as HTMLAudioElement | null;
     if (!audio) {
-      audio = document.createElement("audio");
-      audio.id = "remote-audio";
-      audio.style.display = "none";
+      audio = document.createElement('audio');
+      audio.id = 'remote-audio';
+      audio.style.display = 'none';
       document.body.appendChild(audio);
     }
     return audio;
   }
 
   function removeRemoteAudio() {
-    const audio = document.getElementById("remote-audio");
+    const audio = document.getElementById('remote-audio');
     if (audio && audio.parentNode) (audio.parentNode as HTMLElement).removeChild(audio);
   }
 
-  async function finalizeRecordingAndLog(finalStatus: "completed" | "failed" | "terminated", cause?: string) {
+  async function finalizeRecordingAndLog(finalStatus: 'completed' | 'failed' | 'terminated', cause?: string) {
     try {
       // Stop recorder if running
       const rec = recorderRef.current;
       if (rec && rec.state !== 'inactive') {
-        const stopP = new Promise<void>((resolve) => {
+        const stopP = new Promise<void>(resolve => {
           rec.onstop = () => resolve();
         });
-        try { rec.stop(); } catch {}
+        try {
+          rec.stop();
+        } catch {}
         await stopP;
         // Build blob
         const chunks = recordChunksRef.current || [];
@@ -458,8 +546,8 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
           recordingUrlRef.current = url || null;
         }
       }
-    } catch {}
-    finally {
+    } catch {
+    } finally {
       recorderRef.current = null;
       recordChunksRef.current = null;
     }
@@ -490,11 +578,17 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
   }
 
   function resetUI() {
-    try { sessionRef.current?.terminate?.(); } catch {}
+    try {
+      sessionRef.current?.terminate?.();
+    } catch {}
     removeRemoteAudio();
-    try { if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number); } catch {}
+    try {
+      if (ringingTimerRef.current) clearTimeout(ringingTimerRef.current as unknown as number);
+    } catch {}
     ringingTimerRef.current = null;
-    try { if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number); } catch {}
+    try {
+      if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number);
+    } catch {}
     durationTimerRef.current = null;
     setDurationSec(0);
     setMuted(false);
@@ -504,10 +598,10 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
   }
 
   async function makeCall() {
-    if (!currentNumber) return alert("Enter a number");
-    if (!uaRef.current) return alert("UA not ready");
+    if (!currentNumber) return alert('Enter a number');
+    if (!uaRef.current) return alert('UA not ready');
     if (sessionRef.current && sessionRef.current.isInProgress()) {
-      return alert("Call already in progress");
+      return alert('Call already in progress');
     }
 
     try {
@@ -518,12 +612,14 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
           noiseSuppression: true,
           autoGainControl: true,
           channelCount: 1,
-          sampleRate: 48000,
+          sampleRate: 48000
         } as MediaTrackConstraints,
-        video: false as any,
+        video: false as any
       } as MediaStreamConstraints);
       // Ensure all audio tracks are enabled
-      try { localStream.getAudioTracks().forEach(t => t.enabled = true); } catch {}
+      try {
+        localStream.getAudioTracks().forEach(t => (t.enabled = true));
+      } catch {}
 
       const normalized = (currentNumber || '').replace(/[^0-9]/g, '');
       if (!normalized) return alert('Invalid number');
@@ -531,14 +627,14 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
         mediaConstraints: { audio: true, video: false },
         mediaStream: localStream,
         pcConfig: {
-          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-        },
+          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        }
       });
 
       sessionRef.current = session;
-      setStatus("Ringing...");
+      setStatus('Ringing...');
       setLastDialed(currentNumber);
-      localStorage.setItem("lastDialedNumber", currentNumber);
+      localStorage.setItem('lastDialedNumber', currentNumber);
       callStartRef.current = new Date().toISOString();
     } catch (e: any) {
       setStatus(`Call error: ${String(e)}`);
@@ -548,7 +644,7 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
   function hangup() {
     try {
       if (sessionRef.current) {
-        setStatus("Ending...");
+        setStatus('Ending...');
         sessionRef.current.terminate?.();
       }
     } catch {}
@@ -556,7 +652,7 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
 
   function redial() {
     const num = lastDialed || currentNumber;
-    if (!num) return alert("No number to redial");
+    if (!num) return alert('No number to redial');
     setCurrentNumber(num);
     makeCall();
   }
@@ -565,7 +661,7 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
     try {
       const s = sessionRef.current;
       if (!s) return;
-      const isMuted = typeof s.isMuted === 'function' ? !!(s.isMuted().audio) : muted;
+      const isMuted = typeof s.isMuted === 'function' ? !!s.isMuted().audio : muted;
       if (isMuted) {
         s.unmute({ audio: true });
         setMuted(false);
@@ -580,7 +676,7 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
     try {
       const s = sessionRef.current;
       if (!s) return;
-      const localHold = typeof s.isOnHold === 'function' ? !!(s.isOnHold().local) : onHold;
+      const localHold = typeof s.isOnHold === 'function' ? !!s.isOnHold().local : onHold;
       if (localHold) {
         s.unhold({ useUpdate: true });
         setOnHold(false);
@@ -610,7 +706,9 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
         const me = await r.json();
         const pretty = (me?.name || '').trim();
         if (pretty) {
-          try { localStorage.setItem('userName', pretty); } catch {}
+          try {
+            localStorage.setItem('userName', pretty);
+          } catch {}
           return { name: pretty, source: 'api:auth/me' };
         }
       }
@@ -618,7 +716,7 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
     return { name: null, source: 'unknown' };
   }
 
-  async function logFinalCall(finalStatus: "completed" | "failed" | "terminated", cause?: string) {
+  async function logFinalCall(finalStatus: 'completed' | 'failed' | 'terminated', cause?: string) {
     try {
       const extension = typeof window !== 'undefined' ? localStorage.getItem('extension') : null;
       const did = typeof window !== 'undefined' ? localStorage.getItem('did') : null;
@@ -640,7 +738,7 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           extension: extension || null,
-          source_number: (did || extension) || null,
+          source_number: did || extension || null,
           user_name: user_name || null,
           destination: currentNumber || null,
           direction: 'outbound',
@@ -651,7 +749,7 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
           duration_seconds,
           cause: cause || null,
           recording_url: recordingUrlRef.current || null,
-          meta,
+          meta
         })
       });
       try {
@@ -673,7 +771,10 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
     }
   }
 
-  const inProgress = !!(sessionRef.current && (sessionRef.current.isInProgress?.() || status === 'In Call' || status === 'Ringing...'));
+  const inProgress = !!(
+    sessionRef.current &&
+    (sessionRef.current.isInProgress?.() || status === 'In Call' || status === 'Ringing...')
+  );
 
   async function acceptIncoming() {
     try {
@@ -686,21 +787,25 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
           noiseSuppression: true,
           autoGainControl: true,
           channelCount: 1,
-          sampleRate: 48000,
+          sampleRate: 48000
         } as MediaTrackConstraints,
-        video: false as any,
+        video: false as any
       } as MediaStreamConstraints);
-      try { localStream.getAudioTracks().forEach(t => t.enabled = true); } catch {}
+      try {
+        localStream.getAudioTracks().forEach(t => (t.enabled = true));
+      } catch {}
       s.answer({
         mediaConstraints: { audio: true, video: false },
         mediaStream: localStream,
-        pcConfig: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] },
+        pcConfig: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
       });
       // Optimistically set in-call state and start duration immediately
       setStatus('In Call');
       try {
         if (!answerTimeRef.current) answerTimeRef.current = new Date().toISOString();
-        try { if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number); } catch {}
+        try {
+          if (durationTimerRef.current) clearInterval(durationTimerRef.current as unknown as number);
+        } catch {}
         setDurationSec(0);
         durationTimerRef.current = setInterval(() => {
           try {
@@ -713,7 +818,9 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
   }
 
   function rejectIncoming() {
-    try { sessionRef.current?.terminate?.(); } catch {}
+    try {
+      sessionRef.current?.terminate?.();
+    } catch {}
   }
 
   return (
@@ -730,7 +837,10 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
         })()}
         {status === 'In Call' && (
           <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-            {Math.floor(durationSec / 60).toString().padStart(2, '0')}:{(durationSec % 60).toString().padStart(2, '0')}
+            {Math.floor(durationSec / 60)
+              .toString()
+              .padStart(2, '0')}
+            :{(durationSec % 60).toString().padStart(2, '0')}
           </span>
         )}
         {status === 'In Call' && (
@@ -739,7 +849,9 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
               try {
                 const t = answerTimeRef.current ? new Date(answerTimeRef.current) : null;
                 return t ? `Started ${t.toLocaleTimeString()}` : '';
-              } catch { return ''; }
+              } catch {
+                return '';
+              }
             })()}
           </span>
         )}
@@ -749,7 +861,7 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
           className="w-56"
           placeholder="Enter number"
           value={currentNumber}
-          onChange={(e) => setCurrentNumber(e.target.value)}
+          onChange={e => setCurrentNumber(e.target.value)}
         />
         {status === 'Incoming call' && (
           <>
@@ -770,20 +882,10 @@ export default function Dialer({ number, userName, autoHangupOnUnmount = true }:
         <Button type="button" variant="secondary" onClick={redial} disabled={inProgress}>
           Redial
         </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={toggleMute}
-          disabled={!sessionRef.current}
-        >
+        <Button type="button" variant="secondary" onClick={toggleMute} disabled={!sessionRef.current}>
           {muted ? 'Unmute' : 'Mute'}
         </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={toggleHold}
-          disabled={!sessionRef.current}
-        >
+        <Button type="button" variant="secondary" onClick={toggleHold} disabled={!sessionRef.current}>
           {onHold ? 'Resume' : 'Hold'}
         </Button>
         <Button type="button" variant="outline" onClick={resetUI}>

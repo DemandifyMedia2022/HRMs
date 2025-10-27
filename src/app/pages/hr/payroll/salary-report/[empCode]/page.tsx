@@ -1,74 +1,74 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from 'react'
-import { SidebarConfig } from '@/components/sidebar-config'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import Link from 'next/link'
-import { Download, ArrowLeft } from 'lucide-react'
-import { useParams } from 'next/navigation'
+import { useState, useEffect } from 'react';
+import { SidebarConfig } from '@/components/sidebar-config';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
+import { Download, ArrowLeft } from 'lucide-react';
+import { useParams } from 'next/navigation';
 
 interface AnnualReportData {
   user: {
-    Full_name: string
-    emp_code: string
-  }
-  fiscalMonths: string[]
-  report: Record<string, Record<string, number>>
+    Full_name: string;
+    emp_code: string;
+  };
+  fiscalMonths: string[];
+  report: Record<string, Record<string, number>>;
 }
 
 export default function AnnualSalaryReportPage() {
-  const params = useParams()
-  const empCode = params?.empCode as string
-  
-  const [data, setData] = useState<AnnualReportData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const params = useParams();
+  const empCode = params?.empCode as string;
+
+  const [data, setData] = useState<AnnualReportData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (empCode) {
-      fetchData()
+      fetchData();
     }
-  }, [empCode])
+  }, [empCode]);
 
   const fetchData = async () => {
     try {
-      setLoading(true)
-      const response = await fetch(`/api/payroll/annual-report/${empCode}`)
-      const result = await response.json()
+      setLoading(true);
+      const response = await fetch(`/api/payroll/annual-report/${empCode}`);
+      const result = await response.json();
 
       if (result.success) {
-        setData(result.data)
+        setData(result.data);
       } else {
-        console.error('Failed to fetch data:', result.error)
+        console.error('Failed to fetch data:', result.error);
       }
     } catch (error) {
-      console.error('Error fetching data:', error)
+      console.error('Error fetching data:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleDownloadCSV = () => {
-    if (!data) return
+    if (!data) return;
 
-    const headers = ['Component', ...data.fiscalMonths, 'Total']
+    const headers = ['Component', ...data.fiscalMonths, 'Total'];
     const rows = Object.entries(data.report).map(([component, values]) => {
-      const row = [component]
-      data.fiscalMonths.forEach((month) => {
-        row.push(values[month]?.toFixed(2) || '0.00')
-      })
-      row.push(values['Total']?.toFixed(2) || '0.00')
-      return row
-    })
+      const row = [component];
+      data.fiscalMonths.forEach(month => {
+        row.push(values[month]?.toFixed(2) || '0.00');
+      });
+      row.push(values['Total']?.toFixed(2) || '0.00');
+      return row;
+    });
 
-    const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `Annual_Salary_Report_${empCode}.csv`
-    link.click()
-  }
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Annual_Salary_Report_${empCode}.csv`;
+    link.click();
+  };
 
   if (loading) {
     return (
@@ -85,7 +85,7 @@ export default function AnnualSalaryReportPage() {
           </div>
         </div>
       </>
-    )
+    );
   }
 
   if (!data) {
@@ -102,7 +102,7 @@ export default function AnnualSalaryReportPage() {
           </div>
         </div>
       </>
-    )
+    );
   }
 
   return (
@@ -115,9 +115,7 @@ export default function AnnualSalaryReportPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-2xl font-bold text-primary mb-2">
-                    Annual Salary Report
-                  </CardTitle>
+                  <CardTitle className="text-2xl font-bold text-primary mb-2">Annual Salary Report</CardTitle>
                   <p className="text-muted-foreground">
                     <span className="font-semibold text-foreground">{data.user.Full_name}</span> ({data.user.emp_code})
                   </p>
@@ -146,7 +144,7 @@ export default function AnnualSalaryReportPage() {
                   <thead className="bg-primary text-primary-foreground">
                     <tr>
                       <th className="px-3 py-3 text-left font-semibold sticky left-0 bg-primary z-10">Component</th>
-                      {data.fiscalMonths.map((month) => (
+                      {data.fiscalMonths.map(month => (
                         <th key={month} className="px-3 py-3 text-center font-semibold whitespace-nowrap">
                           {month}
                         </th>
@@ -159,38 +157,34 @@ export default function AnnualSalaryReportPage() {
                       const isHighlight =
                         component === 'Total Earnings' ||
                         component === 'Total Deductions' ||
-                        component === 'Net Take Home'
+                        component === 'Net Take Home';
 
                       return (
                         <tr
                           key={component}
                           className={
-                            isHighlight
-                              ? 'bg-blue-50 font-semibold'
-                              : idx % 2 === 0
-                              ? 'bg-white'
-                              : 'bg-gray-50'
+                            isHighlight ? 'bg-blue-50 font-semibold' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                           }
                         >
                           <td className="px-3 py-2.5 font-medium sticky left-0 bg-inherit z-10 border-r">
                             {component}
                           </td>
-                          {data.fiscalMonths.map((month) => (
+                          {data.fiscalMonths.map(month => (
                             <td key={month} className="px-3 py-2.5 text-center whitespace-nowrap">
                               {values[month]?.toLocaleString('en-IN', {
                                 minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
+                                maximumFractionDigits: 2
                               }) || '0.00'}
                             </td>
                           ))}
                           <td className="px-3 py-2.5 text-center font-semibold whitespace-nowrap bg-gray-100">
                             {values['Total']?.toLocaleString('en-IN', {
                               minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
+                              maximumFractionDigits: 2
                             }) || '0.00'}
                           </td>
                         </tr>
-                      )
+                      );
                     })}
                   </tbody>
                 </table>
@@ -199,7 +193,8 @@ export default function AnnualSalaryReportPage() {
               {/* Legend */}
               <div className="mt-4 text-xs text-muted-foreground">
                 <p>
-                  <span className="font-semibold">Note:</span> This report shows fiscal year data from April to March. Highlighted rows indicate summary calculations.
+                  <span className="font-semibold">Note:</span> This report shows fiscal year data from April to March.
+                  Highlighted rows indicate summary calculations.
                 </p>
               </div>
             </CardContent>
@@ -207,5 +202,5 @@ export default function AnnualSalaryReportPage() {
         </div>
       </div>
     </>
-  )
+  );
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import {prisma} from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   // Authentication
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
             { serial: 19, tax_regime: 'NEW', lower_limit: 1200001, upper_limit: 1600000, tax_percentage: 15 },
             { serial: 20, tax_regime: 'NEW', lower_limit: 1600001, upper_limit: 2000000, tax_percentage: 20 },
             { serial: 21, tax_regime: 'NEW', lower_limit: 2000001, upper_limit: 2400000, tax_percentage: 25 },
-            { serial: 22, tax_regime: 'NEW', lower_limit: 2400001, upper_limit: 999999999, tax_percentage: 30 },
+            { serial: 22, tax_regime: 'NEW', lower_limit: 2400001, upper_limit: 999999999, tax_percentage: 30 }
           ]
         },
         {
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
             { serial: 33, tax_regime: 'NEW', lower_limit: 1200001, upper_limit: 1600000, tax_percentage: 15 },
             { serial: 34, tax_regime: 'NEW', lower_limit: 1600001, upper_limit: 2000000, tax_percentage: 20 },
             { serial: 35, tax_regime: 'NEW', lower_limit: 2000001, upper_limit: 2400000, tax_percentage: 25 },
-            { serial: 36, tax_regime: 'NEW', lower_limit: 2400001, upper_limit: 999999999, tax_percentage: 30 },
+            { serial: 36, tax_regime: 'NEW', lower_limit: 2400001, upper_limit: 999999999, tax_percentage: 30 }
           ]
         },
         {
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
             { serial: 40, tax_regime: 'NEW', lower_limit: 1200001, upper_limit: 1600000, tax_percentage: 15 },
             { serial: 41, tax_regime: 'NEW', lower_limit: 1600001, upper_limit: 2000000, tax_percentage: 20 },
             { serial: 42, tax_regime: 'NEW', lower_limit: 2000001, upper_limit: 2400000, tax_percentage: 25 },
-            { serial: 43, tax_regime: 'NEW', lower_limit: 2400001, upper_limit: 999999999, tax_percentage: 30 },
+            { serial: 43, tax_regime: 'NEW', lower_limit: 2400001, upper_limit: 999999999, tax_percentage: 30 }
           ]
         }
       ];
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
         {
           headers: {
             'Cache-Control': 'no-store, no-cache, must-revalidate',
-            'Pragma': 'no-cache',
+            Pragma: 'no-cache'
           }
         }
       );

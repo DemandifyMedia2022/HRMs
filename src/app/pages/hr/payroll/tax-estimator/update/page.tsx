@@ -1,203 +1,203 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { SidebarConfig } from "@/components/sidebar-config"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/hooks/use-toast"
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { SidebarConfig } from '@/components/sidebar-config';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 
 type User = {
-  id: string
-  Full_name: string
-  PF_Annual_Contribution: string
-}
+  id: string;
+  Full_name: string;
+  PF_Annual_Contribution: string;
+};
 
 export default function UpdateTaxEstimatorPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [selectedUserId, setSelectedUserId] = useState("")
-  const [selectedUserPF, setSelectedUserPF] = useState("0")
-  const { toast } = useToast()
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [selectedUserPF, setSelectedUserPF] = useState('0');
+  const { toast } = useToast();
 
   // Old Tax Regime States
-  const [grossSalary, setGrossSalary] = useState("")
-  const [salaryHead, setSalaryHead] = useState("")
-  const [variableAmount, setVariableAmount] = useState("0")
-  const [employerDetails, setEmployerDetails] = useState("0")
-  const [incomeFromOther, setIncomeFromOther] = useState("0")
-  const [hra80GG, setHra80GG] = useState("0")
-  const [hraExempted, setHraExempted] = useState("0")
-  const [a80C, setA80C] = useState("")
-  const [aOthers, setAOthers] = useState("0")
-  const [standardDeduction, setStandardDeduction] = useState("50000")
-  const [netTaxableIncome, setNetTaxableIncome] = useState("")
-  const [annualProjectedTDS, setAnnualProjectedTDS] = useState("")
-  const [tdsDeducted, setTdsDeducted] = useState("0")
-  const [remainingTax, setRemainingTax] = useState("")
-  const [tdsSubsequentMonth, setTdsSubsequentMonth] = useState("")
-  const [tdsThisMonth, setTdsThisMonth] = useState("")
-  const [totalTax, setTotalTax] = useState("")
+  const [grossSalary, setGrossSalary] = useState('');
+  const [salaryHead, setSalaryHead] = useState('');
+  const [variableAmount, setVariableAmount] = useState('0');
+  const [employerDetails, setEmployerDetails] = useState('0');
+  const [incomeFromOther, setIncomeFromOther] = useState('0');
+  const [hra80GG, setHra80GG] = useState('0');
+  const [hraExempted, setHraExempted] = useState('0');
+  const [a80C, setA80C] = useState('');
+  const [aOthers, setAOthers] = useState('0');
+  const [standardDeduction, setStandardDeduction] = useState('50000');
+  const [netTaxableIncome, setNetTaxableIncome] = useState('');
+  const [annualProjectedTDS, setAnnualProjectedTDS] = useState('');
+  const [tdsDeducted, setTdsDeducted] = useState('0');
+  const [remainingTax, setRemainingTax] = useState('');
+  const [tdsSubsequentMonth, setTdsSubsequentMonth] = useState('');
+  const [tdsThisMonth, setTdsThisMonth] = useState('');
+  const [totalTax, setTotalTax] = useState('');
 
   // New Tax Regime States
-  const [grossSalary1, setGrossSalary1] = useState("")
-  const [salaryHead1, setSalaryHead1] = useState("")
-  const [variableAmount1, setVariableAmount1] = useState("0")
-  const [employerDetails1, setEmployerDetails1] = useState("0")
-  const [incomeFromOther1, setIncomeFromOther1] = useState("0")
-  const [aOthers1, setAOthers1] = useState("0")
-  const [standardDeduction1, setStandardDeduction1] = useState("75000")
-  const [netTaxableIncome1, setNetTaxableIncome1] = useState("")
-  const [annualProjectedTDS1, setAnnualProjectedTDS1] = useState("")
-  const [tdsDeducted1, setTdsDeducted1] = useState("0")
-  const [remainingTax1, setRemainingTax1] = useState("")
-  const [tdsSubsequentMonth1, setTdsSubsequentMonth1] = useState("")
-  const [tdsThisMonth1, setTdsThisMonth1] = useState("")
-  const [totalTax1, setTotalTax1] = useState("")
+  const [grossSalary1, setGrossSalary1] = useState('');
+  const [salaryHead1, setSalaryHead1] = useState('');
+  const [variableAmount1, setVariableAmount1] = useState('0');
+  const [employerDetails1, setEmployerDetails1] = useState('0');
+  const [incomeFromOther1, setIncomeFromOther1] = useState('0');
+  const [aOthers1, setAOthers1] = useState('0');
+  const [standardDeduction1, setStandardDeduction1] = useState('75000');
+  const [netTaxableIncome1, setNetTaxableIncome1] = useState('');
+  const [annualProjectedTDS1, setAnnualProjectedTDS1] = useState('');
+  const [tdsDeducted1, setTdsDeducted1] = useState('0');
+  const [remainingTax1, setRemainingTax1] = useState('');
+  const [tdsSubsequentMonth1, setTdsSubsequentMonth1] = useState('');
+  const [tdsThisMonth1, setTdsThisMonth1] = useState('');
+  const [totalTax1, setTotalTax1] = useState('');
 
   useEffect(() => {
-    fetchUsers()
-  }, [])
+    fetchUsers();
+  }, []);
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/payroll/tax-estimator/users")
-      const data = await res.json()
+      const res = await fetch('/api/payroll/tax-estimator/users');
+      const data = await res.json();
       if (data.success) {
-        setUsers(data.data)
+        setUsers(data.data);
       } else {
-        toast({ title: "Error", description: "Failed to load users", variant: "destructive" })
+        toast({ title: 'Error', description: 'Failed to load users', variant: 'destructive' });
       }
     } catch (error) {
-      toast({ title: "Error", description: "Failed to fetch users", variant: "destructive" })
+      toast({ title: 'Error', description: 'Failed to fetch users', variant: 'destructive' });
     }
-  }
+  };
 
   const handleUserSelect = (userId: string) => {
-    setSelectedUserId(userId)
-    const user = users.find((u) => u.id === userId)
+    setSelectedUserId(userId);
+    const user = users.find(u => u.id === userId);
     if (user) {
-      setSelectedUserPF(user.PF_Annual_Contribution)
-      setA80C(user.PF_Annual_Contribution)
+      setSelectedUserPF(user.PF_Annual_Contribution);
+      setA80C(user.PF_Annual_Contribution);
     }
-  }
+  };
 
   // Old Tax Regime Calculation
   const calculateOldTaxRegime = (grossVal: string) => {
-    setSalaryHead(grossVal)
-    setGrossSalary(grossVal)
-    
-    const gross = parseFloat(grossVal) || 0
-    const variable = parseFloat(variableAmount) || 0
-    const employer = parseFloat(employerDetails) || 0
-    const income = parseFloat(incomeFromOther) || 0
-    const hra = parseFloat(hra80GG) || 0
-    const hraEx = parseFloat(hraExempted) || 0
-    const others = parseFloat(aOthers) || 0
-    const c80C = parseFloat(a80C) || 0
-    const stdDeduction = parseFloat(standardDeduction) || 0
+    setSalaryHead(grossVal);
+    setGrossSalary(grossVal);
 
-    const netIncome = gross + variable + employer + income - hra - hraEx - others - c80C - stdDeduction - 2500
-    setNetTaxableIncome(Math.round(netIncome).toString())
+    const gross = parseFloat(grossVal) || 0;
+    const variable = parseFloat(variableAmount) || 0;
+    const employer = parseFloat(employerDetails) || 0;
+    const income = parseFloat(incomeFromOther) || 0;
+    const hra = parseFloat(hra80GG) || 0;
+    const hraEx = parseFloat(hraExempted) || 0;
+    const others = parseFloat(aOthers) || 0;
+    const c80C = parseFloat(a80C) || 0;
+    const stdDeduction = parseFloat(standardDeduction) || 0;
 
-    let tax = 0
+    const netIncome = gross + variable + employer + income - hra - hraEx - others - c80C - stdDeduction - 2500;
+    setNetTaxableIncome(Math.round(netIncome).toString());
+
+    let tax = 0;
     if (netIncome <= 250000) {
-      tax = 0
+      tax = 0;
     } else if (netIncome <= 500000) {
-      tax = (netIncome - 250000) * 0.05
+      tax = (netIncome - 250000) * 0.05;
     } else if (netIncome <= 1000000) {
-      tax = (250000 * 0.05) + (netIncome - 500000) * 0.20
+      tax = 250000 * 0.05 + (netIncome - 500000) * 0.2;
     } else {
-      tax = (250000 * 0.05) + (500000 * 0.20) + (netIncome - 1000000) * 0.30
+      tax = 250000 * 0.05 + 500000 * 0.2 + (netIncome - 1000000) * 0.3;
     }
 
     if (netIncome <= 500000) {
-      tax -= 12500
-      if (tax < 0) tax = 0
+      tax -= 12500;
+      if (tax < 0) tax = 0;
     }
 
-    const cess = tax * 0.04
-    const totalTaxVal = tax + cess
-    const annualTDS = Math.round(totalTaxVal)
-    
-    setAnnualProjectedTDS(annualTDS.toString())
-    setTotalTax(annualTDS.toString())
+    const cess = tax * 0.04;
+    const totalTaxVal = tax + cess;
+    const annualTDS = Math.round(totalTaxVal);
 
-    const tdsDeductedVal = parseFloat(tdsDeducted) || 0
-    const tdsPerMonth = Math.round((annualTDS - tdsDeductedVal) / 10)
-    
-    setTdsSubsequentMonth(tdsPerMonth.toString())
-    setTdsThisMonth(tdsPerMonth.toString())
-    
-    const remaining = annualTDS - tdsPerMonth - tdsDeductedVal
-    setRemainingTax(remaining >= 0 ? remaining.toString() : "0")
-  }
+    setAnnualProjectedTDS(annualTDS.toString());
+    setTotalTax(annualTDS.toString());
+
+    const tdsDeductedVal = parseFloat(tdsDeducted) || 0;
+    const tdsPerMonth = Math.round((annualTDS - tdsDeductedVal) / 10);
+
+    setTdsSubsequentMonth(tdsPerMonth.toString());
+    setTdsThisMonth(tdsPerMonth.toString());
+
+    const remaining = annualTDS - tdsPerMonth - tdsDeductedVal;
+    setRemainingTax(remaining >= 0 ? remaining.toString() : '0');
+  };
 
   // New Tax Regime Calculation
   const calculateNewTaxRegime = (grossVal: string) => {
-    setSalaryHead1(grossVal)
-    setGrossSalary1(grossVal)
+    setSalaryHead1(grossVal);
+    setGrossSalary1(grossVal);
 
-    const gross = parseFloat(grossVal) || 0
-    const variable = parseFloat(variableAmount1) || 0
-    const employer = parseFloat(employerDetails1) || 0
-    const income = parseFloat(incomeFromOther1) || 0
-    const others = parseFloat(aOthers1) || 0
-    const stdDeduction = parseFloat(standardDeduction1) || 0
+    const gross = parseFloat(grossVal) || 0;
+    const variable = parseFloat(variableAmount1) || 0;
+    const employer = parseFloat(employerDetails1) || 0;
+    const income = parseFloat(incomeFromOther1) || 0;
+    const others = parseFloat(aOthers1) || 0;
+    const stdDeduction = parseFloat(standardDeduction1) || 0;
 
-    const netIncome = gross + variable + employer + income + others - stdDeduction
-    setNetTaxableIncome1(Math.round(netIncome).toString())
+    const netIncome = gross + variable + employer + income + others - stdDeduction;
+    setNetTaxableIncome1(Math.round(netIncome).toString());
 
-    let tax = 0
-    let annualTDS = 0
+    let tax = 0;
+    let annualTDS = 0;
 
     if (gross > 1000000) {
       if (netIncome <= 400000) {
-        tax = 0
+        tax = 0;
       } else if (netIncome <= 800000) {
-        tax = (netIncome - 400000) * 0.05
+        tax = (netIncome - 400000) * 0.05;
       } else if (netIncome <= 1200000) {
-        tax = (400000 * 0.05) + (netIncome - 800000) * 0.10
+        tax = 400000 * 0.05 + (netIncome - 800000) * 0.1;
       } else if (netIncome <= 1600000) {
-        tax = (400000 * 0.05) + (400000 * 0.10) + (netIncome - 1200000) * 0.15
+        tax = 400000 * 0.05 + 400000 * 0.1 + (netIncome - 1200000) * 0.15;
       } else if (netIncome <= 2000000) {
-        tax = (400000 * 0.05) + (400000 * 0.10) + (400000 * 0.15) + (netIncome - 1600000) * 0.20
+        tax = 400000 * 0.05 + 400000 * 0.1 + 400000 * 0.15 + (netIncome - 1600000) * 0.2;
       } else if (netIncome <= 2400000) {
-        tax = (400000 * 0.05) + (400000 * 0.10) + (400000 * 0.15) + (400000 * 0.20) + (netIncome - 2000000) * 0.25
+        tax = 400000 * 0.05 + 400000 * 0.1 + 400000 * 0.15 + 400000 * 0.2 + (netIncome - 2000000) * 0.25;
       } else {
-        tax = (400000 * 0.05) + (400000 * 0.10) + (400000 * 0.15) + (400000 * 0.20) + (400000 * 0.25) + (netIncome - 2400000) * 0.30
+        tax = 400000 * 0.05 + 400000 * 0.1 + 400000 * 0.15 + 400000 * 0.2 + 400000 * 0.25 + (netIncome - 2400000) * 0.3;
       }
 
-      const cess = tax * 0.04
-      annualTDS = Math.round(tax + cess)
+      const cess = tax * 0.04;
+      annualTDS = Math.round(tax + cess);
     }
 
-    setAnnualProjectedTDS1(annualTDS.toString())
-    setTotalTax1(annualTDS.toString())
+    setAnnualProjectedTDS1(annualTDS.toString());
+    setTotalTax1(annualTDS.toString());
 
-    const monthlyTDS = Math.round(annualTDS / 12)
-    setTdsSubsequentMonth1(monthlyTDS.toString())
-    setTdsThisMonth1(monthlyTDS.toString())
-    setTdsDeducted1((monthlyTDS * 5).toString())
-    setTdsDeducted((monthlyTDS * 5).toString())
-    setRemainingTax1((annualTDS - (monthlyTDS * 6)).toString())
-  }
+    const monthlyTDS = Math.round(annualTDS / 12);
+    setTdsSubsequentMonth1(monthlyTDS.toString());
+    setTdsThisMonth1(monthlyTDS.toString());
+    setTdsDeducted1((monthlyTDS * 5).toString());
+    setTdsDeducted((monthlyTDS * 5).toString());
+    setRemainingTax1((annualTDS - monthlyTDS * 6).toString());
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     if (!selectedUserId) {
-      toast({ title: "Error", description: "Please select an employee", variant: "destructive" })
-      return
+      toast({ title: 'Error', description: 'Please select an employee', variant: 'destructive' });
+      return;
     }
 
     try {
-      const res = await fetch("/api/payroll/tax-estimator/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/payroll/tax-estimator/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           SelectUser: selectedUserId,
           Gross_salary: grossSalary,
@@ -230,20 +230,20 @@ export default function UpdateTaxEstimatorPage() {
           Remaining_Tax1: remainingTax1,
           TDS_subsequent_month1: tdsSubsequentMonth1,
           TDS_this_month1: tdsThisMonth1,
-          Total_Tax1: totalTax1,
-        }),
-      })
+          Total_Tax1: totalTax1
+        })
+      });
 
-      const data = await res.json()
+      const data = await res.json();
       if (data.success) {
-        toast({ title: "Success", description: "Tax structure updated successfully!" })
+        toast({ title: 'Success', description: 'Tax structure updated successfully!' });
       } else {
-        toast({ title: "Error", description: data.message || "Failed to update", variant: "destructive" })
+        toast({ title: 'Error', description: data.message || 'Failed to update', variant: 'destructive' });
       }
     } catch (error) {
-      toast({ title: "Error", description: "Failed to submit form", variant: "destructive" })
+      toast({ title: 'Error', description: 'Failed to submit form', variant: 'destructive' });
     }
-  }
+  };
 
   return (
     <>
@@ -274,7 +274,7 @@ export default function UpdateTaxEstimatorPage() {
                       <SelectValue placeholder="Select an employee" />
                     </SelectTrigger>
                     <SelectContent>
-                      {users.map((user) => (
+                      {users.map(user => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.Full_name}
                         </SelectItem>
@@ -293,7 +293,7 @@ export default function UpdateTaxEstimatorPage() {
                   <TabsTrigger value="old-tax">Old Tax Regime</TabsTrigger>
                   <TabsTrigger value="new-tax">New Tax Regime</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="old-tax" className="mt-4">
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
@@ -307,61 +307,65 @@ export default function UpdateTaxEstimatorPage() {
                         <tr className="border-b">
                           <td className="p-3">Annual gross salary (A)</td>
                           <td className="p-3">
-                            <Input value={grossSalary} onChange={(e) => calculateOldTaxRegime(e.target.value)} placeholder="Enter gross salary" />
+                            <Input
+                              value={grossSalary}
+                              onChange={e => calculateOldTaxRegime(e.target.value)}
+                              placeholder="Enter gross salary"
+                            />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">Income from salary heads(B)</td>
                           <td className="p-3">
-                            <Input value={salaryHead} onChange={(e) => setSalaryHead(e.target.value)} readOnly />
+                            <Input value={salaryHead} onChange={e => setSalaryHead(e.target.value)} readOnly />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">Variable amount(C)</td>
                           <td className="p-3">
-                            <Input value={variableAmount} onChange={(e) => setVariableAmount(e.target.value)} />
+                            <Input value={variableAmount} onChange={e => setVariableAmount(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">Previous employer details(D)</td>
                           <td className="p-3">
-                            <Input value={employerDetails} onChange={(e) => setEmployerDetails(e.target.value)} />
+                            <Input value={employerDetails} onChange={e => setEmployerDetails(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">Income from other(E)</td>
                           <td className="p-3">
-                            <Input value={incomeFromOther} onChange={(e) => setIncomeFromOther(e.target.value)} />
+                            <Input value={incomeFromOther} onChange={e => setIncomeFromOther(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">HRA/80GG(F)</td>
                           <td className="p-3">
-                            <Input value={hra80GG} onChange={(e) => setHra80GG(e.target.value)} />
+                            <Input value={hra80GG} onChange={e => setHra80GG(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">HRA Exempted(G)</td>
                           <td className="p-3">
-                            <Input value={hraExempted} onChange={(e) => setHraExempted(e.target.value)} />
+                            <Input value={hraExempted} onChange={e => setHraExempted(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">Chapter VI A - 80C(H)</td>
                           <td className="p-3">
-                            <Input value={a80C} onChange={(e) => setA80C(e.target.value)} />
+                            <Input value={a80C} onChange={e => setA80C(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">Chapter VI A - Others(I)</td>
                           <td className="p-3">
-                            <Input value={aOthers} onChange={(e) => setAOthers(e.target.value)} />
+                            <Input value={aOthers} onChange={e => setAOthers(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">Standard Deduction(J)</td>
                           <td className="p-3">
-                            <Input value={standardDeduction} onChange={(e) => setStandardDeduction(e.target.value)} />
+                            <Input value={standardDeduction} onChange={e => setStandardDeduction(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
@@ -379,7 +383,7 @@ export default function UpdateTaxEstimatorPage() {
                         <tr className="border-b">
                           <td className="p-3">TDS deducted till date(M)</td>
                           <td className="p-3">
-                            <Input value={tdsDeducted} onChange={(e) => setTdsDeducted(e.target.value)} />
+                            <Input value={tdsDeducted} onChange={e => setTdsDeducted(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
@@ -424,7 +428,11 @@ export default function UpdateTaxEstimatorPage() {
                         <tr className="border-b">
                           <td className="p-3">Annual gross salary (A)</td>
                           <td className="p-3">
-                            <Input value={grossSalary1} onChange={(e) => calculateNewTaxRegime(e.target.value)} placeholder="Enter gross salary" />
+                            <Input
+                              value={grossSalary1}
+                              onChange={e => calculateNewTaxRegime(e.target.value)}
+                              placeholder="Enter gross salary"
+                            />
                           </td>
                         </tr>
                         <tr className="border-b">
@@ -436,31 +444,31 @@ export default function UpdateTaxEstimatorPage() {
                         <tr className="border-b">
                           <td className="p-3">Variable amount(C)</td>
                           <td className="p-3">
-                            <Input value={variableAmount1} onChange={(e) => setVariableAmount1(e.target.value)} />
+                            <Input value={variableAmount1} onChange={e => setVariableAmount1(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">Previous employer details(D)</td>
                           <td className="p-3">
-                            <Input value={employerDetails1} onChange={(e) => setEmployerDetails1(e.target.value)} />
+                            <Input value={employerDetails1} onChange={e => setEmployerDetails1(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">Income from other(E)</td>
                           <td className="p-3">
-                            <Input value={incomeFromOther1} onChange={(e) => setIncomeFromOther1(e.target.value)} />
+                            <Input value={incomeFromOther1} onChange={e => setIncomeFromOther1(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">Chapter VI A - Others(I)</td>
                           <td className="p-3">
-                            <Input value={aOthers1} onChange={(e) => setAOthers1(e.target.value)} />
+                            <Input value={aOthers1} onChange={e => setAOthers1(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="p-3">Standard Deduction(J)</td>
                           <td className="p-3">
-                            <Input value={standardDeduction1} onChange={(e) => setStandardDeduction1(e.target.value)} />
+                            <Input value={standardDeduction1} onChange={e => setStandardDeduction1(e.target.value)} />
                           </td>
                         </tr>
                         <tr className="border-b">
@@ -521,5 +529,5 @@ export default function UpdateTaxEstimatorPage() {
         </form>
       </div>
     </>
-  )
+  );
 }

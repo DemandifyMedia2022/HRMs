@@ -1,6 +1,13 @@
 'use client';
 
-import { IconCreditCard, IconDotsVertical, IconLogout, IconNotification, IconSettings, IconUserCircle } from '@tabler/icons-react';
+import {
+  IconCreditCard,
+  IconDotsVertical,
+  IconLogout,
+  IconNotification,
+  IconSettings,
+  IconUserCircle
+} from '@tabler/icons-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -76,7 +83,7 @@ export function NavUser({
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => window.location.href = '/pages/settings'}>
+              <DropdownMenuItem onClick={() => (window.location.href = '/pages/settings')}>
                 <IconSettings />
                 Settings
               </DropdownMenuItem>

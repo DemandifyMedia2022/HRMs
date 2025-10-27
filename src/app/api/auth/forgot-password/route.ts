@@ -1,32 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { sendMail } from '@/lib/mailer'
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { sendMail } from '@/lib/mailer';
 
 function generateOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { email } = await req.json()
+    const { email } = await req.json();
     if (!email || typeof email !== 'string') {
-      return NextResponse.json({ message: 'Email is required' }, { status: 400 })
+      return NextResponse.json({ message: 'Email is required' }, { status: 400 });
     }
 
-    const user = await (prisma as any).users.findUnique({ where: { email } })
+    const user = await (prisma as any).users.findUnique({ where: { email } });
     if (!user) {
-      return NextResponse.json({ message: 'If the email exists, an OTP has been sent.' })
+      return NextResponse.json({ message: 'If the email exists, an OTP has been sent.' });
     }
 
-    const otp = generateOtp()
+    const otp = generateOtp();
 
     await (prisma as any).password_reset_tokens.upsert({
       where: { email },
       update: { token: otp, created_at: new Date() },
       create: { email, token: otp, created_at: new Date() }
-    })
+    });
 
-    const appName = process.env.MAIL_FROM_NAME || 'HRMS'
+    const appName = process.env.MAIL_FROM_NAME || 'HRMS';
     const html = `
       <div style="font-family:ui-sans-serif,system-ui,-apple-system;max-width:520px;margin:auto">
         <h2>${appName}: Password reset OTP</h2>
@@ -38,15 +38,15 @@ export async function POST(req: NextRequest) {
           <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}/reset-password" target="_blank">Reset Password</a>
         </p>
       </div>
-    `
+    `;
 
-    const res = await sendMail({ to: [email], subject: `${appName}: Password reset OTP`, html })
+    const res = await sendMail({ to: [email], subject: `${appName}: Password reset OTP`, html });
     if (!res.ok) {
-      return NextResponse.json({ message: 'Failed to send email', error: res.error }, { status: 500 })
+      return NextResponse.json({ message: 'Failed to send email', error: res.error }, { status: 500 });
     }
 
-    return NextResponse.json({ message: 'OTP sent if the email exists' })
+    return NextResponse.json({ message: 'OTP sent if the email exists' });
   } catch (e: any) {
-    return NextResponse.json({ message: 'Request error', details: e?.message }, { status: 500 })
+    return NextResponse.json({ message: 'Request error', details: e?.message }, { status: 500 });
   }
 }

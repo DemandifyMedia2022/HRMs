@@ -14,7 +14,12 @@ type Props = {
 
 export default function DialerModal({ open, onClose, number, userName }: Props) {
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
+    <Dialog
+      open={open}
+      onOpenChange={o => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Dialer</DialogTitle>
@@ -23,7 +28,9 @@ export default function DialerModal({ open, onClose, number, userName }: Props) 
           <div className="text-sm text-muted-foreground">Number: {number || 'N/A'}</div>
           <Dialer number={number} userName={userName} />
           <div className="flex justify-end">
-            <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Close
+            </Button>
           </div>
         </div>
       </DialogContent>

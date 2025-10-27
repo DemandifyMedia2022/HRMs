@@ -1,89 +1,102 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { SidebarConfig } from "@/components/sidebar-config"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { SidebarConfig } from '@/components/sidebar-config';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
 
 export default function GratuityPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  
+  const router = useRouter();
+  const { toast } = useToast();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
   const [formData, setFormData] = useState({
-    Gratuity: 'No',
-  })
+    Gratuity: 'No'
+  });
 
   useEffect(() => {
-    fetchGratuity()
-  }, [])
+    fetchGratuity();
+  }, []);
 
   const fetchGratuity = async () => {
     try {
-      setLoading(true)
-      const res = await fetch("/api/payroll/gratuity", {
-        cache: "no-store",
+      setLoading(true);
+      const res = await fetch('/api/payroll/gratuity', {
+        cache: 'no-store',
         credentials: 'include'
-      })
-      const json = await res.json()
-      
+      });
+      const json = await res.json();
+
       if (json.success && json.data) {
-        const data = json.data
+        const data = json.data;
         setFormData({
-          Gratuity: data.Gratuity || 'No',
-        })
+          Gratuity: data.Gratuity || 'No'
+        });
       }
     } catch (error) {
-      console.error("Error fetching gratuity:", error)
+      console.error('Error fetching gratuity:', error);
       toast({
-        title: "Error",
-        description: "Failed to load gratuity settings",
-        variant: "destructive"
-      })
+        title: 'Error',
+        description: 'Failed to load gratuity settings',
+        variant: 'destructive'
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setConfirmOpen(true)
-  }
+    e.preventDefault();
+    setConfirmOpen(true);
+  };
 
   const onConfirmSave = async () => {
     try {
-      setSaving(true)
-      const res = await fetch("/api/payroll/gratuity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      setSaving(true);
+      const res = await fetch('/api/payroll/gratuity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(formData),
-      })
-      const json = await res.json()
+        body: JSON.stringify(formData)
+      });
+      const json = await res.json();
       if (json.success) {
-        toast({ title: "Saved", description: "Gratuity settings saved successfully" })
-        setConfirmOpen(false)
+        toast({ title: 'Saved', description: 'Gratuity settings saved successfully' });
+        setConfirmOpen(false);
       } else {
-        throw new Error(json.error || "Failed to save")
+        throw new Error(json.error || 'Failed to save');
       }
     } catch (error: any) {
-      console.error("Error saving gratuity:", error)
-      toast({ title: "Error", description: error.message || "Failed to save gratuity settings", variant: "destructive" })
+      console.error('Error saving gratuity:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save gratuity settings',
+        variant: 'destructive'
+      });
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -93,7 +106,7 @@ export default function GratuityPage() {
           <div className="text-center p-8">Loading gratuity settings...</div>
         </div>
       </>
-    )
+    );
   }
 
   return (
@@ -121,20 +134,26 @@ export default function GratuityPage() {
               {/* Gratuity Applicability */}
               <div>
                 <Label className="mb-3 block text-base">Is gratuity applicable?</Label>
-                <RadioGroup value={formData.Gratuity} onValueChange={(val) => handleInputChange('Gratuity', val)}>
+                <RadioGroup value={formData.Gratuity} onValueChange={val => handleInputChange('Gratuity', val)}>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="Yes" id="gratuity-yes" />
-                    <Label htmlFor="gratuity-yes" className="font-normal">Yes</Label>
+                    <Label htmlFor="gratuity-yes" className="font-normal">
+                      Yes
+                    </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="No" id="gratuity-no" />
-                    <Label htmlFor="gratuity-no" className="font-normal">No</Label>
+                    <Label htmlFor="gratuity-no" className="font-normal">
+                      No
+                    </Label>
                   </div>
                 </RadioGroup>
               </div>
 
               <div className="flex justify-center pt-6">
-                <Button type="submit" className="w-48" disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+                <Button type="submit" className="w-48" disabled={saving}>
+                  {saving ? 'Saving...' : 'Save'}
+                </Button>
               </div>
             </form>
           </CardContent>
@@ -149,11 +168,13 @@ export default function GratuityPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={onConfirmSave} disabled={saving}>Confirm</AlertDialogAction>
+              <AlertDialogAction onClick={onConfirmSave} disabled={saving}>
+                Confirm
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
     </>
-  )
+  );
 }

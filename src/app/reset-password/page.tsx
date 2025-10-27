@@ -1,51 +1,54 @@
-'use client'
+'use client';
 
-import { useEffect, useMemo, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function ResetPasswordPage() {
-  const sp = useSearchParams()
-  const [email, setEmail] = useState('')
-  const [otp, setOtp] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const sp = useSearchParams();
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    const e = sp.get('email') || ''
-    if (e) setEmail(e)
-  }, [sp])
+    const e = sp.get('email') || '';
+    if (e) setEmail(e);
+  }, [sp]);
 
-  const canSubmit = useMemo(() => email && otp && password && confirm && password === confirm, [email, otp, password, confirm])
+  const canSubmit = useMemo(
+    () => email && otp && password && confirm && password === confirm,
+    [email, otp, password, confirm]
+  );
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!canSubmit) return
-    setLoading(true)
+    e.preventDefault();
+    if (!canSubmit) return;
+    setLoading(true);
     try {
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, newPassword: password })
-      })
-      const j = await res.json().catch(() => ({}))
+      });
+      const j = await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error(j.message || 'Reset failed')
+        toast.error(j.message || 'Reset failed');
       } else {
-        toast.success('Password updated')
-        router.push('/')
+        toast.success('Password updated');
+        router.push('/');
       }
     } catch (e: any) {
-      toast.error('Network error')
+      toast.error('Network error');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -68,7 +71,13 @@ export default function ResetPasswordPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">New password</Label>
-              <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirm">Confirm password</Label>
@@ -86,5 +95,5 @@ export default function ResetPasswordPage() {
         </CardContent>
       </Card>
     </main>
-  )
+  );
 }

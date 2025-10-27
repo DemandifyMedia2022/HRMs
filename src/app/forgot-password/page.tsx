@@ -1,40 +1,40 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!email) return
-    setLoading(true)
+    e.preventDefault();
+    if (!email) return;
+    setLoading(true);
     try {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
-      })
+      });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}))
-        toast.error(j.message || 'Failed to send OTP')
+        const j = await res.json().catch(() => ({}));
+        toast.error(j.message || 'Failed to send OTP');
       } else {
-        toast.success('If the email exists, an OTP has been sent')
-        router.push(`/reset-password?email=${encodeURIComponent(email)}`)
+        toast.success('If the email exists, an OTP has been sent');
+        router.push(`/reset-password?email=${encodeURIComponent(email)}`);
       }
     } catch (e: any) {
-      toast.error('Network error')
+      toast.error('Network error');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -63,5 +63,5 @@ export default function ForgotPasswordPage() {
         </CardContent>
       </Card>
     </main>
-  )
+  );
 }

@@ -1,50 +1,69 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { SidebarConfig } from "@/components/sidebar-config"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { IconX, IconPlus } from "@tabler/icons-react"
-import { useToast } from "@/hooks/use-toast"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { SidebarConfig } from '@/components/sidebar-config';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { IconX, IconPlus } from '@tabler/icons-react';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
 
 type LabourWelfareSlab = {
-  id: string
-  name: string
-  state: string
-  branch: string
-  minApplicability: number
-  maxApplicability: number
+  id: string;
+  name: string;
+  state: string;
+  branch: string;
+  minApplicability: number;
+  maxApplicability: number;
   employeeContribution: {
-    [month: string]: number
-  }
+    [month: string]: number;
+  };
   employerContribution: {
-    [month: string]: number
-  }
-}
+    [month: string]: number;
+  };
+};
 
 const months = [
-  "April", "May", "June", "July", "August", "September",
-  "October", "November", "December", "January", "February", "March"
-]
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+  'January',
+  'February',
+  'March'
+];
 
 export default function LabourWelfareDetailsPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [slabs, setSlabs] = useState<LabourWelfareSlab[]>([])
-  const [selectedSlabId, setSelectedSlabId] = useState<string | null>(null)
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const router = useRouter();
+  const { toast } = useToast();
+  const [slabs, setSlabs] = useState<LabourWelfareSlab[]>([]);
+  const [selectedSlabId, setSelectedSlabId] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<LabourWelfareSlab>({
-    id: "",
-    name: "Slab for Pune(3001-999999999)",
-    state: "Maharashtra",
-    branch: "Pune",
+    id: '',
+    name: 'Slab for Pune(3001-999999999)',
+    state: 'Maharashtra',
+    branch: 'Pune',
     minApplicability: 3001,
     maxApplicability: 999999999,
     employeeContribution: {
@@ -59,7 +78,7 @@ export default function LabourWelfareDetailsPage() {
       December: 12,
       January: 0,
       February: 0,
-      March: 0,
+      March: 0
     },
     employerContribution: {
       April: 0,
@@ -73,82 +92,82 @@ export default function LabourWelfareDetailsPage() {
       December: 36,
       January: 0,
       February: 0,
-      March: 0,
-    },
-  })
+      March: 0
+    }
+  });
 
   useEffect(() => {
-    fetchSlabs()
-  }, [])
+    fetchSlabs();
+  }, []);
 
   const fetchSlabs = async () => {
     try {
-      const res = await fetch('/api/payroll/labour-welfare-fund', { cache: 'no-store' })
-      const json = await res.json()
+      const res = await fetch('/api/payroll/labour-welfare-fund', { cache: 'no-store' });
+      const json = await res.json();
       if (json.success && json.data) {
-        setSlabs(json.data)
+        setSlabs(json.data);
         if (json.data.length > 0) {
-          setSelectedSlabId(json.data[0].id)
-          setFormData(json.data[0])
+          setSelectedSlabId(json.data[0].id);
+          setFormData(json.data[0]);
         }
       }
     } catch (error) {
-      console.error('Error fetching labour welfare fund slabs:', error)
+      console.error('Error fetching labour welfare fund slabs:', error);
     }
-  }
+  };
 
   const handleInputChange = (field: keyof LabourWelfareSlab, value: string | number) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleEmployeeContributionChange = (month: string, value: number) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      employeeContribution: { ...prev.employeeContribution, [month]: value },
-    }))
-  }
+      employeeContribution: { ...prev.employeeContribution, [month]: value }
+    }));
+  };
 
   const handleEmployerContributionChange = (month: string, value: number) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      employerContribution: { ...prev.employerContribution, [month]: value },
-    }))
-  }
+      employerContribution: { ...prev.employerContribution, [month]: value }
+    }));
+  };
 
   const handleSlabSelect = (slabId: string) => {
-    const slab = slabs.find((s) => s.id === slabId)
+    const slab = slabs.find(s => s.id === slabId);
     if (slab) {
-      setFormData(slab)
-      setSelectedSlabId(slabId)
+      setFormData(slab);
+      setSelectedSlabId(slabId);
     }
-  }
+  };
 
-  const handleSave = () => setConfirmOpen(true)
+  const handleSave = () => setConfirmOpen(true);
 
   const onConfirmSave = async () => {
     try {
-      setSaving(true)
-      const method = formData.id ? 'PUT' : 'POST'
+      setSaving(true);
+      const method = formData.id ? 'PUT' : 'POST';
       const res = await fetch('/api/payroll/labour-welfare-fund', {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-      const json = await res.json()
+        body: JSON.stringify(formData)
+      });
+      const json = await res.json();
       if (json.success) {
-        toast({ title: 'Saved', description: 'Labour welfare fund slab saved successfully' })
-        setConfirmOpen(false)
-        fetchSlabs()
+        toast({ title: 'Saved', description: 'Labour welfare fund slab saved successfully' });
+        setConfirmOpen(false);
+        fetchSlabs();
       } else {
-        throw new Error(json.error || 'Failed to save slab')
+        throw new Error(json.error || 'Failed to save slab');
       }
     } catch (error: any) {
-      console.error('Error saving slab:', error)
-      toast({ title: 'Error', description: error.message || 'Failed to save slab', variant: 'destructive' })
+      console.error('Error saving slab:', error);
+      toast({ title: 'Error', description: error.message || 'Failed to save slab', variant: 'destructive' });
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   return (
     <>
@@ -161,7 +180,9 @@ export default function LabourWelfareDetailsPage() {
             <p className="text-muted-foreground">Manage labour welfare fund slabs and contributions</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => router.back()}>Back</Button>
+            <Button variant="outline" onClick={() => router.back()}>
+              Back
+            </Button>
           </div>
         </div>
 
@@ -177,12 +198,12 @@ export default function LabourWelfareDetailsPage() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="space-y-0">
-                {slabs.map((slab) => (
+                {slabs.map(slab => (
                   <button
                     key={slab.id}
                     onClick={() => handleSlabSelect(slab.id)}
                     className={`w-full text-left px-4 py-3 text-sm border-b transition-colors hover:bg-muted ${
-                      selectedSlabId === slab.id ? "bg-emerald-50 font-semibold" : ""
+                      selectedSlabId === slab.id ? 'bg-emerald-50 font-semibold' : ''
                     }`}
                   >
                     {slab.name}
@@ -205,14 +226,14 @@ export default function LabourWelfareDetailsPage() {
                     <Input
                       id="slabName"
                       value={formData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
+                      onChange={e => handleInputChange('name', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="state">
                       State<span className="text-red-500">*</span>
                     </Label>
-                    <Select value={formData.state} onValueChange={(val) => handleInputChange("state", val)}>
+                    <Select value={formData.state} onValueChange={val => handleInputChange('state', val)}>
                       <SelectTrigger id="state">
                         <SelectValue />
                       </SelectTrigger>
@@ -230,7 +251,7 @@ export default function LabourWelfareDetailsPage() {
                     <Input
                       id="branch"
                       value={formData.branch}
-                      onChange={(e) => handleInputChange("branch", e.target.value)}
+                      onChange={e => handleInputChange('branch', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -241,7 +262,7 @@ export default function LabourWelfareDetailsPage() {
                       id="minApplicability"
                       type="number"
                       value={formData.minApplicability}
-                      onChange={(e) => handleInputChange("minApplicability", parseInt(e.target.value) || 0)}
+                      onChange={e => handleInputChange('minApplicability', parseInt(e.target.value) || 0)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -252,7 +273,7 @@ export default function LabourWelfareDetailsPage() {
                       id="maxApplicability"
                       type="number"
                       value={formData.maxApplicability}
-                      onChange={(e) => handleInputChange("maxApplicability", parseInt(e.target.value) || 0)}
+                      onChange={e => handleInputChange('maxApplicability', parseInt(e.target.value) || 0)}
                     />
                   </div>
                 </div>
@@ -266,7 +287,7 @@ export default function LabourWelfareDetailsPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-4 gap-6">
-                  {months.map((month) => (
+                  {months.map(month => (
                     <div key={month} className="space-y-2">
                       <Label htmlFor={`emp-${month}`} className="font-semibold">
                         {month}*
@@ -275,7 +296,7 @@ export default function LabourWelfareDetailsPage() {
                         id={`emp-${month}`}
                         type="number"
                         value={formData.employeeContribution[month]}
-                        onChange={(e) => handleEmployeeContributionChange(month, parseInt(e.target.value) || 0)}
+                        onChange={e => handleEmployeeContributionChange(month, parseInt(e.target.value) || 0)}
                       />
                     </div>
                   ))}
@@ -290,7 +311,7 @@ export default function LabourWelfareDetailsPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-4 gap-6">
-                  {months.map((month) => (
+                  {months.map(month => (
                     <div key={month} className="space-y-2">
                       <Label htmlFor={`empr-${month}`} className="font-semibold">
                         {month}*
@@ -299,7 +320,7 @@ export default function LabourWelfareDetailsPage() {
                         id={`empr-${month}`}
                         type="number"
                         value={formData.employerContribution[month]}
-                        onChange={(e) => handleEmployerContributionChange(month, parseInt(e.target.value) || 0)}
+                        onChange={e => handleEmployerContributionChange(month, parseInt(e.target.value) || 0)}
                       />
                     </div>
                   ))}
@@ -323,17 +344,17 @@ export default function LabourWelfareDetailsPage() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Save Labour Welfare slab?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will update the selected slab configuration.
-              </AlertDialogDescription>
+              <AlertDialogDescription>This will update the selected slab configuration.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={onConfirmSave} disabled={saving}>Confirm</AlertDialogAction>
+              <AlertDialogAction onClick={onConfirmSave} disabled={saving}>
+                Confirm
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
     </>
-  )
+  );
 }

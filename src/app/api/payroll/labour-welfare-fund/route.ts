@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
           December: 6,
           January: 0,
           February: 0,
-          March: 0,
+          March: 0
         },
         employerContribution: {
           April: 0,
@@ -61,8 +61,8 @@ export async function GET(request: NextRequest) {
           December: 18,
           January: 0,
           February: 0,
-          March: 0,
-        },
+          March: 0
+        }
       },
       {
         id: '2',
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
           December: 12,
           January: 0,
           February: 0,
-          March: 0,
+          March: 0
         },
         employerContribution: {
           April: 0,
@@ -97,14 +97,14 @@ export async function GET(request: NextRequest) {
           December: 36,
           January: 0,
           February: 0,
-          March: 0,
-        },
-      },
+          March: 0
+        }
+      }
     ];
 
     return NextResponse.json({
       success: true,
-      data: slabs,
+      data: slabs
     });
   } catch (error: any) {
     console.error('Error fetching labour welfare fund slabs:', error);
@@ -139,13 +139,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // Validate required fields
-    if (!body.name || !body.state || !body.branch || body.minApplicability === undefined || body.maxApplicability === undefined) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
-        { status: 400 }
-      );
+    if (
+      !body.name ||
+      !body.state ||
+      !body.branch ||
+      body.minApplicability === undefined ||
+      body.maxApplicability === undefined
+    ) {
+      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
     }
 
     // Save to database - implement your database logic here
@@ -155,7 +158,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Labour welfare fund slab saved successfully',
-      data: body,
+      data: body
     });
   } catch (error: any) {
     console.error('Error saving labour welfare fund slab:', error);
@@ -190,13 +193,10 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // Validate required fields
     if (!body.id || !body.name || !body.state || !body.branch) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
     }
 
     // Update in database - implement your database logic here
@@ -205,7 +205,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Labour welfare fund slab updated successfully',
-      data: body,
+      data: body
     });
   } catch (error: any) {
     console.error('Error updating labour welfare fund slab:', error);
@@ -243,10 +243,7 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json(
-        { success: false, error: 'Missing slab ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'Missing slab ID' }, { status: 400 });
     }
 
     // Delete from database - implement your database logic here
@@ -254,7 +251,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Labour welfare fund slab deleted successfully',
+      message: 'Labour welfare fund slab deleted successfully'
     });
   } catch (error: any) {
     console.error('Error deleting labour welfare fund slab:', error);

@@ -65,21 +65,21 @@ export async function GET(request: NextRequest) {
           income: 'No',
           challantax: 'No',
           taxable: '10 rupees',
-          component: 'Proportionate',
-        },
+          component: 'Proportionate'
+        }
       });
     }
 
     return NextResponse.json(
       {
         success: true,
-        data: taxSetting,
+        data: taxSetting
       },
       {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Pragma': 'no-cache',
-        },
+          Pragma: 'no-cache'
+        }
       }
     );
   } catch (error: any) {
@@ -151,13 +151,13 @@ export async function POST(request: NextRequest) {
       income: body.income || null,
       challantax: body.challantax || null,
       taxable: body.taxable || null,
-      component: body.component || null,
+      component: body.component || null
     };
 
     // Laravel: DB::table('tax_setting')->updateOrInsert($match, $data)
     // Check if record exists
     const existingSetting = await prisma.tax_setting.findFirst({
-      where: matchCondition,
+      where: matchCondition
     });
 
     let result;
@@ -165,19 +165,19 @@ export async function POST(request: NextRequest) {
       // Update existing record
       result = await prisma.tax_setting.update({
         where: { id: existingSetting.id },
-        data: taxSettingData,
+        data: taxSettingData
       });
     } else {
       // Create new record
       result = await prisma.tax_setting.create({
-        data: taxSettingData,
+        data: taxSettingData
       });
     }
 
     return NextResponse.json({
       success: true,
       message: 'Tax settings saved successfully',
-      data: result,
+      data: result
     });
   } catch (error: any) {
     console.error('Error saving tax settings:', error);

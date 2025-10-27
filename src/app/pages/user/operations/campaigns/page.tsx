@@ -22,7 +22,10 @@ export default function CampaignListPage() {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/status?page=${page}&pageSize=${pageSize}`, { credentials: 'include', cache: 'no-store' });
+      const res = await fetch(`/api/status?page=${page}&pageSize=${pageSize}`, {
+        credentials: 'include',
+        cache: 'no-store'
+      });
       const j = await res.json().catch(() => ({}));
       const data = Array.isArray(j?.data) ? j.data : [];
       setRows(data);
@@ -94,8 +97,16 @@ export default function CampaignListPage() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="text-sm text-muted-foreground">Rows per page</div>
-                <Select value={String(pageSize)} onValueChange={v => { setPageSize(Number(v)); setPage(1); }}>
-                  <SelectTrigger className="w-[92px]"><SelectValue /></SelectTrigger>
+                <Select
+                  value={String(pageSize)}
+                  onValueChange={v => {
+                    setPageSize(Number(v));
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[92px]">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="10">10</SelectItem>
                     <SelectItem value="20">20</SelectItem>
@@ -130,7 +141,9 @@ export default function CampaignListPage() {
                         <td className="px-3 py-2">
                           {r.f_start_date ? new Date(r.f_start_date).toLocaleDateString() : '-'}
                         </td>
-                        <td className="px-3 py-2">{r.f_end_date ? new Date(r.f_end_date).toLocaleDateString() : '-'}</td>
+                        <td className="px-3 py-2">
+                          {r.f_end_date ? new Date(r.f_end_date).toLocaleDateString() : '-'}
+                        </td>
                         <td className="px-3 py-2">{Number(r.f_status) ? 'Active' : 'Inactive'}</td>
                         <td className="px-3 py-2">
                           {r.f_script_url ? (
@@ -163,7 +176,9 @@ export default function CampaignListPage() {
                         <td className="px-3 py-2">
                           {canEdit ? (
                             <Button asChild size="sm">
-                              <a href={`/pages/crms/campaigns/add?editId=${r.id}`} title="Edit campaign">Edit</a>
+                              <a href={`/pages/crms/campaigns/add?editId=${r.id}`} title="Edit campaign">
+                                Edit
+                              </a>
                             </Button>
                           ) : (
                             <span className="text-gray-400 text-xs">No access</span>
@@ -188,8 +203,22 @@ export default function CampaignListPage() {
                 Page {page} of {totalPages} • Total {total}
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Prev</Button>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                >
+                  Prev
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                >
+                  Next
+                </Button>
               </div>
             </div>
           </CardContent>

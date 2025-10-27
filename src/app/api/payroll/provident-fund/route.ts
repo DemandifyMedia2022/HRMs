@@ -1,35 +1,35 @@
-import { NextRequest, NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 // GET - Fetch provident fund settings
 export async function GET(req: NextRequest) {
   try {
-    const providentFunds = await prisma.provident_fund.findMany()
-    
+    const providentFunds = await prisma.provident_fund.findMany();
+
     return NextResponse.json({
       success: true,
       data: providentFunds.length > 0 ? providentFunds[0] : null
-    })
+    });
   } catch (error: any) {
-    console.error("Error fetching provident fund:", error)
+    console.error('Error fetching provident fund:', error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch provident fund data" },
+      { success: false, error: error.message || 'Failed to fetch provident fund data' },
       { status: 500 }
-    )
+    );
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
 }
 
 // POST - Save/Update provident fund settings
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    
+    const body = await req.json();
+
     // Extract user_id from body or use a default
-    const userId = body.user_id || 1
+    const userId = body.user_id || 1;
 
     // Prepare data for upsert
     const data = {
@@ -54,39 +54,39 @@ export async function POST(req: NextRequest) {
       fund: body.fund || 'No',
       vpf: body.vpf || null,
       user_id: userId
-    }
+    };
 
     // Check if record exists
     const existing = await prisma.provident_fund.findFirst({
       where: { user_id: userId }
-    })
+    });
 
-    let result
+    let result;
     if (existing) {
       // Update existing record
       result = await prisma.provident_fund.update({
         where: { id: existing.id },
         data: data
-      })
+      });
     } else {
       // Create new record
       result = await prisma.provident_fund.create({
         data: data
-      })
+      });
     }
 
     return NextResponse.json({
       success: true,
-      message: "Provident fund settings saved successfully",
+      message: 'Provident fund settings saved successfully',
       data: result
-    })
+    });
   } catch (error: any) {
-    console.error("Error saving provident fund:", error)
+    console.error('Error saving provident fund:', error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to save provident fund data" },
+      { success: false, error: error.message || 'Failed to save provident fund data' },
       { status: 500 }
-    )
+    );
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
 }

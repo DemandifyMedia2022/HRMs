@@ -38,34 +38,84 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: {
-          state: "Maharashtra",
-          branch: "Pune",
-          min_limit1: "0",
-          max_limit1: "0",
-          gender1: "All",
-          apr1: "0", may1: "0", jun1: "0", jul1: "0", aug1: "0", sep1: "0",
-          oct1: "0", nov1: "0", dec1: "0", jan1: "0", feb1: "0", mar1: "0",
-          min_limit2: "0",
-          max_limit2: "0",
-          gender2: "All",
-          apr2: "0", may2: "0", jun2: "0", jul2: "0", aug2: "0", sep2: "0",
-          oct2: "0", nov2: "0", dec2: "0", jan2: "0", feb2: "0", mar2: "0",
-          min_limit3: "0",
-          max_limit3: "0",
-          gender3: "All",
-          apr3: "0", may3: "0", jun3: "0", jul3: "0", aug3: "0", sep3: "0",
-          oct3: "0", nov3: "0", dec3: "0", jan3: "0", feb3: "0", mar3: "0",
-          min_limit4: "0",
-          max_limit4: "0",
-          gender4: "All",
-          apr4: "0", may4: "0", jun4: "0", jul4: "0", aug4: "0", sep4: "0",
-          oct4: "0", nov4: "0", dec4: "0", jan4: "0", feb4: "0", mar4: "0",
-          min_limit5: "0",
-          max_limit5: "0",
-          gender5: "All",
-          apr5: "0", may5: "0", jun5: "0", jul5: "0", aug5: "0", sep5: "0",
-          oct5: "0", nov5: "0", dec5: "0", jan5: "0", feb5: "0", mar5: "0",
-        },
+          state: 'Maharashtra',
+          branch: 'Pune',
+          min_limit1: '0',
+          max_limit1: '0',
+          gender1: 'All',
+          apr1: '0',
+          may1: '0',
+          jun1: '0',
+          jul1: '0',
+          aug1: '0',
+          sep1: '0',
+          oct1: '0',
+          nov1: '0',
+          dec1: '0',
+          jan1: '0',
+          feb1: '0',
+          mar1: '0',
+          min_limit2: '0',
+          max_limit2: '0',
+          gender2: 'All',
+          apr2: '0',
+          may2: '0',
+          jun2: '0',
+          jul2: '0',
+          aug2: '0',
+          sep2: '0',
+          oct2: '0',
+          nov2: '0',
+          dec2: '0',
+          jan2: '0',
+          feb2: '0',
+          mar2: '0',
+          min_limit3: '0',
+          max_limit3: '0',
+          gender3: 'All',
+          apr3: '0',
+          may3: '0',
+          jun3: '0',
+          jul3: '0',
+          aug3: '0',
+          sep3: '0',
+          oct3: '0',
+          nov3: '0',
+          dec3: '0',
+          jan3: '0',
+          feb3: '0',
+          mar3: '0',
+          min_limit4: '0',
+          max_limit4: '0',
+          gender4: 'All',
+          apr4: '0',
+          may4: '0',
+          jun4: '0',
+          jul4: '0',
+          aug4: '0',
+          sep4: '0',
+          oct4: '0',
+          nov4: '0',
+          dec4: '0',
+          jan4: '0',
+          feb4: '0',
+          mar4: '0',
+          min_limit5: '0',
+          max_limit5: '0',
+          gender5: 'All',
+          apr5: '0',
+          may5: '0',
+          jun5: '0',
+          jul5: '0',
+          aug5: '0',
+          sep5: '0',
+          oct5: '0',
+          nov5: '0',
+          dec5: '0',
+          jan5: '0',
+          feb5: '0',
+          mar5: '0'
+        }
       });
     }
 
@@ -82,20 +132,20 @@ export async function GET(request: NextRequest) {
       min_limit4: String(slab.min_limit4 ?? 0),
       max_limit4: String(slab.max_limit4 ?? 0),
       min_limit5: String(slab.min_limit5 ?? 0),
-      max_limit5: String(slab.max_limit5 ?? 0),
+      max_limit5: String(slab.max_limit5 ?? 0)
     };
 
     return NextResponse.json(
       {
         success: true,
-        data: slabData,
+        data: slabData
       },
       {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-        },
+          Pragma: 'no-cache',
+          Expires: '0'
+        }
       }
     );
   } catch (error: any) {
@@ -135,7 +185,7 @@ export async function POST(request: NextRequest) {
     // Match condition: state only (since branch can be null in DB)
     // This ensures we update the same record even if branch was null
     const matchCondition = {
-      state: body.state || 'Maharashtra',
+      state: body.state || 'Maharashtra'
     };
 
     // Convert string values to appropriate types for database
@@ -217,17 +267,17 @@ export async function POST(request: NextRequest) {
       sep5: body.sep5 || '0',
       oct5: body.oct5 || '0',
       nov5: body.nov5 || '0',
-      dec5: body.dec5 || '0',
+      dec5: body.dec5 || '0'
     };
 
     // Laravel: DB::table('slabs')->updateOrInsert($match, $data)
     // Prisma equivalent: upsert with where condition
     console.log('Performing updateOrInsert with match:', matchCondition);
     console.log('Data to save:', slabData);
-    
+
     // Check if record exists with state and branch
     const existingSlab = await prisma.slabs.findFirst({
-      where: matchCondition,
+      where: matchCondition
     });
 
     let result;
@@ -236,20 +286,20 @@ export async function POST(request: NextRequest) {
       console.log('Updating existing slab with id:', existingSlab.id);
       result = await prisma.slabs.update({
         where: { id: existingSlab.id },
-        data: slabData,
+        data: slabData
       });
     } else {
       // Create new slab (matches updateOrInsert insert behavior)
       console.log('Creating new slab for state:', matchCondition.state, 'branch:', slabData.branch);
       result = await prisma.slabs.create({
-        data: slabData,
+        data: slabData
       });
     }
 
     // Convert BigInt to string for JSON serialization
     const resultData = {
       ...result,
-      id: String(result.id),
+      id: String(result.id)
     };
 
     console.log('Saved successfully, returning result');
@@ -257,7 +307,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Professional tax slabs saved successfully',
-      data: resultData,
+      data: resultData
     });
   } catch (error: any) {
     console.error('Error saving professional tax slabs:', error);

@@ -42,10 +42,7 @@ export async function GET(request: NextRequest) {
     let whereClause: any = {};
     if (search) {
       whereClause = {
-        OR: [
-          { Full_name: { contains: search } },
-          { emp_code: { contains: search } }
-        ]
+        OR: [{ Full_name: { contains: search } }, { emp_code: { contains: search } }]
       };
     }
 
@@ -72,12 +69,12 @@ export async function GET(request: NextRequest) {
         netSalary: true,
         gender: true,
         Paygroup: true,
-        joining_date: true,
-      },
+        joining_date: true
+      }
     });
 
     const processedUsers = await Promise.all(
-      users.map(async (user) => {
+      users.map(async user => {
         const empCode = user.emp_code || '';
 
         // Fetch attendance
@@ -86,16 +83,16 @@ export async function GET(request: NextRequest) {
             employeeId: parseInt(empCode) || 0,
             date: {
               gte: new Date(year, month - 1, 1),
-              lt: new Date(year, month, 1),
-            },
-          },
+              lt: new Date(year, month, 1)
+            }
+          }
         });
 
         // Count present days
-        let presentDays = attendance.filter((a) => a.status === 'Present').length;
-        
+        let presentDays = attendance.filter(a => a.status === 'Present').length;
+
         // Add paid statuses
-        const paidStatusDays = attendance.filter((a) =>
+        const paidStatusDays = attendance.filter(a =>
           ['work From Home', 'Paid Leave', 'Sick Leave(FullDay)', 'Week Off'].includes(a.status || '')
         ).length;
         presentDays += paidStatusDays;
@@ -105,16 +102,18 @@ export async function GET(request: NextRequest) {
           where: {
             event_date: {
               gte: new Date(year, month - 1, 1),
-              lt: new Date(year, month, 1),
-            },
+              lt: new Date(year, month, 1)
+            }
           },
-          select: { event_date: true },
+          select: { event_date: true }
         });
-        const holidayDates = holidays.map((h) => h.event_date?.toISOString().split('T')[0]).filter((d): d is string => d !== undefined);
+        const holidayDates = holidays
+          .map(h => h.event_date?.toISOString().split('T')[0])
+          .filter((d): d is string => d !== undefined);
 
-        const halfDays = attendance.filter((a) =>
-          a.status === 'Half-day' && !holidayDates.includes(a.date.toISOString().split('T')[0])
-        ).length * 0.5;
+        const halfDays =
+          attendance.filter(a => a.status === 'Half-day' && !holidayDates.includes(a.date.toISOString().split('T')[0]))
+            .length * 0.5;
 
         // Get all dates in month
         const allDates: string[] = [];
@@ -122,15 +121,15 @@ export async function GET(request: NextRequest) {
           allDates.push(new Date(year, month - 1, day).toISOString().split('T')[0]);
         }
 
-        const existingDates = attendance.map((a) => a.date.toISOString().split('T')[0]);
-        const missingDates = allDates.filter((d) => !existingDates.includes(d));
+        const existingDates = attendance.map(a => a.date.toISOString().split('T')[0]);
+        const missingDates = allDates.filter(d => !existingDates.includes(d));
 
         // Count absent days
-        let absentDays = attendance.filter((a) => a.status === 'Absent').length;
+        let absentDays = attendance.filter(a => a.status === 'Absent').length;
         absentDays += missingDates.length;
 
         // Subtract holidays
-        const holidayCount = missingDates.filter((d) => holidayDates.includes(d)).length;
+        const holidayCount = missingDates.filter(d => holidayDates.includes(d)).length;
         absentDays -= holidayCount;
         presentDays += holidayDates.length;
 
@@ -141,23 +140,23 @@ export async function GET(request: NextRequest) {
             HRapproval: 'Approved',
             Managerapproval: 'Approved',
             leave_type: {
-              in: ['Paid Leave', 'Sick Leave(HalfDay)', 'Sick Leave(FullDay)', 'work From Home'],
+              in: ['Paid Leave', 'Sick Leave(HalfDay)', 'Sick Leave(FullDay)', 'work From Home']
             },
             OR: [
               {
                 start_date: {
                   gte: new Date(year, month - 1, 1),
-                  lt: new Date(year, month, 1),
-                },
+                  lt: new Date(year, month, 1)
+                }
               },
               {
                 end_date: {
                   gte: new Date(year, month - 1, 1),
-                  lt: new Date(year, month, 1),
-                },
-              },
-            ],
-          },
+                  lt: new Date(year, month, 1)
+                }
+              }
+            ]
+          }
         });
 
         let totalPaidLeaveDays = 0;
@@ -186,7 +185,7 @@ export async function GET(request: NextRequest) {
         }
 
         presentDays += totalPaidLeaveDays;
-        absentDays -= paidLeaveDates.filter((d) => missingDates.includes(d)).length;
+        absentDays -= paidLeaveDates.filter(d => missingDates.includes(d)).length;
         absentDays = Math.max(absentDays, 0);
 
         // Calculate pay days
@@ -238,7 +237,7 @@ export async function GET(request: NextRequest) {
         // Fetch Income Tax
         const investmentDeclaration = await prisma.investment_declaration.findFirst({
           where: { emp_code: empCode },
-          select: { TDS_this_month1: true },
+          select: { TDS_this_month1: true }
         });
         const incomeTax = parseFloat(investmentDeclaration?.TDS_this_month1 || '0');
 
@@ -261,7 +260,7 @@ export async function GET(request: NextRequest) {
           job_role: user.job_role,
           pay_days: Math.round(payDays * 10) / 10,
           net_pay: netPay,
-          arrear_days: 0,
+          arrear_days: 0
         };
       })
     );
@@ -273,9 +272,9 @@ export async function GET(request: NextRequest) {
         currentPage: page,
         totalPages: Math.ceil(totalCount / limit),
         totalCount,
-        limit,
+        limit
       },
-      selectedMonth,
+      selectedMonth
     });
   } catch (error: any) {
     console.error('Error fetching process attendance:', error);

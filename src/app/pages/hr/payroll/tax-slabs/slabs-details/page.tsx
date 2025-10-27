@@ -1,69 +1,62 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { SidebarConfig } from "@/components/sidebar-config"
-import { Button } from "@/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { SidebarConfig } from '@/components/sidebar-config';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type TaxSlab = {
-  serial: number
-  tax_regime: string
-  lower_limit: number
-  upper_limit: number
-  tax_percentage: number
-}
+  serial: number;
+  tax_regime: string;
+  lower_limit: number;
+  upper_limit: number;
+  tax_percentage: number;
+};
 
 type CategoryData = {
-  category: string
-  slabs: TaxSlab[]
-}
+  category: string;
+  slabs: TaxSlab[];
+};
 
 export default function SlabsDetailsPage() {
-  const router = useRouter()
-  const [activeCategory, setActiveCategory] = useState<string>("individual")
-  const [taxData, setTaxData] = useState<CategoryData[]>([])
-  const [loading, setLoading] = useState(true)
+  const router = useRouter();
+  const [activeCategory, setActiveCategory] = useState<string>('individual');
+  const [taxData, setTaxData] = useState<CategoryData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const categories = [
-    { id: "individual", label: "Individual" },
-    { id: "senior-citizen", label: "Senior Citizen" },
-    { id: "super-senior-citizen", label: "Super Senior Citizen" },
-  ]
+    { id: 'individual', label: 'Individual' },
+    { id: 'senior-citizen', label: 'Senior Citizen' },
+    { id: 'super-senior-citizen', label: 'Super Senior Citizen' }
+  ];
 
   useEffect(() => {
-    fetchTaxSlabs()
-  }, [])
+    fetchTaxSlabs();
+  }, []);
 
   const fetchTaxSlabs = async () => {
     try {
-      setLoading(true)
-      const res = await fetch("/api/payroll/tax-slabs-details", { 
-        cache: "no-store",
+      setLoading(true);
+      const res = await fetch('/api/payroll/tax-slabs-details', {
+        cache: 'no-store',
         credentials: 'include' // Required to send session cookie
-      })
-      const json = await res.json()
+      });
+      const json = await res.json();
       if (json.success && json.data) {
-        setTaxData(json.data)
+        setTaxData(json.data);
       }
     } catch (error) {
-      console.error("Error fetching tax slabs:", error)
+      console.error('Error fetching tax slabs:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getActiveCategoryData = () => {
-    const data = taxData.find((d) => d.category === activeCategory)
-    return data?.slabs || []
-  }
+    const data = taxData.find(d => d.category === activeCategory);
+    return data?.slabs || [];
+  };
 
   if (loading) {
     return (
@@ -73,7 +66,7 @@ export default function SlabsDetailsPage() {
           <div className="text-center p-8">Loading tax slabs...</div>
         </div>
       </>
-    )
+    );
   }
 
   return (
@@ -86,23 +79,24 @@ export default function SlabsDetailsPage() {
             <p className="text-muted-foreground">View slab ranges and rates by category</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => router.back()}>Back</Button>
+            <Button variant="outline" size="sm" onClick={() => router.back()}>
+              Back
+            </Button>
           </div>
         </div>
 
         <div className="flex">
           {/* Sidebar */}
           <div className="w-64 bg-muted/30 p-6 rounded-lg mr-6">
-            
             <ul className="space-y-4">
-              {categories.map((cat) => (
+              {categories.map(cat => (
                 <li
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
                   className={`cursor-pointer transition-colors ${
                     activeCategory === cat.id
-                      ? "text-emerald-600 font-bold"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? 'text-emerald-600 font-bold'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {cat.label}
@@ -114,7 +108,9 @@ export default function SlabsDetailsPage() {
           {/* Main Content */}
           <div className="flex-1">
             <div className="mb-6 pb-4 border-b-2 border-primary">
-              <h1 className="text-xl font-bold text-primary">Tax Slab - {categories.find(c => c.id === activeCategory)?.label}</h1>
+              <h1 className="text-xl font-bold text-primary">
+                Tax Slab - {categories.find(c => c.id === activeCategory)?.label}
+              </h1>
             </div>
 
             <div className="bg-background rounded-lg border overflow-hidden">
@@ -131,7 +127,7 @@ export default function SlabsDetailsPage() {
                 <TableBody>
                   {getActiveCategoryData().length > 0 ? (
                     getActiveCategoryData().map((slab, index) => (
-                      <TableRow key={index} className={index % 2 === 1 ? "bg-muted/20" : ""}>
+                      <TableRow key={index} className={index % 2 === 1 ? 'bg-muted/20' : ''}>
                         <TableCell>{slab.serial}</TableCell>
                         <TableCell className="font-medium">{slab.tax_regime}</TableCell>
                         <TableCell>₹{slab.lower_limit.toLocaleString()}</TableCell>
@@ -153,5 +149,5 @@ export default function SlabsDetailsPage() {
         </div>
       </div>
     </>
-  )
+  );
 }

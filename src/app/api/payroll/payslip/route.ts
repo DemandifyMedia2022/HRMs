@@ -6,7 +6,18 @@ import { verifyToken } from '@/lib/auth';
 function convertNumberToWords(num: number): string {
   const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
   const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-  const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const teens = [
+    'Ten',
+    'Eleven',
+    'Twelve',
+    'Thirteen',
+    'Fourteen',
+    'Fifteen',
+    'Sixteen',
+    'Seventeen',
+    'Eighteen',
+    'Nineteen'
+  ];
 
   if (num === 0) return 'Zero Rupees Only';
 
@@ -98,8 +109,8 @@ export async function GET(request: NextRequest) {
         PF_Monthly_Contribution: true,
         Employee_Esic_Monthly: true,
         gross_salary: true,
-        netSalary: true,
-      },
+        netSalary: true
+      }
     });
 
     if (!user) {
@@ -117,7 +128,7 @@ export async function GET(request: NextRequest) {
     } else {
       const now = new Date();
       const currentDay = now.getDate();
-      
+
       if (currentDay < 28) {
         month = now.getMonth() + 1;
         year = now.getFullYear();
@@ -132,42 +143,50 @@ export async function GET(request: NextRequest) {
     const totalDays = new Date(year, month, 0).getDate();
 
     // Fetch attendance from npattendance table
-    const attendance = await prisma.npAttendance.findMany({
-      where: {
-        employeeId: parseInt(user.emp_code) || 0,
-        date: {
-          gte: new Date(year, month - 1, 1),
-          lt: new Date(year, month, 1)
-        }
-      },
-      orderBy: { date: 'asc' }
-    }).catch(() => []) || [];
+    const attendance =
+      (await prisma.npAttendance
+        .findMany({
+          where: {
+            employeeId: parseInt(user.emp_code) || 0,
+            date: {
+              gte: new Date(year, month - 1, 1),
+              lt: new Date(year, month, 1)
+            }
+          },
+          orderBy: { date: 'asc' }
+        })
+        .catch(() => [])) || [];
 
     // Fetch holidays
-    const holidays = await prisma.crud_events.findMany({
-      where: {
-        event_date: {
-          gte: new Date(year, month - 1, 1),
-          lt: new Date(year, month, 1)
-        }
-      },
-      select: { event_date: true }
-    }).catch(() => []) || [];
-    const holidayDates = holidays.map(h => h.event_date?.toISOString().split('T')[0]).filter((d): d is string => d !== undefined);
+    const holidays =
+      (await prisma.crud_events
+        .findMany({
+          where: {
+            event_date: {
+              gte: new Date(year, month - 1, 1),
+              lt: new Date(year, month, 1)
+            }
+          },
+          select: { event_date: true }
+        })
+        .catch(() => [])) || [];
+    const holidayDates = holidays
+      .map(h => h.event_date?.toISOString().split('T')[0])
+      .filter((d): d is string => d !== undefined);
 
     // Count present days
     let presentDays = attendance.filter(a => a.status === 'Present').length;
 
     // Add paid statuses
-    const paidStatusDays = attendance.filter(a => 
+    const paidStatusDays = attendance.filter(a =>
       ['work From Home', 'Paid Leave', 'Sick Leave(FullDay)', 'Week Off'].includes(a.status || '')
     ).length;
     presentDays += paidStatusDays;
 
     // Count half days (excluding holidays)
-    const halfDays = attendance.filter(a => 
-      a.status === 'Half-day' && !holidayDates.includes(a.date.toISOString().split('T')[0])
-    ).length * 0.5;
+    const halfDays =
+      attendance.filter(a => a.status === 'Half-day' && !holidayDates.includes(a.date.toISOString().split('T')[0]))
+        .length * 0.5;
 
     // Get all dates in the month
     const allDates: string[] = [];
@@ -188,30 +207,33 @@ export async function GET(request: NextRequest) {
     presentDays += holidayDates.length;
 
     // Fetch approved leaves
-    const leaveDays = await prisma.leavedata.findMany({
-      where: {
-        emp_code: user.emp_code,
-        HRapproval: 'Approved',
-        Managerapproval: 'Approved',
-        leave_type: {
-          in: ['Paid Leave', 'Sick Leave(HalfDay)', 'Sick Leave(FullDay)', 'work From Home']
-        },
-        OR: [
-          {
-            start_date: {
-              gte: new Date(year, month - 1, 1),
-              lt: new Date(year, month, 1)
-            }
-          },
-          {
-            end_date: {
-              gte: new Date(year, month - 1, 1),
-              lt: new Date(year, month, 1)
-            }
+    const leaveDays =
+      (await prisma.leavedata
+        .findMany({
+          where: {
+            emp_code: user.emp_code,
+            HRapproval: 'Approved',
+            Managerapproval: 'Approved',
+            leave_type: {
+              in: ['Paid Leave', 'Sick Leave(HalfDay)', 'Sick Leave(FullDay)', 'work From Home']
+            },
+            OR: [
+              {
+                start_date: {
+                  gte: new Date(year, month - 1, 1),
+                  lt: new Date(year, month, 1)
+                }
+              },
+              {
+                end_date: {
+                  gte: new Date(year, month - 1, 1),
+                  lt: new Date(year, month, 1)
+                }
+              }
+            ]
           }
-        ]
-      }
-    }).catch(() => []) || [];
+        })
+        .catch(() => [])) || [];
 
     let totalPaidLeaveDays = 0;
     let totalSickLeaveDays = 0;
@@ -275,7 +297,7 @@ export async function GET(request: NextRequest) {
 
     if (user.Paygroup !== 'Intern') {
       const slabs = await prisma.slabs.findFirst().catch(() => null);
-      
+
       if (slabs) {
         for (let i = 1; i <= 5; i++) {
           const gender = (slabs as any)[`gender${i}`];
@@ -302,10 +324,12 @@ export async function GET(request: NextRequest) {
     const esiEarned = (employeeEsicMonthly / totalDays) * payDays;
 
     // Fetch Income Tax (TDS)
-    const investmentDeclaration = await prisma.investment_declaration.findFirst({
-      where: { emp_code: user.emp_code },
-      select: { TDS_this_month1: true }
-    }).catch(() => null);
+    const investmentDeclaration = await prisma.investment_declaration
+      .findFirst({
+        where: { emp_code: user.emp_code },
+        select: { TDS_this_month1: true }
+      })
+      .catch(() => null);
     const incomeTax = parseFloat(investmentDeclaration?.TDS_this_month1 || '0');
 
     // Calculate PF Contribution
@@ -321,22 +345,25 @@ export async function GET(request: NextRequest) {
     const netPayInWords = convertNumberToWords(inhandSalary);
 
     // Fetch all available payslips (grouped by month and year)
-    const availablePayslips = await prisma.$queryRawUnsafe<any[]>(
-      `SELECT 
+    const availablePayslips =
+      (await prisma
+        .$queryRawUnsafe<any[]>(
+          `SELECT 
         YEAR(date) as year, 
         MONTH(date) as month
       FROM npattendance
       WHERE npattendance.employee_id = ?
       GROUP BY year, month
       ORDER BY year DESC, month DESC`,
-      user.emp_code
-    ).catch(() => []) || [];
+          user.emp_code
+        )
+        .catch(() => [])) || [];
 
     // Filter out current month
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
-    
+
     const filteredPayslips = availablePayslips.filter((payslip: any) => {
       return !(payslip.month === currentMonth && payslip.year === currentYear);
     });
@@ -353,46 +380,49 @@ export async function GET(request: NextRequest) {
           Account_no: user.Account_no,
           UAN: user.UAN,
           bank_name: user.bank_name,
-          IFSC_code: user.IFSC_code,
+          IFSC_code: user.IFSC_code
         },
         salaryDetails: {
           Basic_Monthly_Remuneration: basic,
           HRA_Monthly_Remuneration: hra,
           OTHER_ALLOWANCE_Monthly_Remuneration: other,
           gross_salary: parseFloat(user.gross_salary || '0'),
-          netSalary: parseFloat(user.netSalary || '0'),
+          netSalary: parseFloat(user.netSalary || '0')
         },
         attendance: {
           totalDays,
           presentDays: Math.round(presentDays * 10) / 10,
           absentDays: Math.round(absentDays * 10) / 10,
           halfDays: Math.round(halfDays * 10) / 10,
-          payDays: Math.round(payDays * 10) / 10,
+          payDays: Math.round(payDays * 10) / 10
         },
         earnings: {
           basicEarned: Math.round(basicEarned),
           hraEarned: Math.round(hraEarned),
           otherEarned: Math.round(otherEarned),
-          totalEarning,
+          totalEarning
         },
         deductions: {
           pfContribution,
           professionalTax,
           incomeTax,
           esiEarned: Math.round(esiEarned),
-          totalDeduction,
+          totalDeduction
         },
         netPay: {
           inhandSalary,
-          netPayInWords,
+          netPayInWords
         },
         payslips: filteredPayslips,
         selectedMonth: month,
-        selectedYear: year,
-      },
+        selectedYear: year
+      }
     });
   } catch (error: any) {
     console.error('Error fetching payslip data:', error);
-    return NextResponse.json({ success: false, error: 'Failed to fetch payslip data.', details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch payslip data.', details: error.message },
+      { status: 500 }
+    );
   }
 }

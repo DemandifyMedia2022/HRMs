@@ -43,11 +43,12 @@ export default function SipLoginModal({ open, onClose }: Props) {
     }
   }, [open]);
 
-  if (!open) return (
-    <Dialog open={false}>
-      <DialogContent className="hidden" />
-    </Dialog>
-  );
+  if (!open)
+    return (
+      <Dialog open={false}>
+        <DialogContent className="hidden" />
+      </Dialog>
+    );
 
   const save = async () => {
     if (!extension || (!password && !hasSavedPassword)) return;
@@ -111,7 +112,12 @@ export default function SipLoginModal({ open, onClose }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
+    <Dialog
+      open={open}
+      onOpenChange={o => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>SIP Extension Login</DialogTitle>
@@ -151,10 +157,7 @@ export default function SipLoginModal({ open, onClose }: Props) {
             ) : null}
           </div>
           <div className="flex items-center justify-between pt-2">
-            <Button
-              onClick={save}
-              disabled={!extension || (!!!password && !hasSavedPassword) || loading}
-            >
+            <Button onClick={save} disabled={!extension || (!!!password && !hasSavedPassword) || loading}>
               {loading ? 'Saving...' : 'Save & Login'}
             </Button>
             <Button variant="outline" onClick={logout}>

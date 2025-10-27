@@ -1,21 +1,30 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { SidebarConfig } from "@/components/sidebar-config"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { SidebarConfig } from '@/components/sidebar-config';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
 
 export default function TDSDeductorPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  
+  const router = useRouter();
+  const { toast } = useToast();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
   const [formData, setFormData] = useState({
     // Income tax details
     financial_year: '2025-2026',
@@ -23,7 +32,7 @@ export default function TDSDeductorPage() {
     pan_number: 'AAJCG8670N',
     tan_number: 'PNEG28450C',
     gst_number: '27AAJCG8670N1ZS',
-    
+
     // Deductor details
     deductor_name: 'Gnosis Data Marketing',
     deductor_branch: 'Gnosis Data Marketing',
@@ -39,7 +48,7 @@ export default function TDSDeductorPage() {
     deductor_phone: '',
     deductor_fax: '',
     deductor_email: 'viresh.kumbhar@gnosisdatamarketing.com',
-    
+
     // Responsible person details
     person_name: 'viresh kumbhar',
     person_group_owner: 'Viresh Basvant Kumbhar #DM007',
@@ -60,35 +69,39 @@ export default function TDSDeductorPage() {
     person_mobile: '1212121212',
     person_pan: 'DPBPA0135M',
     person_email: 'viresh.kumbhar@gnosisdatamarketing.com',
-    
+
     // Applicability
     company: 'Demandify Media',
     branch: 'Pune',
-    sub_branch: 'Pune',
-  })
+    sub_branch: 'Pune'
+  });
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setConfirmOpen(true)
-  }
+    e.preventDefault();
+    setConfirmOpen(true);
+  };
 
   const onConfirmSave = async () => {
     try {
-      setSaving(true)
+      setSaving(true);
       // No backend given; simulate success and show toast
-      toast({ title: "Saved", description: "TDS deductor information saved successfully" })
-      setConfirmOpen(false)
+      toast({ title: 'Saved', description: 'TDS deductor information saved successfully' });
+      setConfirmOpen(false);
     } catch (error: any) {
-      console.error("Error saving TDS deductor info:", error)
-      toast({ title: "Error", description: error.message || "Failed to save TDS deductor information", variant: "destructive" })
+      console.error('Error saving TDS deductor info:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save TDS deductor information',
+        variant: 'destructive'
+      });
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   return (
     <>
@@ -117,51 +130,61 @@ export default function TDSDeductorPage() {
                 <h3 className="bg-muted p-3 mb-6 text-lg font-semibold">Income tax details</h3>
                 <div className="space-y-6">
                   <div>
-                    <Label>Financial year <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Financial year <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.financial_year}
-                      onChange={(e) => handleInputChange('financial_year', e.target.value)}
+                      onChange={e => handleInputChange('financial_year', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Group name <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Group name <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.group_name}
-                      onChange={(e) => handleInputChange('group_name', e.target.value)}
+                      onChange={e => handleInputChange('group_name', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>PAN number <span className="text-red-500">*</span></Label>
+                    <Label>
+                      PAN number <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.pan_number}
-                      onChange={(e) => handleInputChange('pan_number', e.target.value)}
+                      onChange={e => handleInputChange('pan_number', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>TAN number <span className="text-red-500">*</span></Label>
+                    <Label>
+                      TAN number <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.tan_number}
-                      onChange={(e) => handleInputChange('tan_number', e.target.value)}
+                      onChange={e => handleInputChange('tan_number', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Goods and service tax number <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Goods and service tax number <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.gst_number}
-                      onChange={(e) => handleInputChange('gst_number', e.target.value)}
+                      onChange={e => handleInputChange('gst_number', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
@@ -173,141 +196,169 @@ export default function TDSDeductorPage() {
                 <h3 className="bg-muted p-3 mb-6 text-lg font-semibold">Deductor details</h3>
                 <div className="space-y-6">
                   <div>
-                    <Label>Name <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Name <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_name}
-                      onChange={(e) => handleInputChange('deductor_name', e.target.value)}
+                      onChange={e => handleInputChange('deductor_name', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Branch <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Branch <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_branch}
-                      onChange={(e) => handleInputChange('deductor_branch', e.target.value)}
+                      onChange={e => handleInputChange('deductor_branch', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Flat/ Door/ Block No. <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Flat/ Door/ Block No. <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_flat_no}
-                      onChange={(e) => handleInputChange('deductor_flat_no', e.target.value)}
+                      onChange={e => handleInputChange('deductor_flat_no', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Name of building <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Name of building <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_building}
-                      onChange={(e) => handleInputChange('deductor_building', e.target.value)}
+                      onChange={e => handleInputChange('deductor_building', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Street/ Road name <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Street/ Road name <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_street}
-                      onChange={(e) => handleInputChange('deductor_street', e.target.value)}
+                      onChange={e => handleInputChange('deductor_street', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Area <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Area <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_area}
-                      onChange={(e) => handleInputChange('deductor_area', e.target.value)}
+                      onChange={e => handleInputChange('deductor_area', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>State <span className="text-red-500">*</span></Label>
+                    <Label>
+                      State <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_state}
-                      onChange={(e) => handleInputChange('deductor_state', e.target.value)}
+                      onChange={e => handleInputChange('deductor_state', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>City <span className="text-red-500">*</span></Label>
+                    <Label>
+                      City <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_city}
-                      onChange={(e) => handleInputChange('deductor_city', e.target.value)}
+                      onChange={e => handleInputChange('deductor_city', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>PIN <span className="text-red-500">*</span></Label>
+                    <Label>
+                      PIN <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_pin}
-                      onChange={(e) => handleInputChange('deductor_pin', e.target.value)}
+                      onChange={e => handleInputChange('deductor_pin', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Address change <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Address change <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_address_change}
-                      onChange={(e) => handleInputChange('deductor_address_change', e.target.value)}
+                      onChange={e => handleInputChange('deductor_address_change', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>STD code <span className="text-red-500">*</span></Label>
+                    <Label>
+                      STD code <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_std_code}
-                      onChange={(e) => handleInputChange('deductor_std_code', e.target.value)}
+                      onChange={e => handleInputChange('deductor_std_code', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Phone No <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Phone No <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_phone}
-                      onChange={(e) => handleInputChange('deductor_phone', e.target.value)}
+                      onChange={e => handleInputChange('deductor_phone', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Fax <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Fax <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.deductor_fax}
-                      onChange={(e) => handleInputChange('deductor_fax', e.target.value)}
+                      onChange={e => handleInputChange('deductor_fax', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Email <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Email <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="email"
                       value={formData.deductor_email}
-                      onChange={(e) => handleInputChange('deductor_email', e.target.value)}
+                      onChange={e => handleInputChange('deductor_email', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
@@ -319,191 +370,229 @@ export default function TDSDeductorPage() {
                 <h3 className="bg-muted p-3 mb-6 text-lg font-semibold">Responsible person details</h3>
                 <div className="space-y-6">
                   <div>
-                    <Label>Name <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Name <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_name}
-                      onChange={(e) => handleInputChange('person_name', e.target.value)}
+                      onChange={e => handleInputChange('person_name', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Group owner <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Group owner <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_group_owner}
-                      onChange={(e) => handleInputChange('person_group_owner', e.target.value)}
+                      onChange={e => handleInputChange('person_group_owner', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Designation <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Designation <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_designation}
-                      onChange={(e) => handleInputChange('person_designation', e.target.value)}
+                      onChange={e => handleInputChange('person_designation', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Father's name <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Father's name <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_father_name}
-                      onChange={(e) => handleInputChange('person_father_name', e.target.value)}
+                      onChange={e => handleInputChange('person_father_name', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Gender <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Gender <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_gender}
-                      onChange={(e) => handleInputChange('person_gender', e.target.value)}
+                      onChange={e => handleInputChange('person_gender', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Flat/ Door/ Block No. <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Flat/ Door/ Block No. <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_flat_no}
-                      onChange={(e) => handleInputChange('person_flat_no', e.target.value)}
+                      onChange={e => handleInputChange('person_flat_no', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Name of building <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Name of building <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_building}
-                      onChange={(e) => handleInputChange('person_building', e.target.value)}
+                      onChange={e => handleInputChange('person_building', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Street/ Road name <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Street/ Road name <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_street}
-                      onChange={(e) => handleInputChange('person_street', e.target.value)}
+                      onChange={e => handleInputChange('person_street', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Area <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Area <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_area}
-                      onChange={(e) => handleInputChange('person_area', e.target.value)}
+                      onChange={e => handleInputChange('person_area', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>State <span className="text-red-500">*</span></Label>
+                    <Label>
+                      State <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_state}
-                      onChange={(e) => handleInputChange('person_state', e.target.value)}
+                      onChange={e => handleInputChange('person_state', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>City <span className="text-red-500">*</span></Label>
+                    <Label>
+                      City <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_city}
-                      onChange={(e) => handleInputChange('person_city', e.target.value)}
+                      onChange={e => handleInputChange('person_city', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>PIN <span className="text-red-500">*</span></Label>
+                    <Label>
+                      PIN <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_pin}
-                      onChange={(e) => handleInputChange('person_pin', e.target.value)}
+                      onChange={e => handleInputChange('person_pin', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Address change <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Address change <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_address_change}
-                      onChange={(e) => handleInputChange('person_address_change', e.target.value)}
+                      onChange={e => handleInputChange('person_address_change', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>STD code <span className="text-red-500">*</span></Label>
+                    <Label>
+                      STD code <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_std_code}
-                      onChange={(e) => handleInputChange('person_std_code', e.target.value)}
+                      onChange={e => handleInputChange('person_std_code', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Phone number <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Phone number <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_phone}
-                      onChange={(e) => handleInputChange('person_phone', e.target.value)}
+                      onChange={e => handleInputChange('person_phone', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Fax <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Fax <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_fax}
-                      onChange={(e) => handleInputChange('person_fax', e.target.value)}
+                      onChange={e => handleInputChange('person_fax', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Mobile number <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Mobile number <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_mobile}
-                      onChange={(e) => handleInputChange('person_mobile', e.target.value)}
+                      onChange={e => handleInputChange('person_mobile', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>PAN number <span className="text-red-500">*</span></Label>
+                    <Label>
+                      PAN number <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.person_pan}
-                      onChange={(e) => handleInputChange('person_pan', e.target.value)}
+                      onChange={e => handleInputChange('person_pan', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Email <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Email <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="email"
                       value={formData.person_email}
-                      onChange={(e) => handleInputChange('person_email', e.target.value)}
+                      onChange={e => handleInputChange('person_email', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
@@ -515,31 +604,37 @@ export default function TDSDeductorPage() {
                 <h3 className="bg-muted p-3 mb-6 text-lg font-semibold">Applicability</h3>
                 <div className="space-y-6">
                   <div>
-                    <Label>Company <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Company <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.company}
-                      onChange={(e) => handleInputChange('company', e.target.value)}
+                      onChange={e => handleInputChange('company', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Branch <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Branch <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.branch}
-                      onChange={(e) => handleInputChange('branch', e.target.value)}
+                      onChange={e => handleInputChange('branch', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
 
                   <div>
-                    <Label>Sub branch <span className="text-red-500">*</span></Label>
+                    <Label>
+                      Sub branch <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       type="text"
                       value={formData.sub_branch}
-                      onChange={(e) => handleInputChange('sub_branch', e.target.value)}
+                      onChange={e => handleInputChange('sub_branch', e.target.value)}
                       className="border-b border-t-0 border-l-0 border-r-0 border-dashed rounded-none"
                     />
                   </div>
@@ -547,7 +642,9 @@ export default function TDSDeductorPage() {
               </div>
 
               <div className="flex justify-center pt-6">
-                <Button type="submit" className="w-48" disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+                <Button type="submit" className="w-48" disabled={saving}>
+                  {saving ? 'Saving...' : 'Save'}
+                </Button>
               </div>
             </form>
           </CardContent>
@@ -562,11 +659,13 @@ export default function TDSDeductorPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={onConfirmSave} disabled={saving}>Confirm</AlertDialogAction>
+              <AlertDialogAction onClick={onConfirmSave} disabled={saving}>
+                Confirm
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
     </>
-  )
+  );
 }

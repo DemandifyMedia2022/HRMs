@@ -1,7 +1,7 @@
-import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { IconLock } from '@tabler/icons-react'
+import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { IconLock } from '@tabler/icons-react';
 
 export default function AccessDeniedPage() {
   return (
@@ -13,8 +13,8 @@ export default function AccessDeniedPage() {
           </div>
           <CardTitle className="text-2xl">Access denied</CardTitle>
           <CardDescription>
-            You don't have permission to view this page. If you believe this is a mistake, please
-            contact your administrator.
+            You don't have permission to view this page. If you believe this is a mistake, please contact your
+            administrator.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center gap-3">

@@ -1,120 +1,112 @@
-"use client"
+'use client';
 
-import { useEffect, useMemo, useState } from "react"
-import { useSearchParams } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { AlertCircle, BarChart3, CalendarRange, ListChecks, PlaneTakeoff, RefreshCcw, User } from "lucide-react"
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertCircle, BarChart3, CalendarRange, ListChecks, PlaneTakeoff, RefreshCcw, User } from 'lucide-react';
 import {
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
-import { Pie, PieChart, Cell } from "recharts"
+  ChartTooltipContent
+} from '@/components/ui/chart';
+import { Pie, PieChart, Cell } from 'recharts';
 
 type Leave = {
-  l_id: number
-  leave_type: string
-  start_date: string
-  end_date: string
-  reason: string
-  HRapproval: string
-  Managerapproval: string
-}
+  l_id: number;
+  leave_type: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  HRapproval: string;
+  Managerapproval: string;
+};
 
 type AvailableResponse = {
-  approvedLeaves: Leave[]
-  LeaveApprovalData: Leave[]
-  usedPaidLeave: number
-  usedSickLeave: number
-  remainingPaidLeave: number
-  remainingSickLeave: number
-  totals: { totalPaidLeave: number; totalSickLeave: number }
-  user: string
-}
+  approvedLeaves: Leave[];
+  LeaveApprovalData: Leave[];
+  usedPaidLeave: number;
+  usedSickLeave: number;
+  remainingPaidLeave: number;
+  remainingSickLeave: number;
+  totals: { totalPaidLeave: number; totalSickLeave: number };
+  user: string;
+};
 
 export default function UserAvailableLeavePage() {
-  const searchParams = useSearchParams()
-  const userFromQuery = useMemo(() => searchParams.get("user_name") || searchParams.get("added_by_user") || "", [searchParams])
+  const searchParams = useSearchParams();
+  const userFromQuery = useMemo(
+    () => searchParams.get('user_name') || searchParams.get('added_by_user') || '',
+    [searchParams]
+  );
 
-  const [userName, setUserName] = useState<string>("")
-  const [data, setData] = useState<AvailableResponse | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [userName, setUserName] = useState<string>('');
+  const [data, setData] = useState<AvailableResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function load(targetUser?: string) {
-    const u = (targetUser ?? userName).trim()
-    if (!u) return
-    setLoading(true)
-    setError(null)
+    const u = (targetUser ?? userName).trim();
+    if (!u) return;
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/leaves/available?user_name=${encodeURIComponent(u)}`, { cache: "no-store" })
+      const res = await fetch(`/api/leaves/available?user_name=${encodeURIComponent(u)}`, { cache: 'no-store' });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body?.error || "Failed to load available leaves")
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to load available leaves');
       }
-      const json = (await res.json()) as AvailableResponse
-      setData(json)
+      const json = (await res.json()) as AvailableResponse;
+      setData(json);
     } catch (e: any) {
-      setError(e?.message || "Failed to load available leaves")
+      setError(e?.message || 'Failed to load available leaves');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   useEffect(() => {
     if (userFromQuery) {
-      setUserName(userFromQuery)
+      setUserName(userFromQuery);
       // auto-load when query param is present
-      load(userFromQuery)
-    }
-    else {
-      ;(async () => {
+      load(userFromQuery);
+    } else {
+      (async () => {
         try {
-          const meRes = await fetch("/api/auth/me", { cache: "no-store" })
+          const meRes = await fetch('/api/auth/me', { cache: 'no-store' });
           if (meRes.ok) {
-            const me = await meRes.json()
-            const candidate: string = me?.name || me?.email || ""
+            const me = await meRes.json();
+            const candidate: string = me?.name || me?.email || '';
             if (candidate) {
-              setUserName(candidate)
-              load(candidate)
+              setUserName(candidate);
+              load(candidate);
             }
           }
-        } catch (e) {
-        }
-      })()
+        } catch (e) {}
+      })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userFromQuery])
+  }, [userFromQuery]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-primary-50 to-indigo-50 p-6">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-              
-              My Available Leave
-            </h1>
+            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-3">My Available Leave</h1>
             <p className="text-gray-600 mt-1">Track remaining balances, approvals, and leave history in one view.</p>
           </div>
-          <Badge variant="secondary" className="text-sm px-4 py-2">Employee Portal</Badge>
+          <Badge variant="secondary" className="text-sm px-4 py-2">
+            Employee Portal
+          </Badge>
         </div>
-
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.8fr,1fr]">
           <Card className="shadow-md border-0">
@@ -128,11 +120,13 @@ export default function UserAvailableLeavePage() {
             <CardContent className="space-y-4">
               <div className="grid gap-4 lg:grid-cols-[2fr,auto]">
                 <div className="space-y-2">
-                  <Label htmlFor="user-search" className="text-sm font-medium">Employee</Label>
+                  <Label htmlFor="user-search" className="text-sm font-medium">
+                    Employee
+                  </Label>
                   <Input
                     id="user-search"
                     value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
+                    onChange={e => setUserName(e.target.value)}
                     placeholder="Search by user name"
                   />
                 </div>
@@ -143,7 +137,6 @@ export default function UserAvailableLeavePage() {
                     onClick={() => load()}
                     disabled={loading || !userName.trim()}
                   >
-                    
                     View Leave
                   </Button>
                   <Button
@@ -193,26 +186,23 @@ export default function UserAvailableLeavePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2">
-                    
-                    Paid Leave Usage
-                  </CardTitle>
+                  <CardTitle className="flex items-center gap-2">Paid Leave Usage</CardTitle>
                   <CardDescription>Visual breakdown of paid leave consumption.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer
                     className="h-64"
                     config={{
-                      Used: { label: "Used", color: "#5ea3f2" },
-                      Remaining: { label: "Remaining", color: "#125ca5" },
+                      Used: { label: 'Used', color: '#5ea3f2' },
+                      Remaining: { label: 'Remaining', color: '#125ca5' }
                     }}
                   >
                     <PieChart>
                       <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
                       <Pie
                         data={[
-                          { name: "Used", value: data.usedPaidLeave },
-                          { name: "Remaining", value: data.remainingPaidLeave },
+                          { name: 'Used', value: data.usedPaidLeave },
+                          { name: 'Remaining', value: data.remainingPaidLeave }
                         ]}
                         dataKey="value"
                         nameKey="name"
@@ -231,26 +221,23 @@ export default function UserAvailableLeavePage() {
 
               <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2">
-                    
-                    Sick Leave Usage
-                  </CardTitle>
+                  <CardTitle className="flex items-center gap-2">Sick Leave Usage</CardTitle>
                   <CardDescription>Visual breakdown of sick leave consumption.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer
                     className="h-64"
                     config={{
-                      Used: { label: "Used", color: "#5ea3f2" },
-                      Remaining: { label: "Remaining", color: "#125ca5" },
+                      Used: { label: 'Used', color: '#5ea3f2' },
+                      Remaining: { label: 'Remaining', color: '#125ca5' }
                     }}
                   >
                     <PieChart>
                       <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
                       <Pie
                         data={[
-                          { name: "Used", value: data.usedSickLeave },
-                          { name: "Remaining", value: data.remainingSickLeave },
+                          { name: 'Used', value: data.usedSickLeave },
+                          { name: 'Remaining', value: data.remainingSickLeave }
                         ]}
                         dataKey="value"
                         nameKey="name"
@@ -270,10 +257,7 @@ export default function UserAvailableLeavePage() {
 
             <Card className="shadow-lg border-0 bg-white/90 backdrop-blur">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  
-                  All My Leaves
-                </CardTitle>
+                <CardTitle className="flex items-center gap-2">All My Leaves</CardTitle>
                 <CardDescription>Review every leave request and its approval status.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -289,7 +273,7 @@ export default function UserAvailableLeavePage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.LeaveApprovalData.map((l) => (
+                      {data.LeaveApprovalData.map(l => (
                         <TableRow key={l.l_id}>
                           <TableCell className="font-medium">{l.leave_type}</TableCell>
                           <TableCell>{new Date(l.start_date).toLocaleDateString()}</TableCell>
@@ -307,5 +291,5 @@ export default function UserAvailableLeavePage() {
         )}
       </div>
     </div>
-  )
+  );
 }

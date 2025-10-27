@@ -27,7 +27,7 @@ export function DatePicker({
   value,
   onChange,
   disabled = false,
-  triggerClassName,
+  triggerClassName
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [date, setDate] = React.useState<Date | undefined>(value);
@@ -55,7 +55,7 @@ export function DatePicker({
             variant="outline"
             id={id}
             disabled={disabled}
-            className={(triggerClassName ?? 'w-48 justify-between font-normal')}
+            className={triggerClassName ?? 'w-48 justify-between font-normal'}
           >
             {date ? date.toLocaleDateString() : placeholder}
             <ChevronDownIcon className="size-4" />

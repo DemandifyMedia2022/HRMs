@@ -65,17 +65,28 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, month]);
 
-  async function act(id: number, approval: 'approved' | 'rejected', opts?: { finalStatus?: string; inTime?: string; outTime?: string }) {
+  async function act(
+    id: number,
+    approval: 'approved' | 'rejected',
+    opts?: { finalStatus?: string; inTime?: string; outTime?: string }
+  ) {
     try {
       setSubmittingId(id);
       const feedback = notes[id]?.trim() || undefined;
       const res = await fetch('/api/attendance/request-update', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, approval, feedback, finalStatus: opts?.finalStatus, inTime: opts?.inTime, outTime: opts?.outTime })
+        body: JSON.stringify({
+          id,
+          approval,
+          feedback,
+          finalStatus: opts?.finalStatus,
+          inTime: opts?.inTime,
+          outTime: opts?.outTime
+        })
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({} as any));
+        const j = await res.json().catch(() => ({}) as any);
         throw new Error(j?.message || 'Failed to update');
       }
       await load();
@@ -186,7 +197,9 @@ export default function Page() {
                       <td className="py-2 pr-4">{r.Attendance_Approval || r.status || 'pending'}</td>
                       <td className="py-2 pr-4">
                         {r.reason ? (
-                          <Button variant="link" className="px-0" onClick={() => openReason(r.reason)}>View</Button>
+                          <Button variant="link" className="px-0" onClick={() => openReason(r.reason)}>
+                            View
+                          </Button>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
@@ -204,7 +217,12 @@ export default function Page() {
                           <Button size="sm" onClick={() => openUpdate(r)} disabled={submittingId === r.id}>
                             Update
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => act(r.id, 'rejected')} disabled={submittingId === r.id}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => act(r.id, 'rejected')}
+                            disabled={submittingId === r.id}
+                          >
                             Reject
                           </Button>
                         </div>
@@ -271,7 +289,11 @@ export default function Page() {
             <Button
               onClick={async () => {
                 if (!selectedId) return;
-                await act(selectedId, 'approved', { finalStatus, inTime: inTime || undefined, outTime: outTime || undefined });
+                await act(selectedId, 'approved', {
+                  finalStatus,
+                  inTime: inTime || undefined,
+                  outTime: outTime || undefined
+                });
                 setUpdateOpen(false);
               }}
               disabled={submittingId !== null}
