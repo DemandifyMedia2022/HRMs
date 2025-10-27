@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SidebarConfig } from '@/components/sidebar-config';
@@ -23,30 +24,21 @@ type Issue = {
 };
 
 export default function Page() {
+  const [date, setDate] = useState<string>('');
+  const [desired, setDesired] = useState<string>('');
+  const [reason, setReason] = useState<string>('');
+  const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string>('');
+  const [myRequests, setMyRequests] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const [status, setStatus] = useState<string>('pending');
-  const [month, setMonth] = useState<string>(''); // YYYY-MM
-  const [search, setSearch] = useState<string>(''); // search by user name
-  const [requests, setRequests] = useState<Issue[]>([]);
-  const [actionNote, setActionNote] = useState<string>('');
-
-  async function load() {
+  async function loadMine() {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (status) params.set('status', status);
-      if (month) params.set('month', month);
-      const res = await fetch(`/api/attendance/request-update?${params.toString()}`, { cache: 'no-store' });
+      const res = await fetch('/api/attendance/request-update?my=1', { cache: 'no-store' });
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
-      let data: Issue[] = json.data || [];
-      if (search.trim()) {
-        const q = search.trim().toLowerCase();
-        data = data.filter(r => (r.added_by_user || r.name || '').toLowerCase().includes(q));
-      }
-      setRequests(data);
+      setMyRequests(json.data || []);
     } catch (e: any) {
       // ignore
     } finally {
@@ -55,139 +47,133 @@ export default function Page() {
   }
 
   useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, month]);
+    loadMine();
+  }, []);
 
-  async function act(id: number, approval: 'approved' | 'rejected') {
+  async function submit() {
     setMessage('');
+    if (!date || !desired || !reason) {
+      setMessage('Please fill all fields.');
+      return;
+    }
+    setSubmitting(true);
     try {
       const res = await fetch('/api/attendance/request-update', {
-        method: 'PATCH',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, approval, feedback: actionNote || undefined })
+        body: JSON.stringify({ date, desired_status: desired, reason })
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.message || 'Failed');
-      setMessage(approval === 'approved' ? 'Approved and synced to attendance.' : 'Rejected.');
-      setActionNote('');
-      await load();
+      setMessage('Request submitted.');
+      setDate('');
+      setDesired('');
+      setReason('');
+      await loadMine();
     } catch (e: any) {
       setMessage(e?.message || 'Failed');
+    } finally {
+      setSubmitting(false);
     }
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <>
       <SidebarConfig role="hr" />
-      <h1 className="text-xl font-semibold">HR · Attendance · Request Update</h1>
+      <div className="p-4 space-y-6">
+        <h1 className="text-xl font-semibold">Attendance · Request Update</h1>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Filter</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div className="space-y-1">
-            <div className="text-sm">Status</div>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <div className="text-sm">Month</div>
-            <Input type="month" value={month} onChange={e => setMonth(e.target.value)} />
-          </div>
-          <div className="space-y-1 md:col-span-2">
-            <div className="text-sm">Search by user</div>
-            <Input
-              placeholder="Type user name"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && load()}
-            />
-          </div>
-          <div className="md:col-span-4 flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setStatus('pending');
-                setMonth('');
-                setSearch('');
-              }}
-            >
-              Reset
-            </Button>
-            <Button onClick={load}>Apply</Button>
-            {message ? <div className="text-sm text-blue-700">{message}</div> : null}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Requests</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-sm">Loading…</div>
-          ) : requests.length === 0 ? (
-            <div className="text-sm text-gray-600">No requests found.</div>
-          ) : (
-            <div className="overflow-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left border-b">
-                    <th className="py-2 pr-4">User</th>
-                    <th className="py-2 pr-4">Date</th>
-                    <th className="py-2 pr-4">Requested Status</th>
-                    <th className="py-2 pr-4">Reason</th>
-                    <th className="py-2 pr-4">Approval</th>
-                    <th className="py-2 pr-4">Feedback</th>
-                    <th className="py-2 pr-4">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {requests.map(r => (
-                    <tr key={r.id} className="border-b last:border-0">
-                      <td className="py-2 pr-4">{r.added_by_user || r.name || ''}</td>
-                      <td className="py-2 pr-4">{r.Date_Attendance_Update?.slice(0, 10) || ''}</td>
-                      <td className="py-2 pr-4">{r.Attendance_status || ''}</td>
-                      <td className="py-2 pr-4 max-w-[280px] truncate" title={r.reason || undefined}>
-                        {r.reason || ''}
-                      </td>
-                      <td className="py-2 pr-4">{r.Attendance_Approval || r.status || 'pending'}</td>
-                      <td className="py-2 pr-4 w-[220px]">
-                        <Input
-                          placeholder="Feedback (optional)"
-                          value={actionNote}
-                          onChange={e => setActionNote(e.target.value)}
-                        />
-                      </td>
-                      <td className="py-2 pr-4 w-[240px]">
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={() => act(r.id, 'approved')}>
-                            Approve
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => act(r.id, 'rejected')}>
-                            Reject
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <Card>
+          <CardHeader>
+            <CardTitle>Submit Attendance Update Request</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <div className="text-sm">Date</div>
+                {(() => {
+                  const toYMD = (d?: Date) =>
+                    d
+                      ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                      : '';
+                  const fromYMD = (s: string) => {
+                    if (!s) return undefined as unknown as Date | undefined;
+                    const [y, m, dd] = s.split('-').map(n => parseInt(n, 10));
+                    return new Date(y, (m || 1) - 1, dd || 1);
+                  };
+                  return (
+                    <DatePicker id="attendance_update_date" value={fromYMD(date)} onChange={d => setDate(toYMD(d))} />
+                  );
+                })()}
+              </div>
+              <div className="space-y-1">
+                <div className="text-sm">Desired Status</div>
+                <Select value={desired} onValueChange={setDesired}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Present">Present</SelectItem>
+                    <SelectItem value="Half-day">Half-day</SelectItem>
+                    <SelectItem value="Absent">Absent</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1 md:col-span-1">
+                <div className="text-sm">Reason</div>
+                <Input placeholder="Short reason" value={reason} onChange={e => setReason(e.target.value)} />
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            <div className="flex items-center gap-2">
+              <Button onClick={submit} disabled={submitting}>
+                {submitting ? 'Submitting...' : 'Submit'}
+              </Button>
+              {message ? <div className="text-sm text-blue-700">{message}</div> : null}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>My Requests</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-sm">Loading…</div>
+            ) : myRequests.length === 0 ? (
+              <div className="text-sm text-gray-600">No requests yet.</div>
+            ) : (
+              <div className="overflow-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left border-b">
+                      <th className="py-2 pr-4">Date</th>
+                      <th className="py-2 pr-4">Status</th>
+                      <th className="py-2 pr-4">Approval</th>
+                      <th className="py-2 pr-4">Reason</th>
+                      <th className="py-2 pr-4">Feedback</th>
+                      <th className="py-2 pr-4">Raised</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myRequests.map(r => (
+                      <tr key={r.id} className="border-b last:border-0">
+                        <td className="py-2 pr-4">{r.Date_Attendance_Update?.slice(0, 10) || ''}</td>
+                        <td className="py-2 pr-4">{r.Attendance_status || ''}</td>
+                        <td className="py-2 pr-4">{r.Attendance_Approval || r.status || 'pending'}</td>
+                        <td className="py-2 pr-4">{r.reason || ''}</td>
+                        <td className="py-2 pr-4">{r.Attendance_feedback || ''}</td>
+                        <td className="py-2 pr-4">{r.raisedate ? new Date(r.raisedate).toLocaleString() : ''}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

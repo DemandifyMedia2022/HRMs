@@ -24,7 +24,8 @@ import {
   IconPlus,
   IconCash,
   IconHistory,
-  IconUserCheck
+  IconUserCheck,
+  IconNotification
 } from '@tabler/icons-react';
 
 import { NavDocuments } from '@/components/nav-documents';
@@ -53,7 +54,8 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconCalendar,
         children: [
           { title: 'Attendance', url: '/pages/admin/attendance', icon: IconUsers },
-          { title: 'Update Attendance', url: '/pages/admin/attendance/update', icon: IconListDetails }
+          { title: 'Update Attendance', url: '/pages/admin/attendance/update', icon: IconListDetails },
+          { title: 'Requests', url: '/pages/admin/attendance/requests', icon: IconListDetails }
         ]
       },
       {
@@ -97,7 +99,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         ]
       }
     ],
-    navSecondary: [{ title: 'Settings', url: '/pages/settings', icon: IconSettings }],
+    navSecondary: [{ title: 'Notifications', url: '/pages/notifications', icon: IconNotification }],
     documents: [
       {
         name: 'Campaigns',
@@ -157,7 +159,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
       
       
     ],
-    navSecondary: [{ title: 'Settings', url: '/pages/settings', icon: IconSettings }],
+    navSecondary: [{ title: ' Notifications', url: '/pages/notifications', icon: IconNotification }],
     documents: [
       {
         name: 'Operation',

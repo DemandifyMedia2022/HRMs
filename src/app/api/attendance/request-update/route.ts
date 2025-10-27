@@ -163,6 +163,9 @@ export async function PATCH(req: NextRequest) {
     const id = Number(body?.id);
     const approval: 'approved' | 'rejected' | undefined = body?.approval;
     const feedback: string | undefined = body?.feedback;
+    const finalStatus: string | undefined = body?.finalStatus;
+    const inTimeStr: string | undefined = body?.inTime;
+    const outTimeStr: string | undefined = body?.outTime;
 
     if (!id || !approval) {
       return NextResponse.json({ message: 'id and approval are required' }, { status: 400 });
@@ -224,7 +227,7 @@ export async function PATCH(req: NextRequest) {
     if (approval === 'approved') {
       // Apply to NpAttendance
       const date = issue.Date_Attendance_Update as unknown as Date | null;
-      const desired = issue.Attendance_status as string | null;
+      const desired = (finalStatus as string | undefined) || (issue.Attendance_status as string | null);
 
       if (date && desired) {
         // resolve employee emp_code from users by name (added_by_user)
@@ -233,10 +236,22 @@ export async function PATCH(req: NextRequest) {
         `;
         const emp_code = users?.[0]?.emp_code ? Number(users[0].emp_code) : me.emp_code ? Number(me.emp_code) : NaN;
         if (!isNaN(emp_code)) {
+          let inTime: Date | undefined = undefined;
+          let outTime: Date | undefined = undefined;
+          if (inTimeStr && /^\d{2}:\d{2}$/.test(inTimeStr)) {
+            const [hh, mm] = inTimeStr.split(':').map(n => Number(n));
+            inTime = new Date(date);
+            inTime.setUTCHours(hh, mm, 0, 0);
+          }
+          if (outTimeStr && /^\d{2}:\d{2}$/.test(outTimeStr)) {
+            const [hh, mm] = outTimeStr.split(':').map(n => Number(n));
+            outTime = new Date(date);
+            outTime.setUTCHours(hh, mm, 0, 0);
+          }
           // Try update, else create
           const upd = await prisma.npAttendance.updateMany({
             where: { employeeId: emp_code, date },
-            data: { status: desired }
+            data: { status: desired, ...(inTime ? { inTime } : {}), ...(outTime ? { outTime } : {}) }
           });
           if (!upd.count || upd.count === 0) {
             try {
@@ -245,8 +260,8 @@ export async function PATCH(req: NextRequest) {
                   employeeId: emp_code,
                   empName: issue.added_by_user ?? me.name,
                   date,
-                  inTime: date,
-                  outTime: date,
+                  inTime: inTime ?? date,
+                  outTime: outTime ?? date,
                   clockTimes: '[]',
                   totalHours: '00:00:00' as any,
                   loginHours: '00:00:00' as any,
@@ -257,7 +272,7 @@ export async function PATCH(req: NextRequest) {
             } catch {
               await prisma.npAttendance.updateMany({
                 where: { employeeId: emp_code, date },
-                data: { status: desired }
+                data: { status: desired, ...(inTime ? { inTime } : {}), ...(outTime ? { outTime } : {}) }
               });
             }
           }

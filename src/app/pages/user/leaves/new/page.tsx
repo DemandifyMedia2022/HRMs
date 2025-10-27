@@ -139,7 +139,7 @@ export default function NewLeavePage() {
               </div>
 
               <CardFooter className="flex flex-col gap-2 px-0 sm:flex-row sm:justify-end sm:gap-3">
-                <Button type="button" variant="outline" onClick={() => router.push('/pages/hr')}>
+                <Button type="button" variant="outline" onClick={() => router.push('/pages/user')}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={submitting}>

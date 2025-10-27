@@ -102,8 +102,8 @@ export default function Page() {
 
   return (
     <div className="p-4 space-y-6">
-      <SidebarConfig role="hr" />
-      <h1 className="text-xl font-semibold">HR · Attendance · Status</h1>
+      <SidebarConfig role="admin" />
+      <h1 className="text-xl font-semibold">Admin · Attendance · Requests</h1>
 
       <Card>
         <CardHeader>
