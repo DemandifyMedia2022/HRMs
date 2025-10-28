@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SidebarConfig } from '@/components/sidebar-config';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type Issue = {
   id: number;
@@ -28,6 +29,15 @@ export default function Page() {
   const [search, setSearch] = useState<string>(''); // search by user name
   const [loading, setLoading] = useState(false);
   const [requests, setRequests] = useState<Issue[]>([]);
+  const [notes, setNotes] = useState<Record<number, string>>({});
+  const [submittingId, setSubmittingId] = useState<number | null>(null);
+  const [reasonOpen, setReasonOpen] = useState(false);
+  const [reasonText, setReasonText] = useState<string>('');
+  const [updateOpen, setUpdateOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [finalStatus, setFinalStatus] = useState<string>('');
+  const [inTime, setInTime] = useState<string>('');
+  const [outTime, setOutTime] = useState<string>('');
 
   async function load() {
     setLoading(true);
@@ -54,6 +64,52 @@ export default function Page() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, month]);
+
+  async function act(
+    id: number,
+    approval: 'approved' | 'rejected',
+    opts?: { finalStatus?: string; inTime?: string; outTime?: string }
+  ) {
+    try {
+      setSubmittingId(id);
+      const feedback = notes[id]?.trim() || undefined;
+      const res = await fetch('/api/attendance/request-update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          approval,
+          feedback,
+          finalStatus: opts?.finalStatus,
+          inTime: opts?.inTime,
+          outTime: opts?.outTime
+        })
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}) as any);
+        throw new Error(j?.message || 'Failed to update');
+      }
+      await load();
+      setNotes(prev => ({ ...prev, [id]: '' }));
+    } catch (e) {
+      // noop: optionally surface error with a toast
+    } finally {
+      setSubmittingId(null);
+    }
+  }
+
+  function openReason(reason: string | null) {
+    setReasonText(reason || '');
+    setReasonOpen(true);
+  }
+
+  function openUpdate(r: Issue) {
+    setSelectedId(r.id);
+    setFinalStatus(r.Attendance_status || 'Present');
+    setInTime('');
+    setOutTime('');
+    setUpdateOpen(true);
+  }
 
   return (
     <div className="p-4 space-y-6">
@@ -129,6 +185,7 @@ export default function Page() {
                     <th className="py-2 pr-4">Reason</th>
                     <th className="py-2 pr-4">Feedback</th>
                     <th className="py-2 pr-4">Raised</th>
+                    <th className="py-2 pr-4">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -138,9 +195,38 @@ export default function Page() {
                       <td className="py-2 pr-4">{r.Date_Attendance_Update?.slice(0, 10) || ''}</td>
                       <td className="py-2 pr-4">{r.Attendance_status || ''}</td>
                       <td className="py-2 pr-4">{r.Attendance_Approval || r.status || 'pending'}</td>
-                      <td className="py-2 pr-4">{r.reason || ''}</td>
-                      <td className="py-2 pr-4">{r.Attendance_feedback || ''}</td>
+                      <td className="py-2 pr-4">
+                        {r.reason ? (
+                          <Button variant="link" className="px-0" onClick={() => openReason(r.reason)}>
+                            View
+                          </Button>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="py-2 pr-4 w-[220px]">
+                        <Input
+                          placeholder="Feedback (optional)"
+                          value={notes[r.id] ?? ''}
+                          onChange={e => setNotes(prev => ({ ...prev, [r.id]: e.target.value }))}
+                        />
+                      </td>
                       <td className="py-2 pr-4">{r.raisedate ? new Date(r.raisedate).toLocaleString() : ''}</td>
+                      <td className="py-2 pr-4 w-[240px]">
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => openUpdate(r)} disabled={submittingId === r.id}>
+                            Update
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => act(r.id, 'rejected')}
+                            disabled={submittingId === r.id}
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -149,6 +235,74 @@ export default function Page() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={reasonOpen} onOpenChange={setReasonOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reason</DialogTitle>
+          </DialogHeader>
+          <div className="whitespace-pre-wrap text-sm">{reasonText}</div>
+          <DialogFooter>
+            <Button onClick={() => setReasonOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={updateOpen} onOpenChange={setUpdateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Attendance</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1 md:col-span-1">
+              <div className="text-sm">Final Status</div>
+              <Select value={finalStatus} onValueChange={setFinalStatus}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Present">Present</SelectItem>
+                  <SelectItem value="Half-day">Half-day</SelectItem>
+                  <SelectItem value="Absent">Absent</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <div className="text-sm">In Time</div>
+              <Input type="time" value={inTime} onChange={e => setInTime(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <div className="text-sm">Out Time</div>
+              <Input type="time" value={outTime} onChange={e => setOutTime(e.target.value)} />
+            </div>
+            <div className="space-y-1 md:col-span-3">
+              <div className="text-sm">Feedback (optional)</div>
+              <Input
+                placeholder="Feedback"
+                value={selectedId ? (notes[selectedId] ?? '') : ''}
+                onChange={e => selectedId && setNotes(prev => ({ ...prev, [selectedId]: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={async () => {
+                if (!selectedId) return;
+                await act(selectedId, 'approved', {
+                  finalStatus,
+                  inTime: inTime || undefined,
+                  outTime: outTime || undefined
+                });
+                setUpdateOpen(false);
+              }}
+              disabled={submittingId !== null}
+            >
+              Save & Approve
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

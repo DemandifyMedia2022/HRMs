@@ -5,6 +5,7 @@ import path from 'path';
 import { promises as fs } from 'fs';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import { sendMail } from '@/lib/mailer';
 
 async function ensureDir(dir: string) {
   await fs.mkdir(dir, { recursive: true });
@@ -146,8 +147,29 @@ export async function POST(req: Request) {
       select: { id: true }
     });
 
-    // Convert BigInt to string to avoid JSON serialization errors
     const createdId = typeof created.id === 'bigint' ? created.id.toString() : (created.id as any);
+
+    try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+      const forgotLink = `${appUrl}/forgot-password?email=${encodeURIComponent(email)}`;
+      const org = company_name || 'HRMS';
+      const html = `
+        <div style="font-family:ui-sans-serif,system-ui,-apple-system;max-width:560px;margin:auto">
+          <h2 style="margin:0 0 8px">Welcome to ${org}</h2>
+          <p style="margin:0 0 16px">Hi ${name || 'Employee'}, your account has been created.</p>
+          <ul style="margin:0 0 16px;padding-left:20px">
+            <li>Email: <strong>${email}</strong></li>
+            ${emp_code ? `<li>Employee Code: <strong>${emp_code}</strong></li>` : ''}
+            ${department ? `<li>Department: <strong>${department}</strong></li>` : ''}
+          </ul>
+          <p style="margin:0 0 16px">To set your password, request a one-time password (OTP) using the link below:</p>
+          <p style="margin:0 0 16px"><a href="${forgotLink}" target="_blank">Generate OTP and set your password</a></p>
+          <p style="color:#64748b;margin:0">If you did not expect this email, you can ignore it.</p>
+        </div>
+      `;
+      await sendMail({ to: [email], subject: `${org}: Your account and password setup`, html });
+    } catch {}
+
     return NextResponse.json({ id: createdId, ok: true }, { status: 201 });
   } catch (e: any) {
     console.error('/api/employees error:', e);

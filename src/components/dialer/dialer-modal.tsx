@@ -2,6 +2,8 @@
 
 import React from 'react';
 import Dialer from './dialer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 type Props = {
   open: boolean;
@@ -11,20 +13,27 @@ type Props = {
 };
 
 export default function DialerModal({ open, onClose, number, userName }: Props) {
-  if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">Dialer</h2>
-          <button onClick={onClose} className="text-sm px-2 py-1 rounded bg-gray-100 hover:bg-gray-200">
-            Close
-          </button>
+    <Dialog
+      open={open}
+      onOpenChange={o => {
+        if (!o) onClose();
+      }}
+    >
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Dialer</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="text-sm text-muted-foreground">Number: {number || 'N/A'}</div>
+          <Dialer number={number} userName={userName} />
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Close
+            </Button>
+          </div>
         </div>
-        <div className="text-sm text-gray-700 mb-2">Number: {number || 'N/A'}</div>
-        <Dialer number={number} userName={userName} />
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

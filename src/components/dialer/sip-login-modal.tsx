@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 type Props = {
   open: boolean;
@@ -39,7 +43,12 @@ export default function SipLoginModal({ open, onClose }: Props) {
     }
   }, [open]);
 
-  if (!open) return null;
+  if (!open)
+    return (
+      <Dialog open={false}>
+        <DialogContent className="hidden" />
+      </Dialog>
+    );
 
   const save = async () => {
     if (!extension || (!password && !hasSavedPassword)) return;
@@ -103,64 +112,61 @@ export default function SipLoginModal({ open, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">SIP Extension Login</h2>
-          <button onClick={onClose} className="text-sm px-2 py-1 rounded bg-gray-100 hover:bg-gray-200">
-            Close
-          </button>
-        </div>
+    <Dialog
+      open={open}
+      onOpenChange={o => {
+        if (!o) onClose();
+      }}
+    >
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>SIP Extension Login</DialogTitle>
+        </DialogHeader>
         <div className="space-y-3">
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">Display Name (for call logs)</label>
-            <input
-              className="w-full rounded border px-3 py-1.5 text-sm"
+          <div className="space-y-1.5">
+            <Label htmlFor="displayName">Display Name (for call logs)</Label>
+            <Input
+              id="displayName"
               placeholder="e.g. Rutuja Pawar rutuja.pawar@demandifymedia.com"
               value={displayName}
               onChange={e => setDisplayName(e.target.value)}
             />
           </div>
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">Username / Extension</label>
-            <input
-              className="w-full rounded border px-3 py-1.5 text-sm"
+          <div className="space-y-1.5">
+            <Label htmlFor="extension">Username / Extension</Label>
+            <Input
+              id="extension"
               placeholder="e.g. 1033203"
               value={extension}
               onChange={e => setExtension(e.target.value)}
             />
           </div>
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">Password</label>
-            <input
-              className="w-full rounded border px-3 py-1.5 text-sm"
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
               placeholder="••••••••"
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
             />
-            {hasSavedPassword && !password && (
-              <div className="text-[11px] text-gray-500 mt-1">
+            {hasSavedPassword && !password ? (
+              <div className="text-[11px] text-muted-foreground">
                 A password is already saved for your account. Leave blank to keep existing.
               </div>
-            )}
+            ) : null}
           </div>
           <div className="flex items-center justify-between pt-2">
-            <button
-              onClick={save}
-              disabled={!extension || (!!!password && !hasSavedPassword) || loading}
-              className="bg-blue-600 text-white text-sm px-3 py-1.5 rounded disabled:opacity-50"
-            >
+            <Button onClick={save} disabled={!extension || (!!!password && !hasSavedPassword) || loading}>
               {loading ? 'Saving...' : 'Save & Login'}
-            </button>
-            <button onClick={logout} className="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200">
+            </Button>
+            <Button variant="outline" onClick={logout}>
               Logout
-            </button>
+            </Button>
           </div>
-          <div className="text-xs text-gray-500">Server: pbx2.telxio.com.sg</div>
+          <div className="text-xs text-muted-foreground">Server: pbx2.telxio.com.sg</div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

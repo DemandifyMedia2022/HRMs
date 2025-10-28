@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
 import { verifyToken } from '@/lib/auth';
 
-const DB_NAME = process.env.MYSQL_DATABASE || 'newhrmsreactdb';
+const DB_NAME = process.env.DB_NAME || 'demandkb_lms1';
 
 const pool = mysql.createPool({
-  host: process.env.MYSQL_HOST || 'localhost',
-  user: process.env.MYSQL_USER || 'root',
-  password: process.env.MYSQL_PASSWORD || '',
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
   database: DB_NAME,
   waitForConnections: true,
   connectionLimit: 10

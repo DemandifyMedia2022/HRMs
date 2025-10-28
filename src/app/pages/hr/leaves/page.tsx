@@ -1,17 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
-import Link from 'next/link';
-import { SidebarConfig } from '@/components/sidebar-config';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
 
 type Leave = {
   l_id: number;
@@ -41,7 +37,7 @@ export default function HRLeavesPage() {
   const [leaveType, setLeaveType] = useState('');
   const [month, setMonth] = useState(''); // YYYY-MM
   const [userName, setUserName] = useState('');
-  const [status, setStatus] = useState(''); // HRapproval
+  const [status, setStatus] = useState('all'); // HRapproval filter; 'all' means no filter
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -62,7 +58,7 @@ export default function HRLeavesPage() {
     if (leaveType) p.set('leave_type', leaveType);
     if (month) p.set('month', month);
     if (userName) p.set('user_name', userName);
-    if (status) p.set('Leaves_Status', status);
+    if (status && status !== 'all') p.set('Leaves_Status', status);
     p.set('page', String(page));
     p.set('pageSize', String(pageSize));
     return p.toString();
@@ -163,318 +159,252 @@ export default function HRLeavesPage() {
     setLeaveType('');
     setMonth('');
     setUserName('');
-    setStatus('');
+    setStatus('all');
     setPage(1);
   }
 
-  const handleFiltersSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setPage(1);
-  };
-
-  const formatDate = (value?: string | null) => {
-    if (!value) return '—';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
-  };
-
-  const renderStatusBadge = (value?: string | null) => {
-    const text = (value || 'Pending').toString();
-    const lower = text.toLowerCase();
-    const classes =
-      lower === 'approved'
-        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-        : lower === 'rejected'
-          ? 'border-destructive/50 bg-destructive/10 text-destructive'
-          : 'border-amber-200 bg-amber-50 text-amber-700';
-    return (
-      <Badge variant="outline" className={classes}>
-        {text.charAt(0).toUpperCase() + text.slice(1)}
-      </Badge>
-    );
-  };
-
-  const selectStatusValue = status || 'all';
-
   return (
-    <div className="p-6">
-      <SidebarConfig role="hr" />
-      <div className="mx-auto max-w-6xl space-y-6">
-        {flash ? (
-          <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            {flash}
-          </div>
-        ) : null}
+    <div className="p-6 space-y-4">
+      {flash ? (
+        <div className="border border-green-200 bg-green-50 text-green-700 rounded px-3 py-2 text-sm">{flash}</div>
+      ) : null}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">All Employees Leaves</h1>
+      </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="border rounded p-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight">All Employees Leaves</h1>
-            <p className="text-sm text-muted-foreground">Review, filter, and action company-wide leave requests.</p>
+            <Label htmlFor="filter-leave-type">Leave Type</Label>
+            <Input id="filter-leave-type" value={leaveType} onChange={e => setLeaveType(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="filter-month">Month</Label>
+            <Input id="filter-month" type="month" value={month} onChange={e => setMonth(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="filter-user">User Name</Label>
+            <Input id="filter-user" value={userName} onChange={e => setUserName(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label>HR Status</Label>
+            <Select value={status} onValueChange={v => setStatus(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPage(1);
+                load();
+              }}
+            >
+              Apply
+            </Button>
+            <Button variant="outline" onClick={resetFilters}>
+              Reset
+            </Button>
           </div>
         </div>
+      </div>
 
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle>Filters</CardTitle>
-            <CardDescription>Refine the leave list by type, period, requester, or HR status.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5" onSubmit={handleFiltersSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="leave_type">Leave Type</Label>
-                <Input
-                  id="leave_type"
-                  value={leaveType}
-                  onChange={e => setLeaveType(e.target.value)}
-                  placeholder="e.g. Sick"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="filter_month">Month</Label>
-                <Input id="filter_month" type="month" value={month} onChange={e => setMonth(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="user_name">User Name</Label>
-                <Input
-                  id="user_name"
-                  value={userName}
-                  onChange={e => setUserName(e.target.value)}
-                  placeholder="Search by employee"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="hr_status">HR Status</Label>
-                <Select value={selectStatusValue} onValueChange={value => setStatus(value === 'all' ? '' : value)}>
-                  <SelectTrigger id="hr_status">
-                    <SelectValue placeholder="Any status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex min-w-0 flex-col items-end gap-2 sm:flex-row">
-                <Button type="submit" className="w-full sm:flex-1" disabled={loading}>
-                  Apply
-                </Button>
-                <Button type="button" variant="outline" className="w-full sm:flex-1" onClick={resetFilters}>
-                  Reset
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Leave Requests</CardTitle>
-            <CardDescription>Total records: {total}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {error ? (
-              <div className="rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
-              </div>
-            ) : null}
-
-            <Table>
-              <TableHeader>
+      <div className="border rounded p-4">
+        <div className="text-sm text-muted-foreground mb-2">Total: {total}</div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[60px]">ID</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Start</TableHead>
+                <TableHead>End</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Manager Status</TableHead>
+                <TableHead>Reason</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
                 <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Start</TableHead>
-                  <TableHead>End</TableHead>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Manager</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableCell colSpan={8} className="py-4">
+                    Loading...
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, index) => (
-                    <TableRow key={`skeleton-${index}`}>
-                      <TableCell colSpan={8}>
-                        <Skeleton className="h-6 w-full rounded" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : rows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
-                      No leave requests match the current filters.
+              ) : rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="py-4">
+                    No records found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                rows.map(l => (
+                  <TableRow key={l.l_id}>
+                    <TableCell>{l.l_id}</TableCell>
+                    <TableCell>{l.leave_type}</TableCell>
+                    <TableCell>{new Date(l.start_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(l.end_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{l.added_by_user}</TableCell>
+                    <TableCell>{l.Managerapproval}</TableCell>
+                    <TableCell className="max-w-[240px] truncate" title={l.reason}>
+                      {l.reason}
+                    </TableCell>
+                    <TableCell>
+                      <Button size="sm" onClick={() => openReview(l)}>
+                        Approve
+                      </Button>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  rows.map(l => (
-                    <TableRow key={l.l_id}>
-                      <TableCell className="font-medium">{l.l_id}</TableCell>
-                      <TableCell>{l.leave_type}</TableCell>
-                      <TableCell>{formatDate(l.start_date)}</TableCell>
-                      <TableCell>{formatDate(l.end_date)}</TableCell>
-                      <TableCell className="flex flex-col gap-1">
-                        <span className="font-medium">{l.added_by_user}</span>
-                        <span className="text-xs text-muted-foreground">Submitted {formatDate(l.leaveregdate)}</span>
-                      </TableCell>
-                      <TableCell>{renderStatusBadge(l.Managerapproval)}</TableCell>
-                      <TableCell className="max-w-[240px] whitespace-normal text-sm text-muted-foreground">
-                        {l.reason || '—'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" variant="outline" onClick={() => openReview(l)}>
-                          Review
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              >
-                Next
-              </Button>
-            </div>
-          </CardFooter>
-        </Card>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
 
-        <Dialog
-          open={!!selected}
-          onOpenChange={open => {
-            if (!open) setSelected(null);
-          }}
-        >
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Review Leave Request</DialogTitle>
-            </DialogHeader>
-            {selected ? (
-              <div className="space-y-5 text-sm">
-                <div className="grid gap-4 sm:grid-cols-2">
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-sm">
+            Page {page} of {totalPages}
+          </div>
+          <div className="space-x-2">
+            <Button variant="outline" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
+              Prev
+            </Button>
+            <Button variant="outline" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+              Next
+            </Button>
+          </div>
+        </div>
+      </div>
+      <Dialog
+        open={!!selected}
+        onOpenChange={o => {
+          if (!o) setSelected(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Review Leave Request</DialogTitle>
+          </DialogHeader>
+          {selected && (
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-gray-500">Request ID</div>
+                  <div>{selected.l_id}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500">User</div>
+                  <div>{selected.added_by_user}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500">Type</div>
+                  <div>{selected.leave_type}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500">Dates</div>
                   <div>
-                    <div className="text-muted-foreground">Request ID</div>
-                    <div className="font-medium">{selected.l_id}</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Employee</div>
-                    <div className="font-medium">{selected.added_by_user}</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Leave Type</div>
-                    <div>{selected.leave_type}</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Dates</div>
-                    <div>
-                      {formatDate(selected.start_date)} → {formatDate(selected.end_date)}
-                    </div>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <div className="text-muted-foreground">Reason</div>
-                    <div className="whitespace-pre-wrap">{selected.reason}</div>
+                    {new Date(selected.start_date).toLocaleDateString()} →{' '}
+                    {new Date(selected.end_date).toLocaleDateString()}
                   </div>
                 </div>
-
-                <div className="space-y-3 rounded-md border bg-muted/30 p-4">
-                  <div className="font-semibold">Employee Info</div>
-                  {reviewLoading ? (
-                    <Skeleton className="h-20 w-full" />
-                  ) : userInfo ? (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <span className="block text-muted-foreground">Full Name</span>
-                        {userInfo.Full_name || userInfo.name || '—'}
-                      </div>
-                      <div>
-                        <span className="block text-muted-foreground">Email</span>
-                        {userInfo.email || '—'}
-                      </div>
-                      <div>
-                        <span className="block text-muted-foreground">Emp Code</span>
-                        {userInfo.emp_code || '—'}
-                      </div>
-                      <div>
-                        <span className="block text-muted-foreground">Department</span>
-                        {userInfo.department || '—'}
-                      </div>
-                      <div>
-                        <span className="block text-muted-foreground">Job Role</span>
-                        {userInfo.job_role || '—'}
-                      </div>
-                      <div>
-                        <span className="block text-muted-foreground">Company</span>
-                        {userInfo.company_name || '—'}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-muted-foreground">No additional employee info</div>
-                  )}
-                </div>
-
-                <div className="space-y-3">
-                  <div className="font-semibold">Decision</div>
-                  <div className="flex flex-wrap gap-4">
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="radio"
-                        name="decision"
-                        checked={decision === 'approved'}
-                        onChange={() => setDecision('approved')}
-                      />
-                      Approve
-                    </label>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="radio"
-                        name="decision"
-                        checked={decision === 'rejected'}
-                        onChange={() => setDecision('rejected')}
-                      />
-                      Reject
-                    </label>
-                  </div>
-                  {decision === 'rejected' ? (
-                    <div className="space-y-1">
-                      <div className="text-muted-foreground">Reject Reason</div>
-                      <textarea
-                        className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        value={rejectReason}
-                        onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setRejectReason(event.target.value)}
-                        placeholder="Provide a note for rejection"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setSelected(null)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={submitReview} disabled={!decision}>
-                    Submit
-                  </Button>
+                <div className="sm:col-span-2">
+                  <div className="text-gray-500">Reason</div>
+                  <div className="break-words">{selected.reason}</div>
                 </div>
               </div>
-            ) : null}
-          </DialogContent>
-        </Dialog>
-      </div>
+
+              <div className="border-t pt-4">
+                <div className="font-semibold mb-2">Employee Info</div>
+                {reviewLoading ? (
+                  <div>Loading...</div>
+                ) : userInfo ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-gray-500">Full Name</div>
+                      <div>{userInfo.Full_name || userInfo.name || ''}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Email</div>
+                      <div>{userInfo.email || ''}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Emp Code</div>
+                      <div>{userInfo.emp_code || ''}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Department</div>
+                      <div>{userInfo.department || ''}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Job Role</div>
+                      <div>{userInfo.job_role || ''}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Company</div>
+                      <div>{userInfo.company_name || ''}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-gray-500">No additional employee info</div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <div className="font-semibold">Decision</div>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="decision"
+                      checked={decision === 'approved'}
+                      onChange={() => setDecision('approved')}
+                    />{' '}
+                    Approve
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="decision"
+                      checked={decision === 'rejected'}
+                      onChange={() => setDecision('rejected')}
+                    />{' '}
+                    Reject
+                  </label>
+                </div>
+                {decision === 'rejected' && (
+                  <div>
+                    <div className="text-gray-500 mb-1">Reject Reason</div>
+                    <textarea
+                      className="w-full border rounded px-3 py-2"
+                      value={rejectReason}
+                      onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setRejectReason(e.target.value)}
+                      placeholder="Reason for rejection"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setSelected(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={submitReview} disabled={!decision}>
+                  Submit
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

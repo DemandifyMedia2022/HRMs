@@ -3,13 +3,16 @@ export const runtime = 'nodejs';
 import mysql from 'mysql2/promise';
 import { NextResponse } from 'next/server';
 
-const DB_NAME = process.env.DB_NAME || 'newhrmsreactdb';
+const DB_NAME = process.env.DB_NAME as string | undefined;
+if (!DB_NAME) {
+  console.error('[api/status/[id]] DB_NAME env not set');
+}
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || '127.0.0.1',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: DB_NAME,
+  database: DB_NAME || undefined,
   port: Number(process.env.DB_PORT || 3306),
   waitForConnections: true,
   connectionLimit: 5
@@ -18,7 +21,8 @@ const pool = mysql.createPool({
 // GET /api/status/[id] - Get single record
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
-    const [rows] = await pool.execute('SELECT * FROM dm_form WHERE f_id = ?', [params.id]);
+    if (!DB_NAME) return NextResponse.json({ error: 'DB_NAME env not set' }, { status: 500 });
+    const [rows] = await pool.execute(`SELECT * FROM ${DB_NAME}.dm_form WHERE f_id = ?`, [params.id]);
     // @ts-ignore
     const record = rows[0];
     if (!record) {
@@ -34,6 +38,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 // PATCH /api/status/[id] - Update status fields
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
+    if (!DB_NAME) return NextResponse.json({ error: 'DB_NAME env not set' }, { status: 500 });
     const body = await req.json();
     const allowedFields = [
       'f_email_status',

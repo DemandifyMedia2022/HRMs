@@ -22,7 +22,10 @@ import {
   IconTicket,
   IconUsers,
   IconPlus,
-  IconCash
+  IconCash,
+  IconHistory,
+  IconUserCheck,
+  IconNotification
 } from '@tabler/icons-react';
 
 import { NavDocuments } from '@/components/nav-documents';
@@ -51,13 +54,23 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconCalendar,
         children: [
           { title: 'Attendance', url: '/pages/admin/attendance', icon: IconUsers },
-          { title: 'Update Attendance', url: '/pages/admin/attendance/update', icon: IconListDetails }
+          { title: 'Update Attendance', url: '/pages/admin/attendance/update', icon: IconListDetails },
+          { title: 'Requests', url: '/pages/admin/attendance/requests', icon: IconListDetails }
         ]
       },
       {
         title: 'Leaves',
         url: '/pages/admin/leaves',
         icon: IconChartBar
+      },
+      {
+        title: 'Tickets',
+        url: '#',
+        icon: IconTicket,
+        children: [
+          { title: 'Raise Ticket', url: '/pages/admin/tickets/raise', icon: IconReport },
+          { title: 'Ticket Status', url: '/pages/admin/tickets/status', icon: IconFileDescription }
+        ]
       },
       {
         title: 'Payroll',
@@ -73,9 +86,20 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
           },
           { title: 'Tax', url: '/pages/admin/payroll/tax', icon: IconReport }
         ]
+      },
+      {
+        title: 'Employee Details',
+        url: '#',
+        icon: IconUsers,
+        children: [
+          { title: 'All Employees', url: '/pages/admin/employees/employee-details', icon: IconUsers },
+          { title: 'Add Employee', url: '/pages/admin/employees/new', icon: IconPlus },
+          { title: 'Employee Settlement', url: '/pages/admin/employees/settlement', icon: IconUserCheck },
+          { title: 'Settlement History', url: '/pages/admin/employees/history', icon: IconHistory }
+        ]
       }
     ],
-    navSecondary: [{ title: 'Settings', url: '/pages/settings', icon: IconSettings }],
+    navSecondary: [{ title: 'Notifications', url: '/pages/notifications', icon: IconNotification }],
     documents: [
       {
         name: 'Campaigns',
@@ -83,9 +107,9 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconSpeakerphone,
         children: [
           { name: 'Campaign list', url: '/pages/admin/campaigns', icon: IconReport },
-          { name: 'Add Campaigns', url: '/pages/admin/campaigns/add', icon: IconReport },
+          { name: 'Add Campaigns', url: '/pages/admin/campaigns/add', icon: IconPlus },
           { name: 'Call Data', url: '/pages/admin/call-data', icon: IconDatabase },
-          { name: 'Paste Call Data', url: '/pages/admin/paste-call-data', icon: IconDatabase }
+          { name: 'Paste Call Data', url: '/pages/admin/paste-call-data', icon: IconDialpad }
         ]
       },
       { name: 'Team', url: '/pages/admin/team', icon: IconUsers }
@@ -123,19 +147,27 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
           { title: 'Salary structure', url: '/pages/user/payroll/salary-structure', icon: IconFileDescription }
         ]
       },
-      { title: 'Raise Ticket', url: '#', icon: IconTicket }
+      {
+        title: 'Ticket',
+        url: '#',
+        icon: IconTicket,
+        children: [
+          { title: 'Raise Ticket', url: '/pages/user/tickets/raise', icon: IconReport },
+          { title: 'Ticket Status', url: '/pages/user/tickets/status', icon: IconFileDescription }
+        ]
+      }
     ],
-    navSecondary: [{ title: 'Settings', url: '/pages/settings', icon: IconSettings }],
+    navSecondary: [{ title: ' Notifications', url: '/pages/notifications', icon: IconNotification }],
     documents: [
       {
         name: 'Operation',
         url: '#',
         icon: IconPhone,
         children: [
-          { name: 'Extensions', url: '/pages/user/operations/extensions', icon: IconReport },
+          { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
           { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
-          { name: 'Calls', url: '/pages/user/operations/calls', icon: IconFileWord },
-          { name: 'Call Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
+          { name: 'Call History', url: '/pages/user/operations/calls', icon: IconFileWord },
+          { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
           { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
         ]
       },
@@ -154,12 +186,12 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: '#',
         icon: IconUsers,
         children: [
-          { name: 'Campaign List', url: '/pages/user/team-lead/campaigns', icon: IconSpeakerphone },
+          { name: 'Campaigns', url: '/pages/user/team-lead/campaigns', icon: IconSpeakerphone },
           { name: 'Add Campaign', url: '/pages/user/team-lead/add', icon: IconPlus },
           { name: 'Analytics', url: '/pages/user/team-lead/analytics', icon: IconReport },
           { name: 'Team', url: '/pages/user/team-lead/team', icon: IconUsers },
           { name: 'Paste Call Data', url: '/pages/user/team-lead/paste-call-data', icon: IconReport },
-          { name: 'Call Data', url: '/pages/user/team-lead/call-data', icon: IconDatabase }
+          { name: 'Call History', url: '/pages/user/team-lead/call-data', icon: IconDatabase }
         ]
       }
       // { name: "Team", url: "/pages/user/team", icon: IconUsers },
@@ -197,14 +229,23 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: '#',
         icon: IconReport,
         children: [
-          { title: 'Paylip', url: '/pages/hr/payslip', icon: IconReport },
+          { title: 'Payslip', url: '/pages/hr/payroll/payslip', icon: IconReport },
           { title: 'My Salary Structure', url: '/pages/hr/payroll/my-salary-structure', icon: IconFileDescription },
           {
             title: 'Employee Salary Structure',
             url: '/pages/hr/payroll/employee-salary-structure',
             icon: IconFileDescription
           },
-          { title: 'Tax', url: '/pages/hr/payroll/tax', icon: IconReport }
+          { title: 'Employee Expenses', url: '/pages/hr/payroll/tax', icon: IconReport }
+        ]
+      },
+      {
+        title: 'Tickets',
+        url: '#',
+        icon: IconTicket,
+        children: [
+          { title: 'Raise Ticket', url: '/pages/hr/tickets/raise', icon: IconReport },
+          { title: 'Ticket Status', url: '/pages/hr/tickets/status', icon: IconFileDescription }
         ]
       },
       { title: 'Bank Challan', url: '/pages/hr/bank-challan', icon: IconCash },
@@ -213,6 +254,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: '#',
         icon: IconFileDescription,
         children: [
+          { title: 'All Employees', url: '/pages/hr/employees/employee-details', icon: IconFileDescription },
           { title: 'Add Employee', url: '/pages/hr/employees/new', icon: IconFileDescription },
           { title: 'Employee Settlement', url: '/pages/hr/employees/settlement', icon: IconFileDescription },
           { title: 'Settlement History', url: '/pages/hr/employees/history', icon: IconFileDescription }

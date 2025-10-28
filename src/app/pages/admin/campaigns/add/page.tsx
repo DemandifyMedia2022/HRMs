@@ -95,7 +95,9 @@ export default function AddCampaignPage() {
     return (
       role.includes('assistant team lead') ||
       role.includes('head of operation') ||
-      email === 'asfiya.pathan@demandifymedia.com'
+      email === 'asfiya.pathan@demandifymedia.com' ||
+      email === 'viresh.kumbhar@demandifymedia.com' ||
+      email === 'tejal.kamble@demandifymedia.com'
     );
   }, [authRole, authEmail]);
 
