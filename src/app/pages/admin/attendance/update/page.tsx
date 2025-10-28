@@ -321,7 +321,11 @@ export default function AdminAttendanceBulkPage() {
                     <SelectContent>
                       <SelectItem value="Present">Present</SelectItem>
                       <SelectItem value="Half-day">Half-day</SelectItem>
-                      <SelectItem value="Absent">Absent</SelectItem>
+                      <SelectItem value="Absent">Absent</SelectItem>  
+                      <SelectItem value="Week Off">Week Off</SelectItem>      
+                      <SelectItem value="Paid Leave">Paid Leave</SelectItem>
+                      <SelectItem value="Sick Leave(FullDay)">Sick Leave - FullDay</SelectItem>
+                      <SelectItem value="work From Home">Work From Home</SelectItem>
                       <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>

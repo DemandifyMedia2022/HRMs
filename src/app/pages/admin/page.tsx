@@ -75,6 +75,18 @@ export default function AdminPage() {
     }[];
   } | null>(null);
 
+  // DM dashboard: resource stats and leads status
+  const [dmResourceStats, setDmResourceStats] = useState<{
+    daily: { resource_name: string; total: number }[];
+    monthly: { resource_name: string; total: number }[];
+  } | null>(null);
+  const [dmMode, setDmMode] = useState<'daily' | 'monthly'>('daily');
+  const [dmLeadsStatus, setDmLeadsStatus] = useState<{ status: string; count: number }[] | null>(null);
+  const [todayEvents, setTodayEvents] = useState<{
+    birthdays: { name: string }[];
+    anniversaries: { name: string; years: number }[];
+  } | null>(null);
+
   // Load dashboard aggregates
   useEffect(() => {
     let ignore = false;
@@ -83,7 +95,7 @@ export default function AdminPage() {
         const y = new Date();
         y.setDate(y.getDate() - 1);
         const ymd = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
-        const [hc, gd, br, at, ay, lt, ev, lf, ltr, lr] = await Promise.all([
+        const [hc, gd, br, at, ay, lt, ev, lf, ltr, lr, dmrs, dmls, te] = await Promise.all([
           fetch(`/api/admin/dashboard/headcount`).then(r => r.json()),
           fetch(`/api/admin/dashboard/gender`).then(r => r.json()),
           fetch(`/api/admin/dashboard/breakdown?by=department`).then(r => r.json()),
@@ -93,7 +105,10 @@ export default function AdminPage() {
           fetch(`/api/admin/dashboard/upcoming-events?days=14`).then(r => r.json()),
           fetch(`/api/admin/dashboard/leaves-future?days=14`).then(r => r.json()),
           fetch(`/api/admin/dashboard/leave-trends?year=${year}`).then(r => r.json()),
-          fetch(`/api/admin/dashboard/leave-requests?status=pending&limit=3`).then(r => r.json())
+          fetch(`/api/admin/dashboard/leave-requests?status=pending&limit=3`).then(r => r.json()),
+          fetch(`/api/admin/dashboard/dm/resource-stats`).then(r => r.json()),
+          fetch(`/api/admin/dashboard/dm/leads-by-status`).then(r => r.json()),
+          fetch(`/api/admin/dashboard/today-events`).then(r => r.json())
         ]);
         if (ignore) return;
         setHeadcount(hc);
@@ -106,6 +121,9 @@ export default function AdminPage() {
         setLeavesFuture(lf);
         setLeaveTrends(ltr);
         setLeaveRequests(lr);
+        setDmResourceStats(dmrs);
+        setDmLeadsStatus(Array.isArray(dmls) ? dmls : (dmls?.data || []));
+        setTodayEvents(te);
       } catch (e: any) {
         if (!ignore) setError(e?.message || 'Failed to load dashboard');
       }
@@ -189,10 +207,63 @@ export default function AdminPage() {
       <SidebarConfig role="admin" />
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-semibold">Welcome, {user.name}</h1>
-            <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString()}</p>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-lg">
+              👋
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold leading-tight">Welcome, {user.name} <span className="align-middle">🎉</span></h1>
+            </div>
           </div>
+
+        {(todayEvents?.birthdays?.length || 0) > 0 || (todayEvents?.anniversaries?.length || 0) > 0 ? (
+          <div className="ml-auto">
+            <Card className="min-w-[280px] max-w-[340px] shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle>🎉 Celebrations Today</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {(todayEvents?.birthdays?.length || 0) > 0 ? (
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground mb-2">🎂 Birthdays</div>
+                    <div className="space-y-2 max-h-40 overflow-auto pr-1">
+                      {(todayEvents?.birthdays || []).map((b, i) => (
+                        <div key={i} className="flex items-center justify-between rounded-md border p-2">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-xs font-semibold">
+                              {(b.name || ' ').split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()}
+                            </div>
+                            <div className="text-sm font-medium">{b.name}</div>
+                          </div>
+                          <span>🎂</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {(todayEvents?.anniversaries?.length || 0) > 0 ? (
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground mb-2">🎊 Anniversaries</div>
+                    <div className="space-y-2 max-h-40 overflow-auto pr-1">
+                      {(todayEvents?.anniversaries || []).map((a, i) => (
+                        <div key={i} className="flex items-center justify-between rounded-md border p-2">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-semibold">
+                              {(a.name || ' ').split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()}
+                            </div>
+                            <div className="text-sm font-medium">{a.name}</div>
+                          </div>
+                          <Badge variant="secondary">🎊 {a.years} yrs</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
+
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -223,6 +294,73 @@ export default function AdminPage() {
               <CardTitle className="text-3xl">{leavesToday?.total ?? 0}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">Approved</CardContent>
+          </Card>
+        </div>
+
+        {/* DM Charts: Resource performance & Leads status */}
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader className="flex-row items-center justify-between">
+              <div>
+                <CardTitle>Resource Performance</CardTitle>
+                <CardDescription>{dmMode === 'daily' ? 'Today' : 'This Month'}</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant={dmMode === 'daily' ? 'default' : 'outline'} onClick={() => setDmMode('daily')}>
+                  Daily
+                </Button>
+                <Button size="sm" variant={dmMode === 'monthly' ? 'default' : 'outline'} onClick={() => setDmMode('monthly')}>
+                  Monthly
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+              <ChartContainer
+                config={{ total: { label: 'Total', color: 'hsl(var(--primary))' } }}
+                className="aspect-auto h-[280px] w-full"
+              >
+                <BarChart
+                  data={
+                    ((dmMode === 'daily' ? dmResourceStats?.daily : dmResourceStats?.monthly) || []).filter(
+                      d => dmMode !== 'daily' || (typeof d.total === 'number' && d.total > 0)
+                    )
+                  }
+                >
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="resource_name" tickLine={false} axisLine={false} tickMargin={8} interval={0} angle={-20} height={60} />
+                  <YAxis allowDecimals={false} width={30} tickLine={false} axisLine={false} tickMargin={8} />
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent labelKey="resource_name" />} />
+                  <Bar dataKey="total" fill="var(--primary)" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Leads by QA Status</CardTitle>
+              <CardDescription>Distribution</CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center justify-center">
+              <ChartContainer config={{}} className="aspect-auto h-[280px] w-full">
+                <PieChart width={280} height={240}>
+                  <Pie
+                    data={(Array.isArray(dmLeadsStatus) ? dmLeadsStatus : []).map((x, i) => ({ name: x.status || 'pending', value: x.count, color: ['#0ea5e9','#22c55e','#f97316','#ef4444','#a855f7','#eab308','#06b6d4','#f43f5e'][i % 8] }))}
+                    dataKey="value"
+                    nameKey="name"
+                    cx={140}
+                    cy={110}
+                    innerRadius={50}
+                    outerRadius={90}
+                    paddingAngle={3}
+                  >
+                    {(Array.isArray(dmLeadsStatus) ? dmLeadsStatus : []).map((_, i) => (
+                      <Cell key={i} fill={["#0ea5e9","#22c55e","#f97316","#ef4444","#a855f7","#eab308","#06b6d4","#f43f5e"][i % 8]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ChartContainer>
+            </CardContent>
           </Card>
         </div>
 

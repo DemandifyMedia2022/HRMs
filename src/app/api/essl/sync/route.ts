@@ -19,9 +19,21 @@ export async function POST(request: NextRequest) {
       return await handleJsonAttendance(jsonUrl);
     }
 
-    // SOAP mode: Get date range from request or use defaults
-    const fromDate = body.fromDate || '2025-01-01 07:00:00';
-    const toDate = body.toDate || new Date().toISOString().replace('T', ' ').substring(0, 19);
+    // SOAP mode: Get date range from request or use dynamic defaults
+    // Default from: latest attendance date (00:00:00); if none, yesterday 00:00:00
+    const lastRecord = await prisma.npAttendance.findFirst({
+      orderBy: { date: 'desc' },
+      select: { date: true },
+    });
+    const now = new Date();
+    const fallbackFrom = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    fallbackFrom.setHours(0, 0, 0, 0);
+    const baseFrom = lastRecord ? new Date(lastRecord.date) : fallbackFrom;
+    baseFrom.setHours(0, 0, 0, 0);
+    const fromDate = body.fromDate || formatLocalDateTime(baseFrom);
+    const toDate = (typeof body.toDate === 'string' && body.toDate.toLowerCase() === 'now')
+      ? formatLocalDateTime(now)
+      : (body.toDate || formatLocalDateTime(now));
 
     // ESSL Configuration from environment variables
     const serverUrl = process.env.ESSL_SERVER_URL!;
@@ -48,119 +60,163 @@ export async function POST(request: NextRequest) {
     const response = await axios.post(serverUrl, xmlPostString, {
       headers: {
         'Content-Type': 'text/xml; charset=utf-8',
-        SOAPAction: '"http://tempuri.org/GetTransactionsLog"'
-      }
+        'SOAPAction': '"http://tempuri.org/GetTransactionsLog"',
+      },
     });
 
     // Check if response is XML
     if (!response.data.includes('<?xml')) {
-      return NextResponse.json({ error: 'Non-XML response received', response: response.data }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Non-XML response received', response: response.data },
+        { status: 500 }
+      );
     }
 
     // Parse XML response
     const strDataList = extractStrDataList(response.data);
     if (!strDataList) {
-      return NextResponse.json({ error: 'Failed to extract data from SOAP response' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to extract data from SOAP response' },
+        { status: 500 }
+      );
     }
 
     // Process attendance data
     const attendanceData = parseAttendanceData(strDataList);
-
+    
     // Store in database
     let insertedCount = 0;
     let updatedCount = 0;
 
-    const minAllowedDate = new Date('2025-01-01T00:00:00');
+    const minAllowedDate = new Date(`${fromDate.substring(0, 10)}T00:00:00`);
+
+    // Track consumed timestamps per employee
+    const consumedByEmp = new Map<string, Set<number>>();
+    const MAX_SHIFT_HOURS = Number(process.env.ESSL_MAX_SHIFT_HOURS || 16);
+    const MAX_SHIFT_SECONDS = MAX_SHIFT_HOURS * 3600;
+
     for (const [employeeID, dates] of Object.entries(attendanceData)) {
-      for (const [cycleDate, timestamps] of Object.entries(dates)) {
-        // Enforce only 2025 data
-        const cycleDateObj = new Date(`${cycleDate}T00:00:00`);
-        if (cycleDateObj < minAllowedDate) {
-          continue;
-        }
-        const sortedTimestamps = timestamps.sort((a, b) => a - b);
-        const employeeIdNum = Number(employeeID);
-        if (Number.isNaN(employeeIdNum)) {
-          continue;
-        }
+      const employeeIdStr = String(employeeID).trim();
+      const employeeIdNum = Number(employeeID);
+      if (Number.isNaN(employeeIdNum)) continue;
 
-        // Extract first and last clock-in/out times
-        const inTime = new Date(sortedTimestamps[0] * 1000);
-        const outTime = new Date(sortedTimestamps[sortedTimestamps.length - 1] * 1000);
+      const consumed = (() => {
+        const s = consumedByEmp.get(employeeIdStr);
+        if (s) return s;
+        const ns = new Set<number>();
+        consumedByEmp.set(employeeIdStr, ns);
+        return ns;
+      })();
 
-        // Get all clock times in HH:mm format
-        const clockTimes = sortedTimestamps.map(ts => {
+      const sortedDays = Object.keys(dates).sort();
+      for (const cycleDate of sortedDays) {
+        const dayStart = new Date(`${cycleDate}T00:00:00`);
+        if (dayStart < minAllowedDate) continue;
+
+        const todayTs = (dates[cycleDate] || []).slice();
+        const nextDate = (() => {
+          const d = new Date(`${cycleDate}T00:00:00`);
+          d.setDate(d.getDate() + 1);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}`;
+        })();
+        const nextDayTs = (dates[nextDate] || []).slice();
+        const allTs = [...todayTs, ...nextDayTs]
+          .filter((ts) => ts && ts > 0)
+          .filter((ts) => !consumed.has(ts))
+          .sort((a, b) => a - b);
+
+        if (allTs.length === 0) continue;
+
+        const firstTs = allTs[0];
+        const windowEnd = firstTs + MAX_SHIFT_SECONDS;
+        const windowTs = allTs.filter((ts) => ts >= firstTs && ts <= windowEnd);
+        if (windowTs.length === 0) continue;
+
+        for (const ts of windowTs) consumed.add(ts);
+
+        const inTs = windowTs[0];
+        const outTs = windowTs[windowTs.length - 1];
+        const inTime = new Date(inTs * 1000);
+        const outTime = new Date(outTs * 1000);
+
+        const clockTimes = windowTs.map((ts) => {
           const date = new Date(ts * 1000);
           return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
         });
 
-        // Calculate working hours
-        const totalSeconds = sortedTimestamps[sortedTimestamps.length - 1] - sortedTimestamps[0];
         let workingSeconds = 0;
-
-        for (let i = 0; i < sortedTimestamps.length - 1; i += 2) {
-          if (sortedTimestamps[i + 1]) {
-            workingSeconds += sortedTimestamps[i + 1] - sortedTimestamps[i];
-          }
+        for (let i = 0; i < windowTs.length - 1; i += 2) {
+          if (windowTs[i + 1]) workingSeconds += windowTs[i + 1] - windowTs[i];
         }
-
-        const breakSeconds = totalSeconds - workingSeconds;
+        const totalSeconds = outTs - inTs;
+        const breakSeconds = Math.max(0, totalSeconds - workingSeconds);
 
         const totalHours = formatSeconds(totalSeconds);
         const workingHours = formatSeconds(workingSeconds);
         const breakHours = formatSeconds(breakSeconds);
-        const totalHoursTime = secondsToTimeDate(totalSeconds);
-        const workingHoursTime = secondsToTimeDate(workingSeconds);
-        const breakHoursTime = secondsToTimeDate(breakSeconds);
 
-        const status = workingSeconds >= 8 * 3600 ? 'Present' : workingSeconds >= 4 * 3600 ? 'Half-day' : 'Absent';
+        const status = workingSeconds >= 8 * 3600
+          ? 'Present'
+          : workingSeconds >= 4 * 3600
+            ? 'Half-day'
+            : 'Absent';
 
-        // Fetch employee name if exists
+        const nowSec = Math.floor(Date.now() / 1000);
+        const isOngoing = nowSec >= inTs && nowSec <= windowEnd;
+        const statusFinal = isOngoing ? '' : status;
+
         const existingEmployee = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeIdNum },
-          select: { empName: true }
+          where: { employeeId: employeeIdStr },
+          select: { empName: true },
         });
-
         const employeeName = existingEmployee?.empName || 'Unknown';
 
-        // Check if record exists
+        const startDateStr = (() => {
+          const d = new Date(inTs * 1000);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}`;
+        })();
+
         const existingRecord = await prisma.npAttendance.findFirst({
           where: {
-            employeeId: employeeIdNum,
-            date: new Date(cycleDate)
-          }
+            employeeId: employeeIdStr,
+            date: new Date(startDateStr),
+          },
         });
 
         if (!existingRecord) {
-          // Insert new record
           await prisma.npAttendance.create({
             data: {
-              employeeId: employeeIdNum,
+              employeeId: employeeIdStr,
               empName: employeeName,
-              date: new Date(cycleDate),
+              date: new Date(startDateStr),
               inTime,
               outTime,
               clockTimes: JSON.stringify(clockTimes),
-              totalHours: totalHoursTime,
-              loginHours: workingHoursTime,
-              breakHours: breakHoursTime,
-              status
-            }
+              totalHours,
+              loginHours: workingHours,
+              breakHours,
+              status: statusFinal,
+            },
           });
           insertedCount++;
         } else {
-          // Update existing record
           await prisma.npAttendance.update({
             where: { id: existingRecord.id },
             data: {
               inTime,
               outTime,
               clockTimes: JSON.stringify(clockTimes),
-              totalHours: totalHoursTime,
-              loginHours: workingHoursTime,
-              breakHours: breakHoursTime,
-              status
-            }
+              totalHours,
+              loginHours: workingHours,
+              breakHours,
+              status: statusFinal,
+            },
           });
           updatedCount++;
         }
@@ -171,14 +227,15 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Attendance data synchronized successfully',
       inserted: insertedCount,
-      updated: updatedCount
+      updated: updatedCount,
     });
+
   } catch (error: any) {
     console.error('ESSL Sync Error:', error);
     return NextResponse.json(
-      {
-        error: 'Failed to sync attendance data',
-        details: error.message
+      { 
+        error: 'Failed to sync attendance data', 
+        details: error.message 
       },
       { status: 500 }
     );
@@ -203,34 +260,23 @@ function parseAttendanceData(strDataList: string): Record<string, Record<string,
 
   for (const line of lines) {
     const trimmedLine = line.trim();
-    // Match pattern: employeeID followed by date-time
     const match = trimmedLine.match(/(\d+)\s+([\d\- :]+)/);
-
     if (match) {
       const employeeID = match[1];
       const dateTime = match[2];
-      const timestamp = Math.floor(new Date(dateTime).getTime() / 1000);
+      const ts = new Date(dateTime);
+      if (Number.isNaN(ts.getTime())) continue;
+      const timestamp = Math.floor(ts.getTime() / 1000);
 
-      // Calculate cycle date (7 AM to 7 AM next day)
-      const date = new Date(timestamp * 1000);
-      let cycleStart = new Date(date);
-      cycleStart.setHours(7, 0, 0, 0);
+      const d = new Date(timestamp * 1000);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const dateKey = `${yyyy}-${mm}-${dd}`;
 
-      if (date < cycleStart) {
-        cycleStart.setDate(cycleStart.getDate() - 1);
-      }
-
-      const cycleDate = cycleStart.toISOString().split('T')[0];
-
-      // Initialize nested objects if they don't exist
-      if (!attendanceData[employeeID]) {
-        attendanceData[employeeID] = {};
-      }
-      if (!attendanceData[employeeID][cycleDate]) {
-        attendanceData[employeeID][cycleDate] = [];
-      }
-
-      attendanceData[employeeID][cycleDate].push(timestamp);
+      if (!attendanceData[employeeID]) attendanceData[employeeID] = {};
+      if (!attendanceData[employeeID][dateKey]) attendanceData[employeeID][dateKey] = [];
+      attendanceData[employeeID][dateKey].push(timestamp);
     }
   }
 
@@ -242,7 +288,7 @@ function formatSeconds(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-
+  
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
@@ -257,6 +303,17 @@ function secondsToTimeDate(seconds: number): Date {
   return new Date(`1970-01-01T${hh}:${mm}:${ss}.000Z`);
 }
 
+// Format a Date object in local time as "YYYY-MM-DD HH:mm:ss"
+function formatLocalDateTime(d: Date): string {
+  const yyyy = d.getFullYear();
+  const MM = String(d.getMonth() + 1).padStart(2, '0');
+  const DD = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${yyyy}-${MM}-${DD} ${hh}:${mm}:${ss}`;
+}
+
 // GET endpoint to trigger sync (for testing)
 export async function GET(request: NextRequest) {
   return POST(request);
@@ -267,7 +324,7 @@ function parseHmsToSeconds(hms?: string): number {
   if (!hms) return 0;
   const parts = hms.split(':');
   if (parts.length !== 3) return 0;
-  const [h, m, s] = parts.map(p => Number(p) || 0);
+  const [h, m, s] = parts.map((p) => Number(p) || 0);
   return h * 3600 + m * 60 + s;
 }
 
@@ -279,7 +336,7 @@ function ensureDateTime(dateStr: string, timeStr?: string | null, fallbackTimes?
     hhmm = fallbackTimes[0];
   }
   if (!hhmm) return null;
-  const [hh, mm] = hhmm.split(':').map(v => Number(v));
+  const [hh, mm] = hhmm.split(':').map((v) => Number(v));
   if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
   const d = new Date(`${dateStr}T${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00`);
   return Number.isNaN(d.getTime()) ? null : d;
@@ -313,26 +370,24 @@ async function handleJsonAttendance(url: string) {
 
         const cycleDate = logDate; // In this mode, use plain date (no 7AM cycle)
         const cycleDateObj = new Date(`${cycleDate}T00:00:00`);
-        if (cycleDateObj < minAllowedDate) {
-          skippedNon2025++;
-          continue;
-        }
+        if (cycleDateObj < minAllowedDate) { skippedNon2025++; continue; }
 
         // Existing employee name from prior entries if available
+        const employeeIdStr = String(employeeID);
         const existingEmployee = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeIdNum },
-          select: { empName: true }
+          where: { employeeId: employeeIdStr },
+          select: { empName: true },
         });
         const employeeName: string = existingEmployee?.empName || log['employee_name'] || 'Unknown';
 
         // Times/metrics
         const loginHoursStr: string | undefined = log['working_hours'] || undefined;
         const workingSeconds = parseHmsToSeconds(loginHoursStr);
-        const totalHours: string | undefined = log['total_hours'] || undefined;
-        const breakHours: string | undefined = log['break_hours'] || undefined;
-        const loginHoursTime = secondsToTimeDate(workingSeconds);
-        const totalHoursTime = secondsToTimeDate(parseHmsToSeconds(totalHours || '00:00:00'));
-        const breakHoursTime = secondsToTimeDate(parseHmsToSeconds(breakHours || '00:00:00'));
+        const totalHoursRaw: string | undefined = log['total_hours'] || undefined;
+        const breakHoursRaw: string | undefined = log['break_hours'] || undefined;
+        const loginHoursFmt = formatSeconds(workingSeconds);
+        const totalHoursFmt = formatSeconds(parseHmsToSeconds(totalHoursRaw || '00:00:00'));
+        const breakHoursFmt = formatSeconds(parseHmsToSeconds(breakHoursRaw || '00:00:00'));
 
         // Clock times array (HH:mm)
         let clockTimes: string[] = Array.isArray(log['clock_times']) ? (log['clock_times'] as string[]) : [];
@@ -353,19 +408,20 @@ async function handleJsonAttendance(url: string) {
         else if (workingSeconds >= 5 * 3600) status = 'Half-day';
         else if (workingSeconds < 4 * 3600 && cycleDate !== new Date().toISOString().split('T')[0]) status = 'Absent';
 
+        // For today's record, suppress status
+        const todayLocalJson = new Date();
+        const todayStrJson = `${todayLocalJson.getFullYear()}-${String(todayLocalJson.getMonth() + 1).padStart(2, '0')}-${String(todayLocalJson.getDate()).padStart(2, '0')}`;
+        const statusFinalJson = cycleDate === todayStrJson ? '' : status;
+
         // Check if record exists
         const existingRecord = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeIdNum, date: new Date(cycleDate) }
+          where: { employeeId: employeeIdStr, date: new Date(cycleDate) },
         });
 
         if (existingRecord) {
           // Merge clock times
           const existingClockTimes = (() => {
-            try {
-              return JSON.parse(existingRecord.clockTimes || '[]');
-            } catch {
-              return [];
-            }
+            try { return JSON.parse(existingRecord.clockTimes || '[]'); } catch { return []; }
           })();
           const mergedClockTimes = Array.from(new Set([...(existingClockTimes || []), ...clockTimes])).sort();
 
@@ -373,28 +429,28 @@ async function handleJsonAttendance(url: string) {
             where: { id: existingRecord.id },
             data: {
               outTime,
-              loginHours: loginHoursTime ?? existingRecord.loginHours,
-              totalHours: totalHoursTime ?? existingRecord.totalHours,
-              breakHours: breakHoursTime ?? existingRecord.breakHours,
+              loginHours: loginHoursFmt ?? existingRecord.loginHours,
+              totalHours: totalHoursFmt ?? existingRecord.totalHours,
+              breakHours: breakHoursFmt ?? existingRecord.breakHours,
               clockTimes: JSON.stringify(mergedClockTimes),
-              status
-            }
+              status: statusFinalJson,
+            },
           });
           updated++;
         } else {
           await prisma.npAttendance.create({
             data: {
-              employeeId: employeeIdNum,
+              employeeId: employeeIdStr,
               empName: employeeName,
               date: new Date(cycleDate),
               inTime,
               outTime,
-              loginHours: loginHoursTime,
-              totalHours: totalHoursTime,
-              breakHours: breakHoursTime,
+              loginHours: loginHoursFmt,
+              totalHours: totalHoursFmt,
+              breakHours: breakHoursFmt,
               clockTimes: JSON.stringify(clockTimes),
-              status
-            }
+              status: statusFinalJson,
+            },
           });
           inserted++;
         }
@@ -410,7 +466,7 @@ async function handleJsonAttendance(url: string) {
       message: 'Attendance data processed from JSON',
       inserted,
       updated,
-      skippedNon2025
+      skippedNon2025,
     });
   } catch (e: any) {
     return NextResponse.json({ error: 'Error fetching attendance data', details: e.message }, { status: 500 });

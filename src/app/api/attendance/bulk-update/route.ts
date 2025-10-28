@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       const date = toUtcMidnight(ds);
       // Try updating first; if no row updated, create
       const upd = await prisma.npAttendance.updateMany({
-        where: { employeeId: Number(empCode), date },
+        where: { employeeId: String(empCode), date },
         data: { status }
       });
       if (upd.count && upd.count > 0) {
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       try {
         await prisma.npAttendance.create({
           data: {
-            employeeId: Number(empCode),
+            employeeId: String(empCode),
             empName: empName,
             date,
             inTime: date,
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
       } catch {
         // Likely unique constraint due to a concurrent insert; fallback to update
         const upd2 = await prisma.npAttendance.updateMany({
-          where: { employeeId: Number(empCode), date },
+          where: { employeeId: String(empCode), date },
           data: { status }
         });
         if (upd2.count > 0) updated += upd2.count;

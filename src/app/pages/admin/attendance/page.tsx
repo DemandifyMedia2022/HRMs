@@ -468,7 +468,9 @@ export default function AdminAttendancePage() {
                                     </span>
                                   </div>
                                   <div className="text-[11px] text-muted-foreground">
-                                    {formatTime(c.ev.extendedProps.in_time)} - {formatTime(c.ev.extendedProps.out_time)}
+                                    {c.ev.extendedProps.shift_time
+                                      ? c.ev.extendedProps.shift_time
+                                      : `${formatTime(c.ev.extendedProps.in_time)} - ${formatTime(c.ev.extendedProps.out_time)}`}
                                   </div>
                                   <div className="text-[11px] text-muted-foreground">
                                     Work {formatDuration(c.ev.extendedProps.login_hours)}
