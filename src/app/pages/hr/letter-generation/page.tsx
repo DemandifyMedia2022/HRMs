@@ -3,7 +3,7 @@
 import { SidebarConfig } from "@/components/sidebar-config"
 import { IconFileText, IconArrowRight, IconSearch, IconChevronDown, IconChevronRight } from "@tabler/icons-react"
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, Suspense } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
@@ -53,7 +53,7 @@ const letterCategories = [
   }
 ]
 
-export default function LetterGenerationPage() {
+function LetterGenerationPageInner() {
   const migratedCount = useMemo(() => letterCategories.reduce((acc, cat) => acc + cat.letters.filter(l => l.migrated).length, 0), [])
   const totalCount = useMemo(() => letterCategories.reduce((acc, cat) => acc + cat.letters.length, 0), [])
   const router = useRouter()
@@ -220,5 +220,13 @@ export default function LetterGenerationPage() {
         </div>
       </div>
     </>
+  )
+}
+
+export default function LetterGenerationPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LetterGenerationPageInner />
+    </Suspense>
   )
 }

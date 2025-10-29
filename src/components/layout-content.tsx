@@ -23,10 +23,8 @@ function PageWithSidebar({ children }: { children: React.ReactNode }) {
   // Memoize user data to ensure stable reference
   const sidebarUserData = useMemo(() => {
     if (!user) {
-      console.log('⚠️ No user data available yet');
       return undefined;
     }
-    console.log('✅ Creating sidebar user data from:', user);
     return {
       user: {
         name: user.name,
@@ -37,14 +35,6 @@ function PageWithSidebar({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const effectiveRole = roleFromPath ?? user?.role ?? 'user';
-
-  console.log('📍 PageWithSidebar render:', {
-    user,
-    loading,
-    sidebarUserData,
-    effectiveRole,
-    hasUserData: !!user
-  });
 
   return (
     <>

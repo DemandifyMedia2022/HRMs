@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,7 @@ type AvailableResponse = {
   user: string;
 };
 
-export default function UserAvailableLeavePage() {
+function UserAvailableLeavePageInner() {
   const searchParams = useSearchParams();
   const userFromQuery = useMemo(
     () => searchParams.get('user_name') || searchParams.get('added_by_user') || '',
@@ -291,5 +291,13 @@ export default function UserAvailableLeavePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function UserAvailableLeavePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UserAvailableLeavePageInner />
+    </Suspense>
   );
 }
