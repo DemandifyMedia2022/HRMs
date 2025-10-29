@@ -69,14 +69,12 @@ function PageWithSidebar({ children }: { children: React.ReactNode }) {
 
 export function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHomePage = pathname === '/';
-  const isAccessDenied = pathname === '/access-denied';
-  const isForgot = pathname === '/forgot-password';
-  const isReset = pathname === '/reset-password';
+  // Only show the app sidebar for application sections under /pages/**
+  const showSidebar = pathname.startsWith('/pages/');
 
   return (
     <SidebarConfigProvider>
-      {isHomePage || isAccessDenied || isForgot || isReset ? children : <PageWithSidebar>{children}</PageWithSidebar>}
+      {showSidebar ? <PageWithSidebar>{children}</PageWithSidebar> : children}
     </SidebarConfigProvider>
   );
 }

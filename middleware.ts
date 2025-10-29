@@ -57,7 +57,7 @@ export function middleware(request: NextRequest) {
     if (!allowedRoles.includes(user.role)) {
       // Rewrite to Access Denied to render denial page without bouncing via '/'
       const url = request.nextUrl.clone();
-      url.pathname = '/access-denied';
+      url.pathname = '/';
       return NextResponse.rewrite(url);
     }
 
