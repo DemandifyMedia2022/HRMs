@@ -22,6 +22,7 @@ import {
   Tooltip
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+import { IconCalendar, IconChartBar, IconChartDonut, IconUsers, IconGift } from '@tabler/icons-react';
 
 export default function AdminPage() {
   const { user, loading } = useRouteGuard('admin');
@@ -208,11 +209,9 @@ export default function AdminPage() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-lg">
-              👋
-            </div>
+            
             <div>
-              <h1 className="text-2xl font-semibold leading-tight">Welcome, {user.name} <span className="align-middle">🎉</span></h1>
+              <h1 className="text-2xl font-semibold leading-tight">Welcome, {user.name} </h1>
             </div>
           </div>
 
@@ -302,7 +301,9 @@ export default function AdminPage() {
           <Card className="lg:col-span-2">
             <CardHeader className="flex-row items-center justify-between">
               <div>
-                <CardTitle>Resource Performance</CardTitle>
+                <CardTitle>
+                  <span className="flex items-center gap-2"><IconChartBar className="size-5 text-primary" /> Resource Performance</span>
+                </CardTitle>
                 <CardDescription>{dmMode === 'daily' ? 'Today' : 'This Month'}</CardDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -337,7 +338,9 @@ export default function AdminPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Leads by QA Status</CardTitle>
+              <CardTitle>
+                <span className="flex items-center gap-2"><IconChartDonut className="size-5 text-primary" /> Leads by QA Status</span>
+              </CardTitle>
               <CardDescription>Distribution</CardDescription>
             </CardHeader>
             <CardContent className="flex items-center justify-center">
@@ -367,7 +370,9 @@ export default function AdminPage() {
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-1">
             <CardHeader>
-              <CardTitle>Gender Ratio</CardTitle>
+              <CardTitle>
+                <span className="flex items-center gap-2"><IconUsers className="size-5 text-primary" /> Gender Ratio</span>
+              </CardTitle>
               <CardDescription>Organization</CardDescription>
             </CardHeader>
             <CardContent className="flex items-center justify-center">
@@ -399,7 +404,9 @@ export default function AdminPage() {
           <Card className="lg:col-span-2">
             <CardHeader className="flex-row items-center justify-between">
               <div>
-                <CardTitle>Headcount Breakdown</CardTitle>
+                <CardTitle>
+                  <span className="flex items-center gap-2"><IconChartBar className="size-5 text-primary" /> Headcount Breakdown</span>
+                </CardTitle>
                 <CardDescription>By department</CardDescription>
               </div>
               <div className="flex items-center gap-2"></div>
@@ -423,7 +430,9 @@ export default function AdminPage() {
         <div className="grid gap-4 lg:grid-cols-4">
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Leave Trends</CardTitle>
+              <CardTitle>
+                <span className="flex items-center gap-2"><IconCalendar className="size-5 text-primary" /> Leave Trends</span>
+              </CardTitle>
               <CardDescription>{leaveTrends?.year || year}</CardDescription>
             </CardHeader>
             <CardContent className="px-2 pt-2">
@@ -450,7 +459,9 @@ export default function AdminPage() {
             <CardHeader>
               <div className="flex items-center justify-between w-full">
                 <div>
-                  <CardTitle>Leave Requests</CardTitle>
+                  <CardTitle>
+                    <span className="flex items-center gap-2"><IconCalendar className="size-5 text-primary" /> Leaves</span>
+                  </CardTitle>
                   <CardDescription>Latest pending (3)</CardDescription>
                 </div>
                 <Button asChild size="sm" variant="outline">
@@ -483,7 +494,9 @@ export default function AdminPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Upcoming Events</CardTitle>
+              <CardTitle>
+                <span className="flex items-center gap-2"><IconGift className="size-5 text-primary" /> Upcoming Events</span>
+              </CardTitle>
               <CardDescription>Next 14 days</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
@@ -557,7 +570,9 @@ export default function AdminPage() {
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-3">
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+              <CardTitle>
+                <span className="flex items-center gap-2"><IconChartBar className="size-5 text-primary" /> Quick Actions</span>
+              </CardTitle>
               <CardDescription>Manage core HRMS features</CardDescription>
               <div className="grid grid-cols-2 gap-4">
                 <Button asChild size="lg" variant="outline">

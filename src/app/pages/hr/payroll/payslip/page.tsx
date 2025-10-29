@@ -254,7 +254,7 @@ export default function PayslipPage() {
           <div style="display:flex; align-items:center; gap:12px;">
             <div>
               <div style="font-size:18px; font-weight:700; letter-spacing:0.2px; color:#B144F8;">Demandify Media</div>
-              <div style="font-size:12px; color:#6b7280;">415, Nyati Empress, Viman Nagar Rd, Clover Park, Viman Nagar, Pune, Maharashtra-123456</div>
+              <div style="font-size:12px; color:#6b7280;">415, Nyati Empress, Viman Nagar Rd, Clover Park, Viman Nagar, Pune, Maharashtra-411014</div>
             </div>
           </div>
           <div style="text-align:right; position: relative; z-index: 3;">

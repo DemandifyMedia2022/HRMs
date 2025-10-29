@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { comparePassword, generateToken, determineRole } from '@/lib/auth';
+import { comparePassword, generateToken, determineRole, generateRefreshToken } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       role,
       department: deptLower as any
     });
+    const refreshToken = generateRefreshToken({ id: idNum });
 
     const res = NextResponse.json({
       id: idNum,
@@ -45,12 +46,20 @@ export async function POST(req: NextRequest) {
     });
 
     const isProd = process.env.NODE_ENV === 'production';
+    // Short-lived access token (e.g., 15 minutes)
     res.cookies.set('access_token', token, {
       httpOnly: true,
       sameSite: 'strict',
       secure: isProd,
       path: '/',
-      maxAge: 60 * 60 // 1 hour
+      maxAge: 60 * 15 // 15 minutes
+    });
+    // Session refresh token (no maxAge -> cleared on browser close). Token itself has server-side expiry.
+    res.cookies.set('refresh_token', refreshToken, {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: isProd,
+      path: '/'
     });
 
     // Fire-and-forget: trigger ESSL attendance sync for realtime data on login

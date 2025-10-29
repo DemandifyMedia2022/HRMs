@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, ReferenceLine, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+import { IconCalendar, IconClock, IconChartDonut, IconHistory, IconGift } from '@tabler/icons-react';
 
 export default function UserPage() {
   const { user, loading } = useRouteGuard('user');
@@ -31,6 +32,7 @@ export default function UserPage() {
     birthdays: { name: string }[];
     anniversaries: { name: string; years: number }[];
   } | null>(null);
+  const [dbRole, setDbRole] = useState<string>('');
 
   const toSecs = (v?: any) => {
     if (v == null) return 0;
@@ -128,6 +130,22 @@ export default function UserPage() {
     };
   }, []);
 
+  // Fetch role/department from DB for current user (must be top-level hook)
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/user/role', { cache: 'no-store' });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!ignore && typeof json?.role === 'string') setDbRole(json.role);
+      } catch {}
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   const me = user;
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
 
@@ -208,6 +226,9 @@ export default function UserPage() {
   }
 
   if (!user) return null;
+  const dmRole = (dbRole || String((user as any)?.role || (user as any)?.department || '')).toLowerCase();
+  const showDm = ['admin', 'operation', 'operations', 'quality', 'qa'].includes(dmRole);
+
 
   return (
     <>
@@ -215,21 +236,21 @@ export default function UserPage() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-lg">👋</div>
+           
             <div>
-              <h1 className="text-2xl font-semibold leading-tight">Welcome, {user.name} <span className="align-middle">🎉</span></h1>
+              <h1 className="text-2xl font-semibold leading-tight">Welcome, {user.name} <span className="align-middle"></span></h1>
             </div>
           </div>
           {(todayEvents?.birthdays?.length || 0) > 0 || (todayEvents?.anniversaries?.length || 0) > 0 ? (
             <div className="ml-auto">
               <Card className="min-w-[280px] max-w-[340px] shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle>🎉 Celebrations Today</CardTitle>
+                  <CardTitle> Celebrations Today</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {(todayEvents?.birthdays?.length || 0) > 0 ? (
                     <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-2">🎂 Birthdays</div>
+                      <div className="text-xs font-medium text-muted-foreground mb-2"> Birthdays</div>
                       <div className="space-y-2 max-h-40 overflow-auto pr-1">
                         {(todayEvents?.birthdays || []).map((b, i) => (
                           <div key={i} className="flex items-center justify-between rounded-md border p-2">
@@ -239,7 +260,7 @@ export default function UserPage() {
                               </div>
                               <div className="text-sm font-medium">{b.name}</div>
                             </div>
-                            <span>🎂</span>
+                            <span></span>
                           </div>
                         ))}
                       </div>
@@ -247,7 +268,7 @@ export default function UserPage() {
                   ) : null}
                   {(todayEvents?.anniversaries?.length || 0) > 0 ? (
                     <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-2">🎊 Anniversaries</div>
+                      <div className="text-xs font-medium text-muted-foreground mb-2"> Anniversaries</div>
                       <div className="space-y-2 max-h-40 overflow-auto pr-1">
                         {(todayEvents?.anniversaries || []).map((a, i) => (
                           <div key={i} className="flex items-center justify-between rounded-md border p-2">
@@ -257,7 +278,7 @@ export default function UserPage() {
                               </div>
                               <div className="text-sm font-medium">{a.name}</div>
                             </div>
-                            <Badge variant="secondary">🎊 {a.years} yrs</Badge>
+                            <Badge variant="secondary"> {a.years} yrs</Badge>
                           </div>
                         ))}
                       </div>
@@ -281,104 +302,41 @@ export default function UserPage() {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="border-emerald-200/80 bg-emerald-50/70">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 space-y-1">
               <CardDescription>This Month</CardDescription>
-              <CardTitle className="text-3xl">{kpis.present}</CardTitle>
+              <CardTitle className="text-4xl">{kpis.present}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">Present days</CardContent>
+            <CardContent className="text-base text-muted-foreground">Present days</CardContent>
           </Card>
           <Card className="border-amber-200/80 bg-amber-50/70">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 space-y-1">
               <CardDescription>This Month</CardDescription>
-              <CardTitle className="text-3xl">{kpis.half}</CardTitle>
+              <CardTitle className="text-4xl">{kpis.half}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">Half-days</CardContent>
+            <CardContent className="text-base text-muted-foreground">Half-days</CardContent>
           </Card>
           <Card className="border-red-200/80 bg-red-50/70">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 space-y-1">
               <CardDescription>This Month</CardDescription>
-              <CardTitle className="text-3xl">{kpis.absent}</CardTitle>
+              <CardTitle className="text-4xl">{kpis.absent}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">Absents</CardContent>
+            <CardContent className="text-base text-muted-foreground">Absents</CardContent>
           </Card>
           <Card className="border-blue-200/80 bg-blue-50/70">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 space-y-1">
               <CardDescription>This Month</CardDescription>
-              <CardTitle className="text-3xl">{kpis.total}</CardTitle>
+              <CardTitle className="text-4xl">{kpis.total}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">Total work time</CardContent>
-          </Card>
-        </div>
-
-        {/* DM Charts: Resource performance & Leads status (same as Admin) */}
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <CardHeader className="flex-row items-center justify-between">
-              <div>
-                <CardTitle>Resource Performance</CardTitle>
-                <CardDescription>{dmMode === 'daily' ? 'Today' : 'This Month'}</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant={dmMode === 'daily' ? 'default' : 'outline'} onClick={() => setDmMode('daily')}>
-                  Daily
-                </Button>
-                <Button size="sm" variant={dmMode === 'monthly' ? 'default' : 'outline'} onClick={() => setDmMode('monthly')}>
-                  Monthly
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-              <ChartContainer config={{ total: { label: 'Total', color: 'hsl(var(--primary))' } }} className="aspect-auto h-[280px] w-full">
-                <BarChart
-                  data={
-                    ((dmMode === 'daily' ? dmResourceStats?.daily : dmResourceStats?.monthly) || [])
-                      .filter(d => dmMode !== 'daily' || (typeof d.total === 'number' && d.total > 0))
-                      .slice()
-                      .sort((a, b) => String(a.resource_name || '').localeCompare(String(b.resource_name || '')))
-                  }
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="resource_name" tickLine={false} axisLine={false} tickMargin={8} interval={0} angle={-20} height={60} />
-                  <YAxis allowDecimals={false} width={30} tickLine={false} axisLine={false} tickMargin={8} />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent labelKey="resource_name" />} />
-                  <Bar dataKey="total" fill="var(--primary)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Leads by QA Status</CardTitle>
-              <CardDescription>Distribution</CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center">
-              <ChartContainer config={{}} className="aspect-auto h-[280px] w-full">
-                <PieChart width={280} height={240}>
-                  <Pie
-                    data={(Array.isArray(dmLeadsStatus) ? dmLeadsStatus : []).map((x, i) => ({ name: x.status || 'pending', value: x.count }))}
-                    dataKey="value"
-                    nameKey="name"
-                    cx={140}
-                    cy={110}
-                    innerRadius={50}
-                    outerRadius={90}
-                    paddingAngle={3}
-                  >
-                    {(Array.isArray(dmLeadsStatus) ? dmLeadsStatus : []).map((_, i) => (
-                      <Cell key={i} fill={["#0ea5e9","#22c55e","#f97316","#ef4444","#a855f7","#eab308","#06b6d4","#f43f5e"][i % 8]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
+            <CardContent className="text-base text-muted-foreground">Total work time</CardContent>
           </Card>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-1">
             <CardHeader>
-              <CardTitle>Today</CardTitle>
+              <CardTitle>
+                <span className="flex items-center gap-2"><IconCalendar className="size-5 text-primary" /> Today</span>
+              </CardTitle>
               <CardDescription>{todayISO}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -407,7 +365,9 @@ export default function UserPage() {
           <Card className="lg:col-span-2">
             <CardHeader className="flex-row items-center justify-between">
               <div>
-                <CardTitle>Daily Hours</CardTitle>
+                <CardTitle>
+                  <span className="flex items-center gap-2"><IconClock className="size-5 text-primary" /> Daily Hours</span>
+                </CardTitle>
                 <CardDescription>
                   {new Date(year, month).toLocaleString(undefined, { month: 'long', year: 'numeric' })}
                 </CardDescription>
@@ -462,32 +422,105 @@ export default function UserPage() {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="lg:col-span-2 border-slate-200/80 bg-slate-50/70">
+          {/* Status Distribution as Ring */}
+          <Card>
             <CardHeader>
-              <CardTitle>Status Distribution</CardTitle>
+              <CardTitle>
+                <span className="flex items-center gap-2"><IconChartDonut className="size-5 text-primary" /> Status Distribution</span>
+              </CardTitle>
               <CardDescription>This month</CardDescription>
             </CardHeader>
-            <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+            <CardContent className="flex items-center justify-center">
               <ChartContainer config={chartDistCfg} className="aspect-auto h-[260px] w-full">
-                <BarChart data={statusDist}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
-                  <YAxis allowDecimals={false} width={30} tickLine={false} axisLine={false} tickMargin={8} />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent labelKey="name" />} />
-                  <Bar dataKey="count" fill="var(--primary)" fillOpacity={1} radius={[6, 6, 0, 0]} />
-                </BarChart>
+                <PieChart width={320} height={240}>
+                  <Pie
+                    data={statusDist.map(s => ({ name: s.name, value: s.count }))}
+                    dataKey="value"
+                    nameKey="name"
+                    cx={160}
+                    cy={110}
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={3}
+                  >
+                    {statusDist.map((_, i) => (
+                      <Cell key={i} fill={["var(--primary)","#3fc8c3ff","#3f94c8ff"][i % 3]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
               </ChartContainer>
             </CardContent>
           </Card>
 
+          {/* Previous Day Attendance */}
           <Card>
             <CardHeader>
-              <CardTitle>Upcoming</CardTitle>
-              <CardDescription>Leaves & Holidays</CardDescription>
+              <CardTitle>
+                <span className="flex items-center gap-2"><IconHistory className="size-5 text-primary" /> Previous Day</span>
+              </CardTitle>
+              <CardDescription>
+                {new Date(Date.now() - 24 * 3600 * 1000).toISOString().split('T')[0]}
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm">
+            <CardContent className="space-y-3">
+              {(() => {
+                const prevISO = new Date(Date.now() - 24 * 3600 * 1000).toISOString().split('T')[0];
+                const prevEvent = monthEvents.find(e => e.extendedProps?.date === prevISO);
+                if (!prevEvent) return <div className="text-sm text-muted-foreground">No record for previous day.</div>;
+                return (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{prevEvent.extendedProps?.status || prevEvent.title}</Badge>
+                    </div>
+                    <div className="text-sm">
+                      {formatTime(prevEvent.extendedProps?.in_time)} - {formatTime(prevEvent.extendedProps?.out_time)}
+                    </div>
+                    <div className="text-sm">
+                      Work {fmtHMS(toSecs(prevEvent.extendedProps?.total_hours ?? prevEvent.extendedProps?.login_hours))}
+                    </div>
+                    <Button asChild size="sm" variant="secondary">
+                      <a href="/pages/user/attendance">View Full Attendance</a>
+                    </Button>
+                  </>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          {/* Events Today (Birthdays & Anniversaries) */}
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <span className="flex items-center gap-2"><IconGift className="size-5 text-primary" /> Events Today</span>
+              </CardTitle>
+              <CardDescription>Birthdays & Anniversaries</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm">
               <div>
-                <div className="text-muted-foreground">Holidays</div>
+                <div className="text-muted-foreground">Birthdays</div>
+                <div className="mt-1 space-y-1">
+                  {(todayEvents?.birthdays || []).length === 0 && (
+                    <div className="text-muted-foreground">None</div>
+                  )}
+                  {(todayEvents?.birthdays || []).map((b, i) => (
+                    <div key={`b-${i}`}>{b.name}</div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">Anniversaries</div>
+                <div className="mt-1 space-y-1">
+                  {(todayEvents?.anniversaries || []).length === 0 && (
+                    <div className="text-muted-foreground">None</div>
+                  )}
+                  {(todayEvents?.anniversaries || []).map((a, i) => (
+                    <div key={`a-${i}`}>{a.name} • {a.years} yrs</div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">Upcoming Holidays</div>
                 <div className="mt-1 space-y-1">
                   {holidays.slice(0, 3).map(h => (
                     <div key={`${h.date}-${h.event_name}`}>
@@ -502,6 +535,73 @@ export default function UserPage() {
         </div>
 
         {error ? <div className="text-sm text-red-600">{error}</div> : null}
+
+        {/* DM Charts moved to bottom and restricted to admin/operation/quality */}
+        {showDm ? (
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <CardHeader className="flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Resource Performance</CardTitle>
+                  <CardDescription>{dmMode === 'daily' ? 'Today' : 'This Month'}</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant={dmMode === 'daily' ? 'default' : 'outline'} onClick={() => setDmMode('daily')}>
+                    Daily
+                  </Button>
+                  <Button size="sm" variant={dmMode === 'monthly' ? 'default' : 'outline'} onClick={() => setDmMode('monthly')}>
+                    Monthly
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+                <ChartContainer config={{ total: { label: 'Total', color: 'hsl(var(--primary))' } }} className="aspect-auto h-[280px] w-full">
+                  <BarChart
+                    data={
+                      ((dmMode === 'daily' ? dmResourceStats?.daily : dmResourceStats?.monthly) || [])
+                        .filter(d => dmMode !== 'daily' || (typeof d.total === 'number' && d.total > 0))
+                        .slice()
+                        .sort((a, b) => String(a.resource_name || '').localeCompare(String(b.resource_name || '')))
+                    }
+                  >
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="resource_name" tickLine={false} axisLine={false} tickMargin={8} interval={0} angle={-20} height={60} />
+                    <YAxis allowDecimals={false} width={30} tickLine={false} axisLine={false} tickMargin={8} />
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent labelKey="resource_name" />} />
+                    <Bar dataKey="total" fill="var(--primary)" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Leads by QA Status</CardTitle>
+                <CardDescription>Distribution</CardDescription>
+              </CardHeader>
+              <CardContent className="flex items-center justify-center">
+                <ChartContainer config={{}} className="aspect-auto h-[280px] w-full">
+                  <PieChart width={280} height={240}>
+                    <Pie
+                      data={(Array.isArray(dmLeadsStatus) ? dmLeadsStatus : []).map((x, i) => ({ name: x.status || 'pending', value: x.count }))}
+                      dataKey="value"
+                      nameKey="name"
+                      cx={140}
+                      cy={110}
+                      innerRadius={50}
+                      outerRadius={90}
+                      paddingAngle={3}
+                    >
+                      {(Array.isArray(dmLeadsStatus) ? dmLeadsStatus : []).map((_, i) => (
+                        <Cell key={i} fill={["#0ea5e9","#22c55e","#f97316","#ef4444","#a855f7","#eab308","#06b6d4","#f43f5e"][i % 8]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
       </div>
     </>
   );

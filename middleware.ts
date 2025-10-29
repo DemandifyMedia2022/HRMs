@@ -43,19 +43,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Get token from cookies
+  // Get tokens from cookies
   const token = request.cookies.get('access_token')?.value;
-
-  if (!token) {
-    // Redirect to login if no token
-    const url = request.nextUrl.clone();
-    url.pathname = '/';
-    url.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(url);
-  }
+  const refresh = request.cookies.get('refresh_token')?.value;
 
   try {
     // Verify token
+    if (!token) throw new Error('no access');
     const user = verifyToken(token);
 
     // Check role-based access for the matched route only
@@ -80,12 +74,20 @@ export function middleware(request: NextRequest) {
 
     return NextResponse.next();
   } catch (error) {
-    // Invalid token - redirect to login
+    // If we have a refresh token, redirect to refresh endpoint to rotate tokens, then back to this path
+    if (refresh) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/api/auth/refresh';
+      url.searchParams.set('redirect', request.nextUrl.pathname + (request.nextUrl.search || ''));
+      return NextResponse.redirect(url);
+    }
+    // No refresh token: redirect to login
     const url = request.nextUrl.clone();
     url.pathname = '/';
+    url.searchParams.set('redirect', pathname);
     const response = NextResponse.redirect(url);
-    // Clear the invalid token
     response.cookies.delete('access_token');
+    response.cookies.delete('refresh_token');
     return response;
   }
 }

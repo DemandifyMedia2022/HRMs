@@ -77,7 +77,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: '#',
         icon: IconSettings,
         children: [
-          { title: 'Paylip', url: '/pages/admin/payroll', icon: IconReport },
+          { title: 'Paylip', url: '/pages/admin/payroll/payslip', icon: IconReport },
           { title: 'My Salary Structure', url: '/pages/admin/payroll/my-salary-structure', icon: IconFileDescription },
           {
             title: 'Employee Salary Structure',
@@ -261,7 +261,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         ]
       }
     ],
-    navSecondary: [{ title: 'Settings', url: '/pages/settings', icon: IconSettings }],
+    navSecondary: [{ title: 'Notifications', url: '/pages/notifications', icon: IconNotification }],
     documents: [
       { name: 'Letter Generation', url: '/pages/hr/letter-generation', icon: IconFileWord },
       { name: 'Events', url: '/pages/hr/events', icon: IconCalendar }

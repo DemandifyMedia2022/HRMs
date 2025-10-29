@@ -24,6 +24,13 @@ function getAuthEmail(req: NextRequest): string | null {
   }
 }
 
+function deriveNameFromEmail(email: string): string {
+  const local = (email || '').split('@')[0] || ''
+  const parts = local.replace(/[^a-zA-Z0-9._\- ]+/g, ' ').replace(/[._-]+/g, ' ').trim().split(/\s+/)
+  const cased = parts.map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ')
+  return cased || email || ''
+}
+
 export async function GET(req: NextRequest) {
   try {
     const email = getAuthEmail(req);
@@ -40,12 +47,18 @@ export async function GET(req: NextRequest) {
        ORDER BY name ASC`
     );
     const arr = Array.isArray(rows) ? (rows as any[]) : [];
-    const list = arr.map((u: any) => ({
-      id: typeof u.id === 'bigint' ? Number(u.id) : u.id,
-      name: u.name || '',
-      email: u.email || '',
-      extension: u.extension || ''
-    }));
+    const list = arr.map((u: any) => {
+      const rawName = (u.name || '').toString().trim()
+      const email = (u.email || '').toString().trim()
+      const looksLikeEmail = /@/.test(rawName) || !rawName || rawName.toLowerCase() === email.toLowerCase()
+      const displayName = looksLikeEmail ? deriveNameFromEmail(email) : rawName
+      return {
+        id: typeof u.id === 'bigint' ? Number(u.id) : u.id,
+        name: displayName,
+        email,
+        extension: u.extension || ''
+      }
+    });
     return NextResponse.json(list);
   } catch (e: any) {
     return NextResponse.json({ error: String(e?.message || e) }, { status: 500 });

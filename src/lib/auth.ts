@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 
 const JWT_SECRET = process.env.JWT_SECRET || '';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || '';
+const REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '30d';
 
 export type JwtUser = {
   id: number;
@@ -56,6 +58,18 @@ export function generateToken(user: JwtUser) {
 export function verifyToken(token: string) {
   if (!JWT_SECRET) throw new Error('JWT_SECRET not configured');
   return jwt.verify(token, JWT_SECRET) as JwtUser;
+}
+
+export function generateRefreshToken(payload: { id: number }) {
+  if (!JWT_REFRESH_SECRET) throw new Error('JWT_REFRESH_SECRET not configured');
+  return jwt.sign({ id: payload.id }, JWT_REFRESH_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRES_IN
+  } as jwt.SignOptions);
+}
+
+export function verifyRefreshToken(token: string): { id: number } {
+  if (!JWT_REFRESH_SECRET) throw new Error('JWT_REFRESH_SECRET not configured');
+  return jwt.verify(token, JWT_REFRESH_SECRET) as { id: number };
 }
 
 export function hashPassword(password: string) {

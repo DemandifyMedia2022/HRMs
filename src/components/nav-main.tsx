@@ -19,6 +19,9 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 
+import { useEffect, useRef } from 'react';
+import { useSidebar } from '@/components/ui/sidebar';
+
 export function NavMain({
   items
 }: {
@@ -30,6 +33,17 @@ export function NavMain({
   }[];
 }) {
   const pathname = usePathname();
+  const { isMobile, openMobile, setOpenMobile } = useSidebar();
+  const lastPath = useRef<string | null>(null);
+  // Close mobile sidebar after navigation (when currently open) and ignore initial mount
+  useEffect(() => {
+    const prev = lastPath.current;
+    lastPath.current = pathname;
+    if (!prev) return; // skip first run
+    if (isMobile && openMobile && pathname !== prev) {
+      setOpenMobile(false);
+    }
+  }, [pathname, isMobile, openMobile, setOpenMobile]);
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">

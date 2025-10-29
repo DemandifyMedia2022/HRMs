@@ -22,6 +22,7 @@ import {
   Tooltip
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+import { IconCalendar, IconGift, IconChartBar } from '@tabler/icons-react';
 
 export default function AdminPage() {
   const { user, loading } = useRouteGuard('admin');
@@ -229,7 +230,9 @@ export default function AdminPage() {
         <div className="grid gap-4 lg:grid-cols-4">
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Leave Trends</CardTitle>
+              <CardTitle>
+                <span className="flex items-center gap-2"><IconCalendar className="size-5 text-primary" /> Leave Trends</span>
+              </CardTitle>
               <CardDescription>{leaveTrends?.year || year}</CardDescription>
             </CardHeader>
             <CardContent className="px-2 pt-2">
@@ -256,8 +259,10 @@ export default function AdminPage() {
             <CardHeader>
               <div className="flex items-center justify-between w-full">
                 <div>
-                  <CardTitle>Leave Requests</CardTitle>
-                  <CardDescription>Latest pending (3)</CardDescription>
+                  <CardTitle>
+                    <span className="flex items-center gap-2"><IconCalendar className="size-5 text-primary" /> Leaves</span>
+                  </CardTitle>
+                  <CardDescription>Latest pending ({leaveRequests?.items?.length})</CardDescription>
                 </div>
                 <Button asChild size="sm" variant="outline">
                   <Link href="/pages/hr/leaves">View All</Link>
@@ -289,7 +294,9 @@ export default function AdminPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Upcoming Events</CardTitle>
+              <CardTitle>
+                <span className="flex items-center gap-2"><IconGift className="size-5 text-primary" /> Upcoming Events</span>
+              </CardTitle>
               <CardDescription>Next 14 days</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
@@ -319,71 +326,11 @@ export default function AdminPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-        {/* <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Employees on Leave Today</CardTitle>
-              <CardDescription>Approved leaves by type</CardDescription>
-            </CardHeader>
-            <CardContent className="px-2 pt-2">
-              <ChartContainer config={{ count: { label: 'Count', color: 'hsl(var(--primary))' }}} className="aspect-auto h-[240px] w-full">
-                <BarChart data={leavesToday?.items || []}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="type" tickLine={false} axisLine={false} tickMargin={8} />
-                  <YAxis allowDecimals={false} width={30} tickLine={false} axisLine={false} tickMargin={8} />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent labelKey="type" />} />
-                  <Bar dataKey="count" fill="var(--primary)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Attendance</CardTitle>
-              <CardDescription>Today and Yesterday</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="rounded-md border p-3">
-                <div className="text-xs text-muted-foreground">Today ({attToday?.date || "--"})</div>
-                <div className="mt-1 flex items-center justify-between text-sm"><span>Present</span><span className="font-semibold">{attToday?.present ?? 0}</span></div>
-                <div className="flex items-center justify-between text-sm"><span>Absent</span><span className="font-semibold">{attToday?.absent ?? 0}</span></div>
-                <div className="flex items-center justify-between text-sm"><span>Total</span><span className="font-semibold">{attToday?.total ?? 0}</span></div>
-              </div>
-              <div className="rounded-md border p-3">
-                <div className="text-xs text-muted-foreground">Yesterday ({attYesterday?.date || "--"})</div>
-                <div className="mt-1 flex items-center justify-between text-sm"><span>Present</span><span className="font-semibold">{attYesterday?.present ?? 0}</span></div>
-                <div className="flex items-center justify-between text-sm"><span>Absent</span><span className="font-semibold">{attYesterday?.absent ?? 0}</span></div>
-                <div className="flex items-center justify-between text-sm"><span>Total</span><span className="font-semibold">{attYesterday?.total ?? 0}</span></div>
-              </div>
-            </CardContent>
-          </Card>
-        </div> */}
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Manage core HRMS features</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/pages/hr/leaves">Manage Leaves</Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/pages/hr/attendance">Manage Attendance</Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/pages/hr/employees">Manage Employees</Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/pages/hr/payroll">Payroll</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          
         </div>
+
+        
 
         {error ? <div className="text-sm text-red-600">{error}</div> : null}
       </div>
