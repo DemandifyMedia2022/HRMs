@@ -36,8 +36,8 @@ import {
   Phone,
   Heart
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { DatePicker } from '@/components/ui/date-picker';
+import { SidebarConfig } from '@/components/sidebar-config';
 
 type User = {
   id: number;
@@ -247,6 +247,32 @@ export default function EmployeeDetailsPage() {
     return true;
   }
 
+  function normalizeStr(v?: string | null) {
+    const s = (v ?? '').toString().trim();
+    if (!s) return '';
+    const low = s.toLowerCase();
+    if (low === 'null' || low === 'undefined' || low === 'nan') return '';
+    return s;
+  }
+
+  function getFieldInsensitive<T extends Record<string, unknown>>(obj: T | null | undefined, key: string) {
+    if (!obj) return undefined;
+    const target = key.toLowerCase();
+    for (const k of Object.keys(obj)) {
+      if (k.toLowerCase() === target) return (obj as any)[k];
+    }
+    return undefined;
+  }
+
+  function getFieldKeyInsensitive<T extends Record<string, unknown>>(obj: T | null | undefined, key: string) {
+    if (!obj) return undefined;
+    const target = key.toLowerCase();
+    for (const k of Object.keys(obj)) {
+      if (k.toLowerCase() === target) return k as keyof T;
+    }
+    return undefined;
+  }
+
   const qs = useMemo(() => {
     const p = new URLSearchParams();
     if (search) p.set('search', search);
@@ -389,6 +415,7 @@ export default function EmployeeDetailsPage() {
 
   return (
     <>
+      <SidebarConfig role="hr" />
       <div className="min-h-screen  p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
@@ -689,7 +716,7 @@ export default function EmployeeDetailsPage() {
                       </fieldset>
                       <div className="sm:col-span-2 flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={() => setIsEditing(v => !v)}>
-                          {isEditing ? 'Cancel' : 'Edit'}
+                          {isEditing ? 'Stop Editing' : 'Edit'}
                         </Button>
                         <Button type="submit" disabled={!isEditing || saving}>
                           {saving ? 'Saving...' : 'Save Basic Info'}
@@ -874,7 +901,7 @@ export default function EmployeeDetailsPage() {
                       </fieldset>
                       <div className="sm:col-span-2 flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={() => setIsEditing(v => !v)}>
-                          {isEditing ? 'Cancel' : 'Edit'}
+                          {isEditing ? 'Stop Editing' : 'Edit'}
                         </Button>
                         <Button type="submit" disabled={!isEditing || saving}>
                           {saving ? 'Saving...' : 'Save Family'}
@@ -940,7 +967,7 @@ export default function EmployeeDetailsPage() {
                       </fieldset>
                       <div className="sm:col-span-2 flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={() => setIsEditing(v => !v)}>
-                          {isEditing ? 'Cancel' : 'Edit'}
+                          {isEditing ? 'Stop Editing' : 'Edit'}
                         </Button>
                         <Button type="submit" disabled={!isEditing || saving}>
                           {saving ? 'Saving...' : 'Save Employment'}
@@ -1004,7 +1031,7 @@ export default function EmployeeDetailsPage() {
                       </fieldset>
                       <div className="sm:col-span-2 flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={() => setIsEditing(v => !v)}>
-                          {isEditing ? 'Cancel' : 'Edit'}
+                          {isEditing ? 'Stop Editing' : 'Edit'}
                         </Button>
                         <Button type="submit" disabled={!isEditing || saving}>
                           {saving ? 'Saving...' : 'Save Position'}
@@ -1112,7 +1139,7 @@ export default function EmployeeDetailsPage() {
                       </fieldset>
                       <div className="sm:col-span-2 flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={() => setIsEditing(v => !v)}>
-                          {isEditing ? 'Cancel' : 'Edit'}
+                          {isEditing ? 'Stop Editing' : 'Edit'}
                         </Button>
                         <Button type="submit" disabled={!isEditing || saving}>
                           {saving ? 'Saving...' : 'Save Bank'}
@@ -1151,13 +1178,19 @@ export default function EmployeeDetailsPage() {
                           <Input
                             id="passport_no"
                             name="passport_no"
-                            defaultValue={selected.passport_no || ''}
+                            value={normalizeStr(getFieldInsensitive(selected, 'passport_no') as string | null)}
+                            onChange={e => {
+                              const actualKey = getFieldKeyInsensitive(selected, 'passport_no') || 'passport_no';
+                              setSelected(prev => (prev ? { ...prev, [actualKey]: e.target.value } as User : prev));
+                            }}
                             placeholder="Passport no"
+                            disabled={!isEditing}
                           />
                         </div>
                         <div className="space-y-1">
                           <Label htmlFor="passport_expiry_date">Passport expiry date</Label>
                           <DatePickerField
+                            key={`passport_expiry-${selected.passport_expiry_date || ''}`}
                             id="passport_expiry_date"
                             name="passport_expiry_date"
                             defaultValue={selected.passport_expiry_date}
@@ -1204,7 +1237,7 @@ export default function EmployeeDetailsPage() {
                       </fieldset>
                       <div className="sm:col-span-2 flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={() => setIsEditing(v => !v)}>
-                          {isEditing ? 'Cancel' : 'Edit'}
+                          {isEditing ? 'Stop Editing' : 'Edit'}
                         </Button>
                         <Button type="submit" disabled={!isEditing || saving}>
                           {saving ? 'Saving...' : 'Save Other'}
@@ -1286,7 +1319,7 @@ export default function EmployeeDetailsPage() {
                       </fieldset>
                       <div className="sm:col-span-2 flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={() => setIsEditing(v => !v)}>
-                          {isEditing ? 'Cancel' : 'Edit'}
+                          {isEditing ? 'Stop Editing' : 'Edit'}
                         </Button>
                         <Button type="submit" disabled={!isEditing || saving}>
                           {saving ? 'Saving...' : 'Save Insurance'}

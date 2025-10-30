@@ -6,6 +6,7 @@ import { promises as fs } from 'fs';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { sendMail } from '@/lib/mailer';
+import { encryptField } from '@/lib/crypto';
 
 async function ensureDir(dir: string) {
   await fs.mkdir(dir, { recursive: true });
@@ -72,6 +73,25 @@ export async function POST(req: Request) {
     const emp_address = String(form.get('emp_address') || '');
     const type = String(form.get('type') || 'user');
     const plainPassword = String(form.get('password') || '');
+
+    // Bank and other PII (optional on create; encrypt at rest if provided)
+    const salary_pay_mode = String(form.get('salary_pay_mode') || '');
+    const bank_name = String(form.get('bank_name') || '');
+    const branch = String(form.get('branch') || '');
+    const IFSC_code = String(form.get('IFSC_code') || '');
+    const Account_no = String(form.get('Account_no') || '');
+    const UAN = String(form.get('UAN') || '');
+    const reimbursement_pay_mode = String(form.get('reimbursement_pay_mode') || '');
+    const reimbursement_bank_name = String(form.get('reimbursement_bank_name') || '');
+    const reimbursement_branch = String(form.get('reimbursement_branch') || '');
+    const reimbursement_ifsc_code = String(form.get('reimbursement_ifsc_code') || '');
+    const reimbursement_account_no = String(form.get('reimbursement_account_no') || '');
+    const pan_card_no = String(form.get('pan_card_no') || '');
+    const adhar_card_no = String(form.get('adhar_card_no') || '');
+    const passport_no = String(form.get('passport_no') || '');
+    const emergency_contact = String(form.get('emergency_contact') || '');
+    const emergency_contact_name = String(form.get('emergency_contact_name') || '');
+    const emergency_relation = String(form.get('emergency_relation') || '');
 
     if (!email || !plainPassword) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
@@ -142,7 +162,25 @@ export async function POST(req: Request) {
         bankpassbook: bankpassbook ?? undefined,
         relieving_letter: relieving_letter ?? undefined,
         pay_slips: pay_slips_arr.length ? JSON.stringify(pay_slips_arr) : undefined,
-        bank_statement: bank_statement_arr.length ? JSON.stringify(bank_statement_arr) : undefined
+        bank_statement: bank_statement_arr.length ? JSON.stringify(bank_statement_arr) : undefined,
+        // Encrypted at rest (only set if provided)
+        salary_pay_mode: salary_pay_mode ? encryptField(salary_pay_mode) : undefined,
+        bank_name: bank_name ? encryptField(bank_name) : undefined,
+        branch: branch ? encryptField(branch) : undefined,
+        IFSC_code: IFSC_code ? encryptField(IFSC_code) : undefined,
+        Account_no: Account_no ? encryptField(Account_no) : undefined,
+        UAN: UAN ? encryptField(UAN) : undefined,
+        reimbursement_pay_mode: reimbursement_pay_mode ? encryptField(reimbursement_pay_mode) : undefined,
+        reimbursement_bank_name: reimbursement_bank_name ? encryptField(reimbursement_bank_name) : undefined,
+        reimbursement_branch: reimbursement_branch ? encryptField(reimbursement_branch) : undefined,
+        reimbursement_ifsc_code: reimbursement_ifsc_code ? encryptField(reimbursement_ifsc_code) : undefined,
+        reimbursement_account_no: reimbursement_account_no ? encryptField(reimbursement_account_no) : undefined,
+        pan_card_no: pan_card_no ? encryptField(pan_card_no) : undefined,
+        adhar_card_no: adhar_card_no ? encryptField(adhar_card_no) : undefined,
+        passport_no: passport_no ? encryptField(passport_no) : undefined,
+        emergency_contact: emergency_contact ? encryptField(emergency_contact) : undefined,
+        emergency_contact_name: emergency_contact_name ? encryptField(emergency_contact_name) : undefined,
+        emergency_relation: emergency_relation ? encryptField(emergency_relation) : undefined
       },
       select: { id: true }
     });

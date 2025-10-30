@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import path from 'path';
 import { promises as fs } from 'fs';
 import crypto from 'crypto';
+import { encryptPatch } from '@/lib/crypto';
 
 // Allowlist of updatable fields in users table (Prisma model fields)
 const ALLOWED: Record<string, true> = {
@@ -73,6 +74,29 @@ const ALLOWED: Record<string, true> = {
   child_dob: true,
   child_gender: true
 };
+
+// Sensitive fields to encrypt at rest (bank + IDs/other PII shown in UI forms)
+const SENSITIVE_FIELDS = new Set<string>([
+  // Bank
+  'salary_pay_mode',
+  'bank_name',
+  'branch',
+  'IFSC_code',
+  'Account_no',
+  'UAN',
+  'reimbursement_pay_mode',
+  'reimbursement_bank_name',
+  'reimbursement_branch',
+  'reimbursement_ifsc_code',
+  'reimbursement_account_no',
+  // Other IDs
+  'pan_card_no',
+  'adhar_card_no',
+  'passport_no',
+  'emergency_contact',
+  'emergency_contact_name',
+  'emergency_relation'
+]);
 
 export async function POST(req: Request) {
   try {
@@ -191,11 +215,14 @@ export async function POST(req: Request) {
       }
     }
 
-    if (Object.keys(data).length === 0) {
+    // Encrypt sensitive fields before saving
+    const secured = encryptPatch(data, SENSITIVE_FIELDS);
+
+    if (Object.keys(secured).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 
-    await prisma.users.update({ where: { id: BigInt(id) } as any, data });
+    await prisma.users.update({ where: { id: BigInt(id) } as any, data: secured });
 
     return NextResponse.json({ ok: true });
   } catch (e: any) {

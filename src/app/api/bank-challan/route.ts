@@ -127,10 +127,10 @@ export async function GET(request: NextRequest) {
       users.map(async user => {
         if (!user.emp_code) return { ...user };
 
-        // Fetch attendance from npattendance table
+        // Fetch attendance from npattendance table (employeeId is VARCHAR)
         const attendance = await prisma.npAttendance.findMany({
           where: {
-            employeeId: parseInt(user.emp_code) || 0,
+            employeeId: String(user.emp_code || '').trim(),
             date: {
               gte: new Date(year, month - 1, 1),
               lt: new Date(year, month, 1)
