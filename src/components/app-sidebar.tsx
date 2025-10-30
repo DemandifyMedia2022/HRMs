@@ -25,7 +25,9 @@ import {
   IconCash,
   IconHistory,
   IconUserCheck,
-  IconNotification
+  IconNotification,
+  IconList,
+  IconClock
 } from '@tabler/icons-react';
 
 import { NavDocuments } from '@/components/nav-documents';
@@ -55,7 +57,8 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         children: [
           { title: 'Attendance', url: '/pages/admin/attendance', icon: IconUsers },
           { title: 'Update Attendance', url: '/pages/admin/attendance/update', icon: IconListDetails },
-          { title: 'Requests', url: '/pages/admin/attendance/requests', icon: IconListDetails }
+          { title: 'Requests', url: '/pages/admin/attendance/requests', icon: IconListDetails },
+          { title: 'Allocate Shift', url: '/pages/admin/attendance/assign-shift', icon: IconClock },
         ]
       },
       {

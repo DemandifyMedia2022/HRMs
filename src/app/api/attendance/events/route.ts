@@ -44,10 +44,9 @@ export async function GET(req: NextRequest) {
         a.break_hours AS breakHours,
         a.status      AS status,
         u.Full_name   AS fullName,
-        s.shift_time  AS shiftTime
+        a.shift_time  AS shiftTime
       FROM npattendance a
-      LEFT JOIN users u ON u.emp_code = a.employee_id
-      LEFT JOIN shift_time s ON s.biomatric_id = a.employee_id
+      LEFT JOIN users u ON u.emp_code COLLATE utf8mb4_unicode_ci = a.employee_id COLLATE utf8mb4_unicode_ci
       WHERE a.date BETWEEN ${startOfYear} AND ${endOfYear}
       ORDER BY a.employee_id ASC, a.date ASC
     `;

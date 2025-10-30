@@ -388,14 +388,19 @@ export default function AdminAttendancePage() {
                         ))}
                         {cells.map((c, idx) => {
                           const status = c.ev?.extendedProps?.status || c.ev?.title || '';
+                          const statusLc = status.toLowerCase();
+                          const isPresent = status === 'Present' || statusLc.startsWith('present');
+                          const isAbsent = status === 'Absent' || statusLc.startsWith('absent');
+                          const isPresentWithNote = isPresent && status !== 'Present';
                           const base =
-                            status === 'Present'
+                            isPresent
                               ? { border: '#10b981', bg: 'bg-emerald-50/50', text: 'text-emerald-700' }
-                              : status === 'Absent'
+                              : isAbsent
                                 ? { border: '#ef4444', bg: 'bg-red-50/50', text: 'text-red-700' }
-                                : status?.toLowerCase().includes('half')
+                                : statusLc.includes('half')
                                   ? { border: '#f59e0b', bg: 'bg-amber-50/50', text: 'text-amber-700' }
                                   : { border: '#d1d5db', bg: 'bg-white', text: 'text-muted-foreground' };
+                          const textClass = isPresentWithNote ? 'text-amber-700' : base.text;
                           const has = Boolean(c.day);
                           const isWeekend = c.dateStr
                             ? (() => {
@@ -462,7 +467,7 @@ export default function AdminAttendancePage() {
                                       className="inline-block rounded px-1 border"
                                       style={{ borderColor: cellBorder }}
                                     >
-                                      <span className={`font-medium ${base.text}`}>
+                                      <span className={`font-medium ${textClass}`}>
                                         {c.ev.extendedProps.status || c.ev.title}
                                       </span>
                                     </span>
@@ -530,16 +535,29 @@ export default function AdminAttendancePage() {
               <div className="flex items-center gap-2">
                 {(() => {
                   const s = selected.event?.extendedProps?.status || selected.event?.title || '';
-                  const cls =
-                    s === 'Present'
-                      ? 'border-emerald-500 text-emerald-700 bg-emerald-50'
-                      : s === 'Absent'
-                        ? 'border-red-500 text-red-700 bg-red-50'
-                        : s.toLowerCase().includes('half')
-                          ? 'border-amber-500 text-amber-700 bg-amber-50'
-                          : 'border-gray-300 text-muted-foreground';
+                  const sLc = s.toLowerCase();
+                  const isPres = s === 'Present' || sLc.startsWith('present');
+                  const isAbs = s === 'Absent' || sLc.startsWith('absent');
+                  const isPresWithNote = isPres && s !== 'Present';
+                  const baseCls =
+                    isPres
+                      ? 'border-emerald-500 bg-emerald-50'
+                      : isAbs
+                        ? 'border-red-500 bg-red-50'
+                        : sLc.includes('half')
+                          ? 'border-amber-500 bg-amber-50'
+                          : 'border-gray-300';
+                  const textCls = isPresWithNote
+                    ? 'text-amber-700'
+                    : isPres
+                      ? 'text-emerald-700'
+                      : isAbs
+                        ? 'text-red-700'
+                        : sLc.includes('half')
+                          ? 'text-amber-700'
+                          : 'text-muted-foreground';
                   return (
-                    <Badge variant="outline" className={cls}>
+                    <Badge variant="outline" className={`${baseCls} ${textCls}`}>
                       {s || 'Status'}
                     </Badge>
                   );

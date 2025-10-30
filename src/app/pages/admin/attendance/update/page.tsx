@@ -394,7 +394,18 @@ export default function AdminAttendanceBulkPage() {
                   {calendar.cells.map((c, idx) => {
                     const has = Boolean(c.day);
                     const isSelected = c.dateStr ? selectedDates.has(c.dateStr) : false;
-                    const baseBorder = c.ev?.borderColor || '#d1d5db';
+                    const statusText = c.ev?.extendedProps?.status || c.ev?.title || '';
+                    const statusLc = statusText.toLowerCase();
+                    const isPresent = statusText === 'Present' || statusLc.startsWith('present');
+                    const isAbsent = statusText === 'Absent' || statusLc.startsWith('absent');
+                    const isHalf = statusLc.includes('half');
+                    const baseBorder = isPresent
+                      ? '#22c55e'
+                      : isAbsent
+                        ? '#ef4444'
+                        : isHalf
+                          ? '#f59e0b'
+                          : (c.ev?.borderColor || '#d1d5db');
                     const isWeekend = c.dateStr
                       ? (() => {
                           const d = new Date(c.dateStr + 'T00:00:00');
@@ -426,8 +437,8 @@ export default function AdminAttendanceBulkPage() {
                             <div className="mt-auto text-[11px] text-blue-600">{leaveType}</div>
                           )
                         ) : c.ev ? (
-                          <div className="mt-auto text-[11px] text-gray-600">
-                            {c.ev.extendedProps.status || c.ev.title}
+                          <div className={`mt-auto text-[11px] ${isPresent ? 'text-emerald-700' : isAbsent ? 'text-red-700' : isHalf ? 'text-amber-700' : 'text-gray-600'}`}>
+                            {statusText || '—'}
                           </div>
                         ) : isWeekend ? (
                           <div className="mt-auto text-[11px] text-gray-600">Week Off</div>

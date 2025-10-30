@@ -12,11 +12,12 @@ export async function POST(request: NextRequest) {
   try {
     // Get body
     const body = await request.json().catch(() => ({}));
+    const overwriteShift: boolean = Boolean(body.overwriteShift) || (String(process.env.ESSL_OVERWRITE_SHIFT || '').trim() === '1');
 
     // If a JSON URL is provided, run JSON mode (Laravel fetchAttendanceData equivalent)
     const jsonUrl: string | null = body.url || request.nextUrl.searchParams.get('url');
     if (jsonUrl) {
-      return await handleJsonAttendance(jsonUrl);
+      return await handleJsonAttendance(jsonUrl, overwriteShift);
     }
 
     // SOAP mode: Get date range from request or use dynamic defaults
@@ -26,10 +27,18 @@ export async function POST(request: NextRequest) {
       select: { date: true },
     });
     const now = new Date();
-    const fallbackFrom = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const fallbackFrom = new Date(now.getTime() - 48 * 60 * 60 * 1000);
     fallbackFrom.setHours(0, 0, 0, 0);
     const baseFrom = lastRecord ? new Date(lastRecord.date) : fallbackFrom;
     baseFrom.setHours(0, 0, 0, 0);
+    const lookbackDaysEnv = Number(process.env.ESSL_LOOKBACK_DAYS || 0);
+    const lookbackDaysBody = Number(body.lookbackDays || 0);
+    const lookbackDays = (Number.isFinite(lookbackDaysBody) && lookbackDaysBody > 0)
+      ? lookbackDaysBody
+      : ((Number.isFinite(lookbackDaysEnv) && lookbackDaysEnv > 0) ? lookbackDaysEnv : 0);
+    if (!body.fromDate && lookbackDays > 0) {
+      baseFrom.setDate(baseFrom.getDate() - lookbackDays);
+    }
     const fromDate = body.fromDate || formatLocalDateTime(baseFrom);
     const toDate = (typeof body.toDate === 'string' && body.toDate.toLowerCase() === 'now')
       ? formatLocalDateTime(now)
@@ -72,7 +81,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse XML response
     const strDataList = extractStrDataList(response.data);
     if (!strDataList) {
       return NextResponse.json(
@@ -81,16 +89,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Process attendance data
     const attendanceData = parseAttendanceData(strDataList);
     
-    // Store in database
     let insertedCount = 0;
     let updatedCount = 0;
 
     const minAllowedDate = new Date(`${fromDate.substring(0, 10)}T00:00:00`);
 
-    // Track consumed timestamps per employee
     const consumedByEmp = new Map<string, Set<number>>();
     const MAX_SHIFT_HOURS = Number(process.env.ESSL_MAX_SHIFT_HOURS || 16);
     const MAX_SHIFT_SECONDS = MAX_SHIFT_HOURS * 3600;
@@ -154,25 +159,9 @@ export async function POST(request: NextRequest) {
         const totalSeconds = outTs - inTs;
         const breakSeconds = Math.max(0, totalSeconds - workingSeconds);
 
-        const totalHours = formatSeconds(totalSeconds);
-        const workingHours = formatSeconds(workingSeconds);
-        const breakHours = formatSeconds(breakSeconds);
-
-        const status = workingSeconds >= 8 * 3600
-          ? 'Present'
-          : workingSeconds >= 4 * 3600
-            ? 'Half-day'
-            : 'Absent';
-
-        const nowSec = Math.floor(Date.now() / 1000);
-        const isOngoing = nowSec >= inTs && nowSec <= windowEnd;
-        const statusFinal = isOngoing ? '' : status;
-
-        const existingEmployee = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeIdStr },
-          select: { empName: true },
-        });
-        const employeeName = existingEmployee?.empName || 'Unknown';
+        const totalHoursDate = secondsToTimeDate(totalSeconds);
+        const workingHoursDate = secondsToTimeDate(workingSeconds);
+        const breakHoursDate = secondsToTimeDate(breakSeconds);
 
         const startDateStr = (() => {
           const d = new Date(inTs * 1000);
@@ -183,11 +172,86 @@ export async function POST(request: NextRequest) {
         })();
 
         const existingRecord = await prisma.npAttendance.findFirst({
-          where: {
-            employeeId: employeeIdStr,
-            date: new Date(startDateStr),
-          },
+          where: { employeeId: employeeIdStr, date: new Date(startDateStr) },
         });
+        let resolvedShift: string | null = overwriteShift ? null : (existingRecord?.shiftTime ?? null);
+        if (!resolvedShift) {
+          const shift = await prisma.shift_time.findFirst({
+            where: { biomatric_id: employeeIdNum },
+            select: { shift_time: true },
+          });
+          resolvedShift = shift?.shift_time ?? null;
+        }
+
+        let status = '';
+        let statusNote: string[] = [];
+        const baseStatus = workingSeconds >= 8 * 3600
+          ? 'Present'
+          : workingSeconds >= 4 * 3600
+            ? 'Half-day'
+            : 'Absent';
+        if (!resolvedShift) {
+          status = baseStatus;
+        } else {
+          const shiftParsed = parseShiftString(resolvedShift);
+          if (!shiftParsed) {
+            status = baseStatus;
+          } else {
+            const { startMinutes, endMinutes } = shiftParsed;
+
+            const day = new Date(inTs * 1000);
+            const startDate = new Date(day);
+            startDate.setHours(0, 0, 0, 0);
+            startDate.setMinutes(startMinutes);
+            const endDate = new Date(day);
+            endDate.setHours(0, 0, 0, 0);
+            endDate.setMinutes(endMinutes);
+            if (endDate <= startDate) {
+              endDate.setDate(endDate.getDate() + 1);
+            }
+
+            const lateThreshold = new Date(startDate.getTime() + 15 * 60 * 1000);
+            const earlyThreshold = new Date(endDate.getTime() - 15 * 60 * 1000);
+
+            const isLate = inTime > lateThreshold;
+            const isEarly = outTime < earlyThreshold;
+
+            status = baseStatus;
+
+            if (isLate) {
+              if (workingSeconds >= 8 * 3600 && status === 'Present') {
+                statusNote.push('Late');
+              } else if (status !== 'Absent') {
+                statusNote.push('Late');
+              }
+            }
+
+            if (isEarly) {
+              if (workingSeconds >= 8 * 3600) {
+                status = 'Present';
+                statusNote.push('Early');
+              } else if (workingSeconds >= 4 * 3600) {
+                status = 'Half-day';
+                statusNote.push('Early');
+              } else {
+                status = 'Absent';
+              }
+            }
+          }
+        }
+
+        const nowSec = Math.floor(Date.now() / 1000);
+        const isOngoing = nowSec >= inTs && nowSec <= windowEnd;
+        const statusWithNote = statusNote.length > 0 ? `${status} (${statusNote.join(', ')})` : status;
+        const statusFinal = isOngoing ? '' : statusWithNote;
+
+        const existingEmployee = await prisma.npAttendance.findFirst({
+          where: { employeeId: employeeIdStr },
+          select: { empName: true },
+        });
+        const employeeName = existingEmployee?.empName || 'Unknown';
+
+        // existingRecord already fetched above
 
         if (!existingRecord) {
           await prisma.npAttendance.create({
@@ -198,9 +262,10 @@ export async function POST(request: NextRequest) {
               inTime,
               outTime,
               clockTimes: JSON.stringify(clockTimes),
-              totalHours,
-              loginHours: workingHours,
-              breakHours,
+              totalHours: totalHoursDate,
+              loginHours: workingHoursDate,
+              breakHours: breakHoursDate,
+              shiftTime: resolvedShift || undefined,
               status: statusFinal,
             },
           });
@@ -212,9 +277,10 @@ export async function POST(request: NextRequest) {
               inTime,
               outTime,
               clockTimes: JSON.stringify(clockTimes),
-              totalHours,
-              loginHours: workingHours,
-              breakHours,
+              totalHours: totalHoursDate,
+              loginHours: workingHoursDate,
+              breakHours: breakHoursDate,
+              shiftTime: resolvedShift || existingRecord.shiftTime || undefined,
               status: statusFinal,
             },
           });
@@ -314,6 +380,43 @@ function formatLocalDateTime(d: Date): string {
   return `${yyyy}-${MM}-${DD} ${hh}:${mm}:${ss}`;
 }
 
+function parseShiftString(input: string): { startMinutes: number; endMinutes: number } | null {
+  if (!input) return null;
+  const s = input.trim().toLowerCase();
+  let normalized = s
+    .replace(/\s+to\s+/g, '-')
+    .replace(/\s*–\s*/g, '-')
+    .replace(/\s*—\s*/g, '-')
+    .replace(/\s+/g, ' ');
+
+  const parts = normalized.split('-').map((p) => p.trim());
+  if (parts.length !== 2) return null;
+
+  const parseTime = (t: string): number | null => {
+    const ampmMatch = t.match(/^(\d{1,2})(?::(\d{1,2}))?\s*(am|pm)?$/);
+    if (!ampmMatch) return null;
+    let hh = Number(ampmMatch[1]);
+    let mm = Number(ampmMatch[2] ?? '0');
+    const ampm = ampmMatch[3];
+    if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
+    if (ampm) {
+      if (ampm === 'pm' && hh !== 12) hh += 12;
+      if (ampm === 'am' && hh === 12) hh = 0;
+    }
+    if (!ampm && hh >= 0 && hh <= 24) {
+      if (hh === 24) hh = 0;
+    }
+    return hh * 60 + mm;
+  };
+
+  const start = parseTime(parts[0].replace(/\./g, ''));
+  const end = parseTime(parts[1].replace(/\./g, ''));
+  if (start == null || end == null) return null;
+  return { startMinutes: start, endMinutes: end };
+}
+
+ 
+
 // GET endpoint to trigger sync (for testing)
 export async function GET(request: NextRequest) {
   return POST(request);
@@ -329,10 +432,8 @@ function parseHmsToSeconds(hms?: string): number {
 }
 
 function ensureDateTime(dateStr: string, timeStr?: string | null, fallbackTimes?: string[]): Date | null {
-  // Build Date from date string (YYYY-MM-DD) and HH:mm time. If missing, use min/max from fallbackTimes
   let hhmm: string | undefined = timeStr || undefined;
   if (!hhmm && fallbackTimes && fallbackTimes.length > 0) {
-    // If we're computing inTime, use first; for outTime, caller will pass reversed array
     hhmm = fallbackTimes[0];
   }
   if (!hhmm) return null;
@@ -342,7 +443,7 @@ function ensureDateTime(dateStr: string, timeStr?: string | null, fallbackTimes?
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-async function handleJsonAttendance(url: string) {
+async function handleJsonAttendance(url: string, overwriteShift?: boolean) {
   try {
     const httpRes = await axios.get(url);
     if (!httpRes || httpRes.status < 200 || httpRes.status >= 300) {
@@ -385,9 +486,11 @@ async function handleJsonAttendance(url: string) {
         const workingSeconds = parseHmsToSeconds(loginHoursStr);
         const totalHoursRaw: string | undefined = log['total_hours'] || undefined;
         const breakHoursRaw: string | undefined = log['break_hours'] || undefined;
-        const loginHoursFmt = formatSeconds(workingSeconds);
-        const totalHoursFmt = formatSeconds(parseHmsToSeconds(totalHoursRaw || '00:00:00'));
-        const breakHoursFmt = formatSeconds(parseHmsToSeconds(breakHoursRaw || '00:00:00'));
+        const totalSecondsJson = parseHmsToSeconds(totalHoursRaw || '00:00:00');
+        const breakSecondsJson = parseHmsToSeconds(breakHoursRaw || '00:00:00');
+        const loginHoursDateJson = secondsToTimeDate(workingSeconds);
+        const totalHoursDateJson = secondsToTimeDate(totalSecondsJson);
+        const breakHoursDateJson = secondsToTimeDate(breakSecondsJson);
 
         // Clock times array (HH:mm)
         let clockTimes: string[] = Array.isArray(log['clock_times']) ? (log['clock_times'] as string[]) : [];
@@ -402,21 +505,57 @@ async function handleJsonAttendance(url: string) {
           continue;
         }
 
+        // Resolve shift: prefer stored npattendance.shiftTime for that date, fallback to shift_time table
+        const existingRecord = await prisma.npAttendance.findFirst({
+          where: { employeeId: employeeIdStr, date: new Date(cycleDate) },
+        });
+        let resolvedShift: string | null = overwriteShift ? null : (existingRecord?.shiftTime ?? null);
+        if (!resolvedShift) {
+          const shiftRow = await prisma.shift_time.findFirst({
+            where: { biomatric_id: employeeIdNum },
+            select: { shift_time: true },
+          });
+          resolvedShift = shiftRow?.shift_time ?? null;
+        }
+
         // Status logic (no holiday/leave DB available here)
         let status = '';
         if (workingSeconds >= 8 * 3600) status = 'Present';
         else if (workingSeconds >= 5 * 3600) status = 'Half-day';
         else if (workingSeconds < 4 * 3600 && cycleDate !== new Date().toISOString().split('T')[0]) status = 'Absent';
 
+        // Early/Late notes from resolvedShift (15 min threshold); JSON mode keeps its 5h half-day rule
+        let statusNoteJson: string[] = [];
+        if (resolvedShift) {
+          const shiftParsed = parseShiftString(resolvedShift);
+          if (shiftParsed) {
+            const { startMinutes, endMinutes } = shiftParsed;
+            const startDate = new Date(inTime);
+            startDate.setHours(0, 0, 0, 0);
+            startDate.setMinutes(startMinutes);
+            const endDate = new Date(inTime);
+            endDate.setHours(0, 0, 0, 0);
+            endDate.setMinutes(endMinutes);
+            if (endDate <= startDate) endDate.setDate(endDate.getDate() + 1);
+
+            const lateThreshold = new Date(startDate.getTime() + 15 * 60 * 1000);
+            const earlyThreshold = new Date(endDate.getTime() - 15 * 60 * 1000);
+            const isLate = inTime > lateThreshold;
+            const isEarly = outTime < earlyThreshold;
+            if (isLate) statusNoteJson.push('Late');
+            if (isEarly) {
+              if (workingSeconds >= 8 * 3600) status = 'Present';
+              else if (workingSeconds >= 5 * 3600) status = 'Half-day';
+              else status = 'Absent';
+              statusNoteJson.push('Early');
+            }
+          }
+        }
+
         // For today's record, suppress status
         const todayLocalJson = new Date();
         const todayStrJson = `${todayLocalJson.getFullYear()}-${String(todayLocalJson.getMonth() + 1).padStart(2, '0')}-${String(todayLocalJson.getDate()).padStart(2, '0')}`;
-        const statusFinalJson = cycleDate === todayStrJson ? '' : status;
-
-        // Check if record exists
-        const existingRecord = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeIdStr, date: new Date(cycleDate) },
-        });
+        const statusFinalJson = cycleDate === todayStrJson ? '' : (statusNoteJson.length ? `${status} (${statusNoteJson.join(', ')})` : status);
 
         if (existingRecord) {
           // Merge clock times
@@ -429,10 +568,11 @@ async function handleJsonAttendance(url: string) {
             where: { id: existingRecord.id },
             data: {
               outTime,
-              loginHours: loginHoursFmt ?? existingRecord.loginHours,
-              totalHours: totalHoursFmt ?? existingRecord.totalHours,
-              breakHours: breakHoursFmt ?? existingRecord.breakHours,
+              loginHours: loginHoursDateJson,
+              totalHours: totalHoursDateJson,
+              breakHours: breakHoursDateJson,
               clockTimes: JSON.stringify(mergedClockTimes),
+              shiftTime: resolvedShift || existingRecord.shiftTime || undefined,
               status: statusFinalJson,
             },
           });
@@ -445,10 +585,11 @@ async function handleJsonAttendance(url: string) {
               date: new Date(cycleDate),
               inTime,
               outTime,
-              loginHours: loginHoursFmt,
-              totalHours: totalHoursFmt,
-              breakHours: breakHoursFmt,
+              loginHours: loginHoursDateJson,
+              totalHours: totalHoursDateJson,
+              breakHours: breakHoursDateJson,
               clockTimes: JSON.stringify(clockTimes),
+              shiftTime: resolvedShift || undefined,
               status: statusFinalJson,
             },
           });

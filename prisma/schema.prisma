@@ -8,23 +8,21 @@ datasource db {
 }
 
 model NpAttendance {
-  id         Int      @id @default(autoincrement())
-  employeeId String   @map("employee_id") @db.VarChar(50)
-  empName    String   @map("emp_name") @db.VarChar(255)
-  date       DateTime @db.Date
-  inTime     DateTime @map("in_time") @db.DateTime(0)
-  outTime    DateTime @map("out_time") @db.DateTime(0)
-  clockTimes String   @map("clock_times") @db.Text
-  totalHours String   @map("total_hours") @db.VarChar(20)
-  loginHours String   @map("login_hours") @db.VarChar(20)
-  breakHours String   @map("break_hours") @db.VarChar(20)
-  status     String   @db.VarChar(50)
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id         Int       @id @default(autoincrement())
+  employeeId String    @map("employee_id") @db.VarChar(11)
+  empName    String?   @map("emp_name") @db.VarChar(255)
+  date       DateTime  @db.Date
+  inTime     DateTime? @map("in_time") @db.Time(0)
+  outTime    DateTime? @map("out_time") @db.Time(0)
+  loginHours DateTime? @map("login_hours") @db.Time(0)
+  status     String?   @db.VarChar(255)
+  shiftTime  String?   @map("shift_time") @db.VarChar(255)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  totalHours DateTime? @map("total_hours") @db.Time(0)
+  breakHours DateTime? @map("break_hours") @db.Time(0)
+  clockTimes String?   @map("clock_times") @db.Text
 
-  @@unique([employeeId, date])
-  @@index([employeeId])
-  @@index([date])
   @@map("npattendance")
 }
 
@@ -143,6 +141,7 @@ model users {
   Reimbursement_amount                      Int?
   months                                    Int?
   status                                    Int?      @db.TinyInt
+  extension                                 String?   @db.VarChar(64)
 }
 
 model crud_events {
@@ -179,15 +178,6 @@ model shift_time {
   biomatric_id Int
   shift_time   String @db.VarChar(255)
   group_name   String @db.VarChar(255)
-}
-
-model employee {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique(map: "Employee_email_key")
-  position  String?
-  salary    Float?
-  createdAt DateTime @default(now())
 }
 
 model birthday_wishes {
@@ -399,6 +389,7 @@ model dm_form {
   qualifyleads_by   String?  @db.VarChar(255)
   f_date            DateTime @default(now()) @db.Timestamp(0)
   form_status       Int
+  f_script_url      String?  @db.VarChar(512)
 }
 
 model dm_task {
@@ -741,4 +732,92 @@ model tax_setting {
   challantax             String? @db.VarChar(255)
   taxable                String? @db.VarChar(255)
   component              String? @db.VarChar(255)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model attendance {
+  id                     Int       @id @default(autoincrement())
+  name                   String?   @db.VarChar(255)
+  username               String?   @db.VarChar(255)
+  email                  String    @db.VarChar(255)
+  date                   DateTime  @db.Date
+  shift_time             String    @db.VarChar(55)
+  new_shift_time         String?   @db.VarChar(255)
+  login_time             String    @db.VarChar(255)
+  added_by_user          String?   @db.VarChar(255)
+  logout_time            String    @db.VarChar(255)
+  logout_reason          String    @db.VarChar(11)
+  login_hours            String    @db.VarChar(55)
+  login_status           String?   @db.VarChar(255)
+  status                 String    @db.VarChar(11)
+  morning_break_start    DateTime? @db.Time(0)
+  morning_break_end      DateTime? @db.Time(0)
+  morning_break_duration String?   @db.VarChar(255)
+  lunch_break_start      DateTime? @db.Time(0)
+  lunch_break_end        DateTime? @db.Time(0)
+  lunch_break_duration   String?   @db.VarChar(255)
+  evening_break_start    DateTime? @db.Time(0)
+  evening_break_end      DateTime? @db.Time(0)
+  evening_break_duration String?   @db.VarChar(255)
+  idle_time              DateTime? @db.Time(0)
+  created_at             DateTime? @db.Timestamp(0)
+  updated_at             DateTime? @db.Timestamp(0)
+  password               String    @db.VarChar(255)
+  type                   String    @db.VarChar(255)
+  start_time             DateTime? @db.Time(0)
+  end_time               DateTime? @db.Time(0)
+  working_hours          DateTime? @db.Time(0)
+  short_break_duration   DateTime? @default(dbgenerated("('00:00:00')")) @db.Time(0)
+}
+
+model call_data {
+  id               BigInt    @id @default(autoincrement())
+  extension        String?   @db.VarChar(64)
+  destination      String?   @db.VarChar(64)
+  direction        String?   @db.VarChar(16)
+  status           String?   @db.VarChar(32)
+  start_time       DateTime? @db.DateTime(0)
+  answer_time      DateTime? @db.DateTime(0)
+  end_time         DateTime? @db.DateTime(0)
+  duration_seconds Int?
+  cause            String?   @db.VarChar(255)
+  meta             String?   @db.Text
+  created_at       DateTime  @default(now()) @db.Timestamp(0)
+  user_name        String?   @db.VarChar(255)
+  recording_url    String?   @db.Text
+  source_number    String?   @db.VarChar(64)
+  region           String?   @db.VarChar(64)
+}
+
+model campaigns {
+  id              BigInt    @id @default(autoincrement())
+  c_id            String    @db.VarChar(64)
+  f_campaign_name String    @db.VarChar(255)
+  f_start_date    DateTime? @db.Date
+  f_end_date      DateTime? @db.Date
+  f_assignto      String?   @db.VarChar(255)
+  f_allocation    Int?
+  f_method        String?   @db.VarChar(255)
+  f_script        String?   @db.Text
+  f_script_url    String?   @db.VarChar(512)
+  f_status        Boolean   @default(true)
+  created_at      DateTime  @default(now()) @db.Timestamp(0)
+}
+
+model extensions {
+  id         BigInt   @id @default(autoincrement())
+  extension  String   @unique(map: "extension") @db.VarChar(64)
+  username   String?  @db.VarChar(128)
+  password   String?  @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model sip_credentials {
+  id           BigInt   @id @default(autoincrement())
+  email        String   @unique(map: "email") @db.VarChar(255)
+  extension    String?  @db.VarChar(64)
+  sip_password String?  @db.VarChar(255)
+  updated_at   DateTime @default(now()) @db.Timestamp(0)
+  created_at   DateTime @default(now()) @db.Timestamp(0)
 }
