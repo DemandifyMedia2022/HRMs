@@ -18,7 +18,6 @@ export type JwtUser = {
     | 'csm'
     | 'operation'
     | 'development'
-    | 'quality analyst'
     | 'hr'
     | 'administration'
     | null;
