@@ -113,17 +113,6 @@ export default function Page() {
         if (!ignore) {
           setMeName(String(m?.name || ''));
           if (m?.emp_code != null) setMeEmpCode(String(m.emp_code));
-          // Trigger ESSL sync via server proxy to get near realtime data, then refresh events
-          try {
-            const u = m?.emp_code
-              ? `/api/essl/trigger?emp_code=${encodeURIComponent(String(m.emp_code))}`
-              : `/api/essl/trigger`;
-            const controller = new AbortController();
-            const to = setTimeout(() => controller.abort(), 6000);
-            await fetch(u, { method: 'POST', signal: controller.signal }).catch(() => {});
-            clearTimeout(to);
-            setRefreshTick(t => t + 1);
-          } catch {}
         }
       } catch {}
     }
