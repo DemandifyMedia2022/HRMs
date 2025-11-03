@@ -1,5 +1,5 @@
 export const runtime = 'nodejs';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import path from 'path';
 import { promises as fs } from 'fs';
@@ -7,51 +7,68 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { sendMail } from '@/lib/mailer';
 import { encryptField } from '@/lib/crypto';
+import { requireRoles } from '@/lib/middleware';
 
 async function ensureDir(dir: string) {
   await fs.mkdir(dir, { recursive: true });
 }
 
-async function saveFile(file: File, folder: string) {
+function detectAllowed(buf: Buffer): 'pdf' | 'png' | 'jpg' | 'jpeg' | 'webp' | null {
+  if (buf.length >= 5 && buf.slice(0, 5).toString('ascii') === '%PDF-') return 'pdf';
+  if (buf.length >= 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47 && buf[4] === 0x0d && buf[5] === 0x0a && buf[6] === 0x1a && buf[7] === 0x0a) return 'png';
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpg';
+  if (buf.length >= 12 && buf.slice(8, 12).toString('ascii') === 'WEBP') return 'webp';
+  return null;
+}
+
+async function saveFile(file: File, folder: string, userSlug: string) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
+  const kind = detectAllowed(buffer);
+  if (!kind) throw new Error('Unsupported file type');
   const ext = path.extname(file.name) || '';
   const base = path.basename(file.name, ext).replace(/[^a-z0-9_-]/gi, '_');
   const hash = crypto.randomBytes(6).toString('hex');
   const filename = `${base}_${Date.now()}_${hash}${ext}`;
-  const publicDir = path.join(process.cwd(), 'public', 'uploads', folder);
-  await ensureDir(publicDir);
-  const filePath = path.join(publicDir, filename);
+  const privateDir = path.join(process.cwd(), 'uploads', 'uploads', userSlug, folder);
+  await ensureDir(privateDir);
+  const filePath = path.join(privateDir, filename);
   await fs.writeFile(filePath, buffer);
-  // Return public URL path
-  const publicPath = path.posix.join('/uploads', folder.replace(/\\/g, '/'), filename);
-  return publicPath;
+  const urlPath = path.posix.join('/api/files/uploads', userSlug, folder.replace(/\\/g, '/'), filename);
+  return urlPath;
 }
 
-async function saveMaybeFile(form: FormData, field: string, folder: string) {
+async function saveMaybeFile(form: FormData, field: string, folder: string, userSlug: string) {
   const f = form.get(field);
   if (!f || !(f instanceof File) || !f.size) return null;
-  return saveFile(f, folder);
+  return saveFile(f, folder, userSlug);
 }
 
-async function saveMaybeFiles(form: FormData, field: string, folder: string) {
+async function saveMaybeFiles(form: FormData, field: string, folder: string, userSlug: string) {
   const all = form.getAll(field).filter(x => x instanceof File && (x as File).size) as File[];
   const results: string[] = [];
   for (const file of all) {
-    const url = await saveFile(file, folder);
+    const url = await saveFile(file, folder, userSlug);
     results.push(url);
   }
   return results;
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const auth = requireRoles(req, 'admin', 'hr');
+    if (auth instanceof NextResponse) return auth;
     const form = await req.formData();
 
     // Basic fields
     const joining_date = String(form.get('join_date') || '');
     const Prefix = String(form.get('Prefix') || '');
     const name = String(form.get('name') || '');
+    const userSlug = (name || 'user')
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_-]/g, '_');
     const Full_name = String(form.get('full_name') || '');
     const gender = String(form.get('gender') || '');
     const emp_code = String(form.get('emp_code') || '');
@@ -113,15 +130,15 @@ export async function POST(req: Request) {
     }
 
     // Files
-    const aadhaar_card = await saveMaybeFile(form, 'aadhaar_card', 'aadhaar');
-    const pan_card = await saveMaybeFile(form, 'pan_card', 'pan');
-    const marksheet = await saveMaybeFile(form, 'marksheet', 'marksheet');
-    const certifications = await saveMaybeFile(form, 'certifications', 'certifications');
-    const bankpassbook = await saveMaybeFile(form, 'bankpassbook', 'bankpassbook');
-    const relieving_letter = await saveMaybeFile(form, 'relieving_letter', 'relieving');
+    const aadhaar_card = await saveMaybeFile(form, 'aadhaar_card', 'aadhaar', userSlug);
+    const pan_card = await saveMaybeFile(form, 'pan_card', 'pan', userSlug);
+    const marksheet = await saveMaybeFile(form, 'marksheet', 'marksheet', userSlug);
+    const certifications = await saveMaybeFile(form, 'certifications', 'certifications', userSlug);
+    const bankpassbook = await saveMaybeFile(form, 'bankpassbook', 'bankpassbook', userSlug);
+    const relieving_letter = await saveMaybeFile(form, 'relieving_letter', 'relieving', userSlug);
 
-    const pay_slips_arr = await saveMaybeFiles(form, 'pay_slips', 'payslips');
-    const bank_statement_arr = await saveMaybeFiles(form, 'bank_statements', 'bankstatements');
+    const pay_slips_arr = await saveMaybeFiles(form, 'pay_slips', 'payslips', userSlug);
+    const bank_statement_arr = await saveMaybeFiles(form, 'bank_statements', 'bankstatements', userSlug);
 
     const now = new Date();
 

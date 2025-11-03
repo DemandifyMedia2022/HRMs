@@ -1,10 +1,11 @@
 export const runtime = 'nodejs';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import path from 'path';
 import { promises as fs } from 'fs';
 import crypto from 'crypto';
 import { encryptPatch } from '@/lib/crypto';
+import { requireRoles } from '@/lib/middleware';
 
 // Allowlist of updatable fields in users table (Prisma model fields)
 const ALLOWED: Record<string, true> = {
@@ -98,8 +99,18 @@ const SENSITIVE_FIELDS = new Set<string>([
   'emergency_relation'
 ]);
 
-export async function POST(req: Request) {
+function detectAllowed(buf: Buffer): 'pdf' | 'png' | 'jpg' | 'jpeg' | 'webp' | null {
+  if (buf.length >= 5 && buf.slice(0, 5).toString('ascii') === '%PDF-') return 'pdf';
+  if (buf.length >= 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47 && buf[4] === 0x0d && buf[5] === 0x0a && buf[6] === 0x1a && buf[7] === 0x0a) return 'png';
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpg';
+  if (buf.length >= 12 && buf.slice(8, 12).toString('ascii') === 'WEBP') return 'webp';
+  return null;
+}
+
+export async function POST(req: NextRequest) {
   try {
+    const auth = requireRoles(req, 'admin', 'hr');
+    if (auth instanceof NextResponse) return auth;
     const contentType = req.headers.get('content-type') || '';
     // Branch: multipart form for document uploads
     if (contentType.includes('multipart/form-data')) {
@@ -107,6 +118,14 @@ export async function POST(req: Request) {
       const employee_id_raw = form.get('employee_id');
       const id = Number(employee_id_raw);
       if (!id) return NextResponse.json({ error: 'Missing employee_id' }, { status: 400 });
+      // Resolve employee to create a per-user subfolder
+      const emp = await prisma.users.findUnique({ where: { id: BigInt(id) } as any });
+      const empName = (emp as any)?.name || (emp as any)?.Full_name || `user_${id}`;
+      const userSlug = String(empName)
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_-]/g, '_');
 
       async function ensureDir(dir: string) {
         await fs.mkdir(dir, { recursive: true });
@@ -114,16 +133,18 @@ export async function POST(req: Request) {
       async function saveFile(file: File, folder: string) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
+        const kind = detectAllowed(buffer);
+        if (!kind) throw new Error('Unsupported file type');
         const ext = path.extname(file.name) || '';
         const base = path.basename(file.name, ext).replace(/[^a-z0-9_-]/gi, '_');
         const hash = crypto.randomBytes(6).toString('hex');
         const filename = `${base}_${Date.now()}_${hash}${ext}`;
-        const publicDir = path.join(process.cwd(), 'public', 'uploads', folder);
-        await ensureDir(publicDir);
-        const filePath = path.join(publicDir, filename);
+        const privateDir = path.join(process.cwd(), 'uploads', 'uploads', userSlug, folder);
+        await ensureDir(privateDir);
+        const filePath = path.join(privateDir, filename);
         await fs.writeFile(filePath, buffer);
-        const publicPath = path.posix.join('/uploads', folder.replace(/\\/g, '/'), filename);
-        return publicPath;
+        const urlPath = path.posix.join('/api/files/uploads', userSlug, folder.replace(/\\/g, '/'), filename);
+        return urlPath;
       }
 
       function getFile(form: FormData, field: string): File | null {

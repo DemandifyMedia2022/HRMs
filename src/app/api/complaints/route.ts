@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendMail } from '@/lib/mailer';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { requireAuth } from '@/lib/middleware';
 
 export async function GET(req: Request) {
   try {
@@ -44,8 +45,18 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+function detectAllowed(buf: Buffer): 'pdf' | 'png' | 'jpg' | 'jpeg' | 'webp' | null {
+  if (buf.length >= 5 && buf.slice(0, 5).toString('ascii') === '%PDF-') return 'pdf';
+  if (buf.length >= 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47 && buf[4] === 0x0d && buf[5] === 0x0a && buf[6] === 0x1a && buf[7] === 0x0a) return 'png';
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpg';
+  if (buf.length >= 12 && buf.slice(8, 12).toString('ascii') === 'WEBP') return 'webp';
+  return null;
+}
+
+export async function POST(req: NextRequest) {
   try {
+    const auth = requireAuth(req);
+    if (auth instanceof NextResponse) return auth;
     const formData = await req.formData();
     const name = formData.get('name') as string;
     const department = formData.get('department') as string;
@@ -59,40 +70,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Handle file upload
     let attachmentPath: string | null = null;
     if (attachmentFile && attachmentFile.size > 0) {
       try {
         const bytes = await attachmentFile.arrayBuffer();
         const buffer = Buffer.from(bytes);
-
-        // Create uploads directory if it doesn't exist
-        const uploadDir = join(process.cwd(), 'public', 'complaint_attachments');
+        const kind = detectAllowed(buffer);
+        if (!kind) {
+          return NextResponse.json({ error: 'Unsupported file type' }, { status: 415 });
+        }
+        const uploadDir = join(process.cwd(), 'uploads', 'complaint_attachments');
         if (!existsSync(uploadDir)) {
           await mkdir(uploadDir, { recursive: true });
-          console.log('Created directory:', uploadDir);
         }
-
-        // Generate unique filename
         const timestamp = Date.now();
         const originalName = attachmentFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const fileName = `${timestamp}_${originalName}`;
         const filePath = join(uploadDir, fileName);
 
         await writeFile(filePath, buffer);
-
-        // Verify file was written
         if (existsSync(filePath)) {
-          attachmentPath = `/complaint_attachments/${fileName}`;
-          console.log('File uploaded successfully:', filePath);
-          console.log('Attachment URL:', attachmentPath);
+          attachmentPath = `/api/files/complaint_attachments/${fileName}`;
         } else {
           console.error('File was not saved:', filePath);
         }
       } catch (uploadError) {
         console.error('File upload error:', uploadError);
-        console.error('Upload directory:', join(process.cwd(), 'public', 'complaint_attachments'));
-        // Continue without attachment if upload fails
+        console.error('Upload directory:', join(process.cwd(), 'uploads', 'complaint_attachments'));
       }
     }
 

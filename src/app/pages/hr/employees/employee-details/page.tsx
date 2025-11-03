@@ -165,6 +165,30 @@ export default function EmployeeDetailsPage() {
     return `${yyyy}-${mm}-${dd}`;
   }
 
+  function maskLast4(value?: string | null) {
+    const s = (value ?? '').toString();
+    if (!s) return '';
+    const digits = s.replace(/\D/g, '');
+    if (digits.length <= 4) return digits;
+    return '****' + digits.slice(-4);
+  }
+
+  function maskLast4Chars(value?: string | null) {
+    const s = (value ?? '').toString();
+    if (!s) return '';
+    const trimmed = s.trim();
+    const tail = trimmed.slice(-4);
+    return '****' + tail;
+  }
+
+  function maskLast4Digits(value?: string | null, stars: number = 4) {
+    const s = (value ?? '').toString();
+    if (!s) return '';
+    const digits = s.replace(/\D/g, '');
+    const tail = digits.slice(-4);
+    return '*'.repeat(Math.max(0, stars)) + tail;
+  }
+
   function DatePickerField({
     name,
     id,
@@ -385,6 +409,11 @@ export default function EmployeeDetailsPage() {
       toast.success('Changes saved');
       setFlash('Saved successfully');
       setTimeout(() => setFlash(null), 2500);
+      // Refresh selected with latest values from server
+      try {
+        const full = await fetch(`/api/hr/employees/${selected.id}`, { cache: 'no-store' }).then(r => r.json());
+        setSelected(prev => (prev ? { ...prev, ...full } : full));
+      } catch {}
     } catch (err: any) {
       toast.error(err?.message || 'Save failed');
     } finally {
@@ -652,13 +681,24 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="space-y-1">
                           <Label htmlFor="dob">DOB</Label>
-                          <DatePickerField
-                            id="dob"
-                            name="dob"
-                            defaultValue={selected.dob}
-                            disabled={!isEditing}
-                            placeholder="Select date"
-                          />
+                          {isEditing ? (
+                            <DatePickerField
+                              id="dob"
+                              name="dob"
+                              defaultValue={selected.dob}
+                              disabled={!isEditing}
+                              placeholder="Select date"
+                            />
+                          ) : (
+                            <Input
+                              id="dob_masked"
+                              name="dob_masked"
+                              value={maskLast4(selected.dob)}
+                              placeholder="DOB"
+                              disabled
+                              readOnly
+                            />
+                          )}
                         </div>
                         <div className="space-y-1">
                           <Label htmlFor="gender">Gender</Label>
@@ -697,12 +737,23 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="space-y-1">
                           <Label htmlFor="contact_no">Contact no</Label>
-                          <Input
-                            id="contact_no"
-                            name="contact_no"
-                            defaultValue={selected.contact_no || ''}
-                            placeholder="Contact no"
-                          />
+                          {isEditing ? (
+                            <Input
+                              id="contact_no"
+                              name="contact_no"
+                              defaultValue={selected.contact_no || ''}
+                              placeholder="Contact no"
+                            />
+                          ) : (
+                            <Input
+                              id="contact_no_masked"
+                              name="contact_no_masked"
+                              value={maskLast4(selected.contact_no)}
+                              placeholder="Contact no"
+                              disabled
+                              readOnly
+                            />
+                          )}
                         </div>
                         <div className="space-y-1">
                           <Label htmlFor="Biometric_id">Biometric ID</Label>
@@ -1080,17 +1131,41 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="space-y-1">
                           <Label htmlFor="Account_no">Account no</Label>
-                          <Input
-                            id="Account_no"
-                            name="Account_no"
-                            defaultValue={selected.Account_no || ''}
-                            placeholder="Account no"
-                          />
+                          {isEditing ? (
+                            <Input
+                              id="Account_no"
+                              name="Account_no"
+                              defaultValue={selected.Account_no || ''}
+                              placeholder="Account no"
+                            />
+                          ) : (
+                            <Input
+                              id="Account_no_masked"
+                              name="Account_no_masked"
+                              value={maskLast4(selected.Account_no)}
+                              placeholder="Account no"
+                              disabled
+                              readOnly
+                            />
+                          )}
                         </div>
+
                         <div className="space-y-1">
                           <Label htmlFor="UAN">UAN</Label>
-                          <Input id="UAN" name="UAN" defaultValue={selected.UAN || ''} placeholder="UAN" />
+                          {isEditing ? (
+                            <Input id="UAN" name="UAN" defaultValue={selected.UAN || ''} placeholder="UAN" />
+                          ) : (
+                            <Input
+                              id="UAN_masked"
+                              name="UAN_masked"
+                              value={maskLast4(selected.UAN)}
+                              placeholder="UAN"
+                              disabled
+                              readOnly
+                            />
+                          )}
                         </div>
+
                         <div className="space-y-1">
                           <Label htmlFor="reimbursement_pay_mode">Reimbursement pay mode</Label>
                           <Input
@@ -1098,24 +1173,6 @@ export default function EmployeeDetailsPage() {
                             name="reimbursement_pay_mode"
                             defaultValue={selected.reimbursement_pay_mode || ''}
                             placeholder="Reimbursement pay mode"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="reimbursement_bank_name">Reimbursement bank name</Label>
-                          <Input
-                            id="reimbursement_bank_name"
-                            name="reimbursement_bank_name"
-                            defaultValue={selected.reimbursement_bank_name || ''}
-                            placeholder="Reimbursement bank name"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="reimbursement_branch">Reimbursement branch</Label>
-                          <Input
-                            id="reimbursement_branch"
-                            name="reimbursement_branch"
-                            defaultValue={selected.reimbursement_branch || ''}
-                            placeholder="Reimbursement branch"
                           />
                         </div>
                         <div className="space-y-1">
@@ -1129,13 +1186,25 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="space-y-1">
                           <Label htmlFor="reimbursement_account_no">Reimbursement account no</Label>
-                          <Input
-                            id="reimbursement_account_no"
-                            name="reimbursement_account_no"
-                            defaultValue={selected.reimbursement_account_no || ''}
-                            placeholder="Reimbursement account no"
-                          />
+                          {isEditing ? (
+                            <Input
+                              id="reimbursement_account_no"
+                              name="reimbursement_account_no"
+                              defaultValue={selected.reimbursement_account_no || ''}
+                              placeholder="Reimbursement account no"
+                            />
+                          ) : (
+                            <Input
+                              id="reimbursement_account_no_masked"
+                              name="reimbursement_account_no_masked"
+                              value={maskLast4(selected.reimbursement_account_no)}
+                              placeholder="Reimbursement account no"
+                              disabled
+                              readOnly
+                            />
+                          )}
                         </div>
+
                       </fieldset>
                       <div className="sm:col-span-2 flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={() => setIsEditing(v => !v)}>
@@ -1157,35 +1226,67 @@ export default function EmployeeDetailsPage() {
                       <fieldset disabled={!isEditing} className="contents">
                         <div className="space-y-1">
                           <Label htmlFor="pan_card_no">PAN card no</Label>
-                          <Input
-                            id="pan_card_no"
-                            name="pan_card_no"
-                            defaultValue={selected.pan_card_no || ''}
-                            placeholder="PAN card no"
-                          />
+                          {isEditing ? (
+                            <Input
+                              id="pan_card_no"
+                              name="pan_card_no"
+                              defaultValue={selected.pan_card_no || ''}
+                              placeholder="PAN card no"
+                            />
+                          ) : (
+                            <Input
+                              id="pan_card_no_masked"
+                              name="pan_card_no_masked"
+                              value={maskLast4Chars(selected.pan_card_no)}
+                              placeholder="PAN card no"
+                              disabled
+                              readOnly
+                            />
+                          )}
                         </div>
                         <div className="space-y-1">
                           <Label htmlFor="adhar_card_no">Aadhar card no</Label>
-                          <Input
-                            id="adhar_card_no"
-                            name="adhar_card_no"
-                            defaultValue={selected.adhar_card_no || ''}
-                            placeholder="Aadhar card no"
-                          />
+                          {isEditing ? (
+                            <Input
+                              id="adhar_card_no"
+                              name="adhar_card_no"
+                              defaultValue={selected.adhar_card_no || ''}
+                              placeholder="Aadhar card no"
+                            />
+                          ) : (
+                            <Input
+                              id="adhar_card_no_masked"
+                              name="adhar_card_no_masked"
+                              value={maskLast4Digits(selected.adhar_card_no, 6)}
+                              placeholder="Aadhar card no"
+                              disabled
+                              readOnly
+                            />
+                          )}
                         </div>
                         <div className="space-y-1">
                           <Label htmlFor="passport_no">Passport no</Label>
-                          <Input
-                            id="passport_no"
-                            name="passport_no"
-                            value={normalizeStr(getFieldInsensitive(selected, 'passport_no') as string | null)}
-                            onChange={e => {
-                              const actualKey = getFieldKeyInsensitive(selected, 'passport_no') || 'passport_no';
-                              setSelected(prev => (prev ? { ...prev, [actualKey]: e.target.value } as User : prev));
-                            }}
-                            placeholder="Passport no"
-                            disabled={!isEditing}
-                          />
+                          {isEditing ? (
+                            <Input
+                              id="passport_no"
+                              name="passport_no"
+                              value={normalizeStr(getFieldInsensitive(selected, 'passport_no') as string | null)}
+                              onChange={e => {
+                                const actualKey = getFieldKeyInsensitive(selected, 'passport_no') || 'passport_no';
+                                setSelected(prev => (prev ? { ...prev, [actualKey]: e.target.value } as User : prev));
+                              }}
+                              placeholder="Passport no"
+                            />
+                          ) : (
+                            <Input
+                              id="passport_no_masked"
+                              name="passport_no_masked"
+                              value={maskLast4Chars(normalizeStr(getFieldInsensitive(selected, 'passport_no') as string | null))}
+                              placeholder="Passport no"
+                              disabled
+                              readOnly
+                            />
+                          )}
                         </div>
                         <div className="space-y-1">
                           <Label htmlFor="passport_expiry_date">Passport expiry date</Label>
