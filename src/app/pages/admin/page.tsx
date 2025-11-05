@@ -217,49 +217,7 @@ export default function AdminPage() {
 
         {(todayEvents?.birthdays?.length || 0) > 0 || (todayEvents?.anniversaries?.length || 0) > 0 ? (
           <div className="ml-auto">
-            <Card className="min-w-[280px] max-w-[340px] shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle>🎉 Celebrations Today</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {(todayEvents?.birthdays?.length || 0) > 0 ? (
-                  <div>
-                    <div className="text-xs font-medium text-muted-foreground mb-2">🎂 Birthdays</div>
-                    <div className="space-y-2 max-h-40 overflow-auto pr-1">
-                      {(todayEvents?.birthdays || []).map((b, i) => (
-                        <div key={i} className="flex items-center justify-between rounded-md border p-2">
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-xs font-semibold">
-                              {(b.name || ' ').split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()}
-                            </div>
-                            <div className="text-sm font-medium">{b.name}</div>
-                          </div>
-                          <span>🎂</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-                {(todayEvents?.anniversaries?.length || 0) > 0 ? (
-                  <div>
-                    <div className="text-xs font-medium text-muted-foreground mb-2">🎊 Anniversaries</div>
-                    <div className="space-y-2 max-h-40 overflow-auto pr-1">
-                      {(todayEvents?.anniversaries || []).map((a, i) => (
-                        <div key={i} className="flex items-center justify-between rounded-md border p-2">
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-semibold">
-                              {(a.name || ' ').split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()}
-                            </div>
-                            <div className="text-sm font-medium">{a.name}</div>
-                          </div>
-                          <Badge variant="secondary">🎊 {a.years} yrs</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
+            
           </div>
         ) : null}
 
