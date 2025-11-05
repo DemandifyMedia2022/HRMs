@@ -51,7 +51,7 @@
         ║  POST /api/auth/user-details                  ║
         ║  ✓ Re-verify token (defense in depth)        ║
         ║  ✓ Query database for user record             ║
-        ║  ✓ Fetch department & name                    ║
+        ║  ✓ Fetch department & name,                    ║
         ║  ✓ Determine role based on rules:            ║
         ║    • "Viresh Kumbhar" → admin                 ║
         ║    • department="hr" → hr                     ║

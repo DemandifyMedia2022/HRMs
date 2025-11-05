@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       department: deptLower as any
     });
     const refreshToken = generateRefreshToken({ id: idNum });
-
+    //Heeloo
     // Return ONLY token and success message - no user details yet
     const res = NextResponse.json({
       success: true,
