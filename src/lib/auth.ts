@@ -23,27 +23,11 @@ export type JwtUser = {
     | null;
 };
 
-// Helper function to determine role based on department and name
-export function determineRole(department: string | null, fullName: string): 'admin' | 'hr' | 'user' {
-  const deptLower = department ? String(department).toLowerCase() : null;
-  const nameLower = fullName.toLowerCase();
-
-  // Special case: Viresh Kumbhar always gets admin access
-  if (nameLower === 'viresh kumbhar') {
-    return 'admin';
-  }
-
-  // Check if department is HR
-  if (deptLower === 'hr') {
-    return 'hr';
-  }
-
-  // Check if department is Administration
-  if (deptLower === 'administration') {
-    return 'admin';
-  }
-
-  // All other departments (operation, sales, quality, development, it, csm, marketing, quality analyst) get user role
+// Helper to normalize DB `type` column to one of allowed roles
+export function mapTypeToRole(type: string | null | undefined): 'admin' | 'hr' | 'user' {
+  const t = (type || 'user').toLowerCase().trim();
+  if (t.includes('admin')) return 'admin';
+  if (t === 'hr' || t.includes('human resource') || t.includes('human-resource')) return 'hr';
   return 'user';
 }
 

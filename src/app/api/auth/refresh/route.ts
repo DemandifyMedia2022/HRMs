@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { generateToken, verifyRefreshToken, determineRole, generateRefreshToken } from '@/lib/auth';
+import { generateToken, verifyRefreshToken, mapTypeToRole, generateRefreshToken } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const dept = (user as any).department ?? null;
     const deptLower = dept ? String(dept).toLowerCase() : null;
     const idNum = typeof user.id === 'bigint' ? Number(user.id) : (user.id as number);
-    const role = determineRole(deptLower, user.name || '');
+    const role = mapTypeToRole((user as any).type);
 
     const accessToken = generateToken({
       id: idNum,

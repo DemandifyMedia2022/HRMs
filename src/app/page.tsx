@@ -15,6 +15,7 @@ function HomePageInner() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const CAN_LOG = process.env.NODE_ENV !== 'production';
 
   // Check if user is already logged in
   useEffect(() => {
@@ -40,33 +41,123 @@ function HomePageInner() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    
     try {
-      const res = await fetch('/api/auth/login', {
+      // STEP 1: Login - Validate credentials and get token
+      // "You say you're Sir Email-Password? Here's your entry token."
+      if (CAN_LOG) console.log(' Sending login request...');
+      const loginRes = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
         credentials: 'include'
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+      
+      if (!loginRes.ok) {
+        const data = await loginRes.json().catch(() => ({}));
         setError(data?.message || 'Invalid credentials');
         setLoading(false);
         return;
       }
-      const data = await res.json();
-      const role = String(data?.role || 'user').toLowerCase();
+      
+      const loginData = await loginRes.json();
+      
+      if (!loginData.success || !loginData.token) {
+        setError('Login failed. No token received.');
+        setLoading(false);
+        return;
+      }
 
-      // Get redirect URL from query params or use default based on role
+      if (CAN_LOG) {
+        console.log(' Token generated');
+        console.log('🔐 Encrypted Token:', loginData.token);
+        console.log('👤 User ID:', loginData.userId);
+      }
+
+      // STEP 2: Validate token
+      // "Show token. Let me verify it's authentic."
+      if (CAN_LOG) console.log('\n Validating token...');
+      const validateRes = await fetch('/api/auth/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: loginData.token })
+      });
+
+      if (!validateRes.ok) {
+        const data = await validateRes.json().catch(() => ({}));
+        setError(data?.message || 'Token validation failed');
+        setLoading(false);
+        return;
+      }
+
+      const validateData = await validateRes.json();
+      
+      if (!validateData.success) {
+        setError('Token validation failed');
+        setLoading(false);
+        return;
+      }
+
+      if (CAN_LOG) {
+        console.log(' Token is valid');
+        console.log('📋 Validation Response:', validateData);
+      }
+
+      // STEP 3: Fetch user details with validated token
+      // "Let me check your official scrolls... oh you're a Knight (role admin)."
+      if (CAN_LOG) console.log('\nFetching user details from database...');
+      const detailsRes = await fetch('/api/auth/user-details', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: loginData.token })
+      });
+
+      if (!detailsRes.ok) {
+        const data = await detailsRes.json().catch(() => ({}));
+        setError(data?.message || 'Failed to fetch user details');
+        setLoading(false);
+        return;
+      }
+
+      const detailsData = await detailsRes.json();
+      
+      if (!detailsData.success) {
+        setError('Failed to fetch user details');
+        setLoading(false);
+        return;
+      }
+      
+      if (CAN_LOG) {
+        console.log('User details retrieved');
+        console.log('Role:', detailsData?.user?.role ?? detailsData?.role);
+      }
+
+      const role = String((detailsData?.user?.role ?? detailsData?.role ?? 'user')).toLowerCase();
+
+      // STEP 4: Redirect based on role
+      // "Proceed to your designated area."
+      if (CAN_LOG) console.log('\n Redirecting based on role...');
       const redirect = searchParams.get('redirect');
       if (redirect && redirect.startsWith('/pages/')) {
+        if (CAN_LOG) console.log(' Redirecting to:', redirect);
         router.push(redirect);
       } else {
         // Redirect based on role
-        if (role === 'admin') router.push('/pages/admin');
-        else if (role === 'hr') router.push('/pages/hr');
-        else router.push('/pages/user');
+        if (role === 'admin') {
+          if (CAN_LOG) console.log(' Redirecting to: /pages/admin');
+          router.push('/pages/admin');
+        } else if (role === 'hr') {
+          if (CAN_LOG) console.log(' Redirecting to: /pages/hr');
+          router.push('/pages/hr');
+        } else {
+          if (CAN_LOG) console.log('Redirecting to: /pages/user');
+          router.push('/pages/user');
+        }
       }
-    } catch {
+      
+      if (CAN_LOG) console.log('\n Authentication flow completed successfully!');
+    } catch (err) {
+      console.error('Login error:', err);
       setError('Login failed. Please check your credentials.');
       setLoading(false);
     }

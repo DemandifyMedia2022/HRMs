@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { comparePassword, generateToken, determineRole, generateRefreshToken } from '@/lib/auth';
+import { comparePassword, generateToken, generateRefreshToken, mapTypeToRole } from '@/lib/auth';
 
+/**
+ * POST /api/auth/login
+ * First gate: Validates credentials and generates JWT token
+ * "You say you're Sir Email-Password? Here's your entry token. Welcome, but I'm not giving you access to the treasury yet."
+ */
 export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
@@ -20,14 +25,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Determine role based on department and name
+    // Determine role strictly from DB `type` column
     const dept = (user as any).department ?? null;
     const deptLower = dept ? String(dept).toLowerCase() : null;
-    const fullName = user.name || '';
     const idNum = typeof user.id === 'bigint' ? Number(user.id) : (user.id as number);
+    const role = mapTypeToRole((user as any).type);
 
-    const role = determineRole(deptLower, fullName);
-
+    // Generate tokens
     const token = generateToken({
       id: idNum,
       email: user.email,
@@ -36,28 +40,36 @@ export async function POST(req: NextRequest) {
     });
     const refreshToken = generateRefreshToken({ id: idNum });
 
+    // Return ONLY token and success message - no user details yet
     const res = NextResponse.json({
-      id: idNum,
-      email: user.email,
-      role,
-      department: deptLower,
-      name: user.name,
-      token // Include token in response for debugging (remove in production)
+      success: true,
+      message: 'Login successful. Token generated.',
+      // token, // Return token for client to validate
+      // userId: idNum // Only return user ID
     });
 
     const isProd = process.env.NODE_ENV === 'production';
+    const csrfToken = crypto.randomUUID().replace(/-/g, '');
     // Short-lived access token (e.g., 15 minutes)
     res.cookies.set('access_token', token, {
       httpOnly: true,
-      sameSite: 'strict',
+      sameSite: 'lax',
       secure: isProd,
       path: '/',
       maxAge: 60 * 15 // 15 minutes
     });
+    // CSRF token (double-submit cookie) - non-HttpOnly so client can read and send in header
+    res.cookies.set('csrf_token', csrfToken, {
+      httpOnly: false,
+      sameSite: 'strict',
+      secure: isProd,
+      path: '/',
+      maxAge: 60 * 60 // 1 hour
+    });
     // Session refresh token (no maxAge -> cleared on browser close). Token itself has server-side expiry.
     res.cookies.set('refresh_token', refreshToken, {
       httpOnly: true,
-      sameSite: 'strict',
+      sameSite: 'lax',
       secure: isProd,
       path: '/'
     });
