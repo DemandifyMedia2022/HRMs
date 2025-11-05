@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
     const res = NextResponse.json({
       success: true,
       message: 'Login successful. Token generated.',
-      token, // Return token for client to validate
-      userId: idNum // Only return user ID
+      // token, // Return token for client to validate
+      // userId: idNum // Only return user ID
     });
 
     const isProd = process.env.NODE_ENV === 'production';
