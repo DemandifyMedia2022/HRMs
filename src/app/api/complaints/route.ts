@@ -11,6 +11,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') || undefined;
     const name = searchParams.get('name') || undefined;
+    const department = searchParams.get('department') || undefined;
     const issueType = searchParams.get('issuse_type') || undefined;
     const page = Math.max(1, Number(searchParams.get('page') || 1));
     const pageSize = Math.max(1, Number(searchParams.get('pageSize') || 10));
@@ -18,6 +19,7 @@ export async function GET(req: Request) {
     const where: any = {};
     if (status) where.status = status;
     if (name) where.name = name;
+    if (department) where.department = department;
     if (issueType) where.issuse_type = issueType;
 
     const [total, data] = await Promise.all([

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { verifyToken, determineRole } from '@/lib/auth';
+import { verifyToken, mapTypeToRole } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
@@ -27,11 +27,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 401 });
     }
 
-    // Determine role based on department
+    // Determine role strictly from DB `type` column
     const dept = user.department ?? null;
     const deptLower = dept ? String(dept).toLowerCase() : null;
-    const fullName = user.Full_name || user.name || '';
-    const role = determineRole(deptLower, fullName);
+    const role = mapTypeToRole((user as any).type);
 
     // Only HR and Admin can view and download all employees bank challan data
     if (role !== 'hr' && role !== 'admin') {
@@ -127,10 +126,11 @@ export async function GET(request: NextRequest) {
       users.map(async user => {
         if (!user.emp_code) return { ...user };
 
-        // Fetch attendance from npattendance table (employeeId is VARCHAR)
+        // Fetch attendance from npattendance table (Prisma model has employeeId as Int)
+        const empIdNum = Number(String(user.emp_code || '').trim());
         const attendance = await prisma.npAttendance.findMany({
           where: {
-            employeeId: String(user.emp_code || '').trim(),
+            employeeId: Number.isFinite(empIdNum) ? Math.trunc(empIdNum) : undefined,
             date: {
               gte: new Date(year, month - 1, 1),
               lt: new Date(year, month, 1)

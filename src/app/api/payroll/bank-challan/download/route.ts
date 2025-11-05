@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { verifyToken, determineRole } from '@/lib/auth';
+import { verifyToken, mapTypeToRole } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
@@ -18,11 +18,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 401 });
     }
 
-    // Check role
-    const dept = user.department ?? null;
-    const deptLower = dept ? String(dept).toLowerCase() : null;
-    const fullName = user.Full_name || user.name || '';
-    const role = determineRole(deptLower, fullName);
+    // Check role strictly from DB `type` column
+    const role = mapTypeToRole((user as any).type);
 
     if (role !== 'hr' && role !== 'admin') {
       return NextResponse.json({ success: false, error: 'Access Denied' }, { status: 403 });

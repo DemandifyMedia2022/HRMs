@@ -766,3 +766,27 @@ model attendance {
   working_hours          DateTime? @db.Time(0)
   short_break_duration   DateTime? @default(dbgenerated("('00:00:00')")) @db.Time(0)
 }
+
+model income_tax_slabs {
+  id             Int       @id @default(autoincrement())
+  category       String    @db.VarChar(50)
+  serial         Int
+  tax_regime     String    @db.VarChar(10)
+  lower_limit    Int
+  upper_limit    Int
+  tax_percentage Decimal   @db.Decimal(5, 2)
+  created_at     DateTime? @default(now()) @db.Timestamp(0)
+  updated_at     DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model letter {
+  id        String   @id @db.Char(36)
+  userId    String?  @db.VarChar(64)
+  slug      String   @db.VarChar(100)
+  title     String   @db.VarChar(200)
+  filename  String   @db.VarChar(255)
+  data      String   @db.LongText
+  createdAt DateTime @default(now()) @db.Timestamp(0)
+
+  @@index([slug], map: "Letter_slug_idx")
+}

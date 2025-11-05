@@ -211,7 +211,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             
             <div>
-              <h1 className="text-2xl font-semibold leading-tight">Welcome, {user.name} </h1>
+            <h1 className="text-2xl font-semibold">Welcome, {user.name || user.email}</h1>
             </div>
           </div>
 

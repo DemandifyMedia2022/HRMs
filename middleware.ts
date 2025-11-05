@@ -14,16 +14,36 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 100; // Max requests per window
 
-// Security headers
-const securityHeaders = {
-  'X-Frame-Options': 'DENY',
-  'X-Content-Type-Options': 'nosniff',
-  'X-XSS-Protection': '1; mode=block',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'"
-};
+// Security headers builder (per-request nonce)
+function buildSecurityHeaders(nonce: string) {
+  return {
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'X-XSS-Protection': '1; mode=block',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    // Remove 'unsafe-inline'; allow only nonce-based inline scripts/styles
+    // Add strict-dynamic to allow trusted scripts to load other scripts
+    'Content-Security-Policy':
+      [
+        "default-src 'self'",
+        `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+        `style-src 'self' 'nonce-${nonce}'`,
+        "img-src 'self' data: https:",
+        "font-src 'self'",
+        "connect-src 'self' https: http:",
+      ].join('; ')
+  } as Record<string, string>;
+}
+
+function applySecurityHeaders(response: NextResponse, nonce: string) {
+  const headers = buildSecurityHeaders(nonce);
+  Object.entries(headers).forEach(([k, v]) => response.headers.set(k, v));
+  // Expose nonce so pages can consume it if they render inline tags (optional)
+  response.headers.set('x-csp-nonce', nonce);
+  return response;
+}
 
 function isValidPath(pathname: string): boolean {
   // Prevent path traversal attacks
@@ -60,6 +80,8 @@ function checkRateLimit(ip: string): boolean {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const method = request.method.toUpperCase();
+  const nonce = crypto.randomUUID().replace(/-/g, '');
   const clientIP = request.headers.get('x-forwarded-for') ||
     request.headers.get('x-real-ip') ||
     request.headers.get('cf-connecting-ip') ||
@@ -68,19 +90,15 @@ export function middleware(request: NextRequest) {
   // Input validation and security checks
   if (!isValidPath(pathname)) {
     console.warn(`Blocked suspicious path attempt: ${pathname} from IP: ${clientIP}`);
-    return new NextResponse('Bad Request', { status: 400 });
+    return applySecurityHeaders(new NextResponse('Bad Request', { status: 400 }), nonce);
   }
 
   // Rate limiting
   if (!checkRateLimit(clientIP)) {
     console.warn(`Rate limit exceeded for IP: ${clientIP}`);
-    return new NextResponse('Too Many Requests', {
-      status: 429,
-      headers: {
-        'Retry-After': '60',
-        ...securityHeaders
-      }
-    });
+    const resp = new NextResponse('Too Many Requests', { status: 429 });
+    resp.headers.set('Retry-After', '60');
+    return applySecurityHeaders(resp, nonce);
   }
 
   // Allow public routes and auth API endpoints
@@ -99,10 +117,73 @@ export function middleware(request: NextRequest) {
         // fall through to show public home if token invalid
       }
     }
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next(), nonce);
   }
-  if (pathname.startsWith('/api/auth')) {
-    return NextResponse.next();
+  // No blanket bypass for /api/auth; specific exemptions are handled in the CSRF block below
+
+  // CSRF protection for mutating API requests (double-submit cookie)
+  if (
+    pathname.startsWith('/api/') &&
+    ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
+  ) {
+    // Allow login/validate/refresh to proceed without CSRF (pre-session or token bootstrap)
+    const exempt = /^(?:\/api\/auth\/(login|validate|refresh))/.test(pathname);
+    if (!exempt) {
+      const headerToken = request.headers.get('x-csrf-token') || '';
+      const cookieToken = request.cookies.get('csrf_token')?.value || '';
+      if (!headerToken || !cookieToken || headerToken !== cookieToken) {
+        return applySecurityHeaders(new NextResponse('Forbidden - CSRF', { status: 403 }), nonce);
+      }
+    }
+  }
+
+  // API-wide auth guard (default-protect APIs)
+  if (pathname.startsWith('/api/')) {
+    // Allow unauthenticated only for bootstrap endpoints; CSRF rules still apply separately
+    const publicAuthAllowed = /^(?:\/api\/auth\/(login|validate|refresh|logout))$/.test(pathname);
+    if (!publicAuthAllowed) {
+      const apiToken = request.cookies.get('access_token')?.value || '';
+      if (!apiToken) {
+        return applySecurityHeaders(
+          new NextResponse(JSON.stringify({ message: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'content-type': 'application/json' }
+          }),
+          nonce
+        );
+      }
+      try {
+        verifyToken(apiToken);
+      } catch {
+        return applySecurityHeaders(
+          new NextResponse(JSON.stringify({ message: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'content-type': 'application/json' }
+          }),
+          nonce
+        );
+      }
+    }
+  }
+
+  // Block invalid /pages/* routes that don't match expected patterns
+  if (pathname.startsWith('/pages/')) {
+    const validPagePatterns = [
+      /^\/pages\/admin(\/.*)?$/,
+      /^\/pages\/hr(\/.*)?$/,
+      /^\/pages\/user(\/.*)?$/,
+      /^\/pages\/account$/,
+      /^\/pages\/settings$/,
+      /^\/pages\/notifications$/
+    ];
+    
+    const isValidPage = validPagePatterns.some(pattern => pattern.test(pathname));
+    
+    if (!isValidPage) {
+      console.warn(`Blocked invalid page route: ${pathname} from IP: ${clientIP}`);
+      // Redirect to home instead of allowing invalid routes
+      return applySecurityHeaders(NextResponse.redirect(new URL('/', request.url)), nonce);
+    }
   }
 
   // Check if route is protected
@@ -144,12 +225,7 @@ export function middleware(request: NextRequest) {
       // Rewrite to Access Denied to render denial page without bouncing via '/'
       const url = request.nextUrl.clone();
       url.pathname = '/';
-      const response = NextResponse.rewrite(url);
-      // Add security headers
-      Object.entries(securityHeaders).forEach(([key, value]) => {
-        response.headers.set(key, value);
-      });
-      return response;
+      return applySecurityHeaders(NextResponse.rewrite(url), nonce);
     }
 
     // Additional check: Users can only access their own department's data
@@ -160,19 +236,10 @@ export function middleware(request: NextRequest) {
       response.headers.set('x-user-department', user.department || '');
       response.headers.set('x-user-id', user.id.toString());
       response.headers.set('x-user-role', user.role);
-      // Add security headers
-      Object.entries(securityHeaders).forEach(([key, value]) => {
-        response.headers.set(key, value);
-      });
-      return response;
+      return applySecurityHeaders(response, nonce);
     }
 
-    const response = NextResponse.next();
-    // Add security headers to all responses
-    Object.entries(securityHeaders).forEach(([key, value]) => {
-      response.headers.set(key, value);
-    });
-    return response;
+    return applySecurityHeaders(NextResponse.next(), nonce);
   } catch (error) {
     console.warn(`Authentication error for IP ${clientIP}: ${error instanceof Error ? error.message : 'Unknown error'}`);
 
@@ -185,11 +252,7 @@ export function middleware(request: NextRequest) {
       if (redirectPath.startsWith('/pages/') || redirectPath === '/') {
         url.searchParams.set('redirect', redirectPath + (request.nextUrl.search || ''));
       }
-      const response = NextResponse.redirect(url);
-      Object.entries(securityHeaders).forEach(([key, value]) => {
-        response.headers.set(key, value);
-      });
-      return response;
+      return applySecurityHeaders(NextResponse.redirect(url), nonce);
     }
 
     // No refresh token or invalid refresh token: redirect to login
@@ -202,10 +265,7 @@ export function middleware(request: NextRequest) {
     const response = NextResponse.redirect(url);
     response.cookies.delete('access_token');
     response.cookies.delete('refresh_token');
-    Object.entries(securityHeaders).forEach(([key, value]) => {
-      response.headers.set(key, value);
-    });
-    return response;
+    return applySecurityHeaders(response, nonce);
   }
 }
 

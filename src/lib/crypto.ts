@@ -1,15 +1,15 @@
 import crypto from 'crypto';
- 
+
 // AES-256-GCM helper for field-level encryption at rest
 // - Key source: process.env.EMPDATA_SECRET (any string). We derive a 32-byte key via SHA-256.
 // - Format: enc.v1.<b64url(iv)>.<b64url(cipher)>.<b64url(tag)>
- 
+
 function getKey(): Buffer {
   const raw = process.env.EMPDATA_SECRET || '';
   // Derive 32-byte key from provided secret using SHA-256
   return crypto.createHash('sha256').update(raw).digest();
 }
- 
+
 function b64url(buf: Buffer): string {
   return buf
     .toString('base64')
@@ -17,13 +17,13 @@ function b64url(buf: Buffer): string {
     .replace(/\+/g, '-')
     .replace(/\//g, '_');
 }
- 
+
 function fromB64url(s: string): Buffer {
   const pad = s.length % 4 === 2 ? '==' : s.length % 4 === 3 ? '=' : '';
   const b64 = s.replace(/-/g, '+').replace(/_/g, '/') + pad;
   return Buffer.from(b64, 'base64');
 }
- 
+
 export function encryptField(plain: string | null | undefined): string | null {
   if (plain == null) return null;
   const val = String(plain);
@@ -36,11 +36,11 @@ export function encryptField(plain: string | null | undefined): string | null {
   const out = `enc.v1.${b64url(iv)}.${b64url(enc)}.${b64url(tag)}`;
   return out;
 }
- 
+
 export function isEncrypted(s: unknown): boolean {
   return typeof s === 'string' && s.startsWith('enc.v1.');
 }
- 
+
 export function decryptField(encVal: string | null | undefined): string | null {
   if (!encVal) return null;
   if (!isEncrypted(encVal)) return encVal;
@@ -60,7 +60,7 @@ export function decryptField(encVal: string | null | undefined): string | null {
     return encVal;
   }
 }
- 
+
 export function encryptPatch(patch: Record<string, unknown>, fields: Set<string>) {
   const out: Record<string, unknown> = { ...patch };
   for (const k of fields) {
@@ -75,7 +75,7 @@ export function encryptPatch(patch: Record<string, unknown>, fields: Set<string>
   }
   return out;
 }
- 
+
 export function decryptRecord<T extends Record<string, unknown>>(rec: T, fields: Set<string>): T {
   const out: Record<string, unknown> = { ...rec };
   for (const k of fields) {
@@ -84,4 +84,29 @@ export function decryptRecord<T extends Record<string, unknown>>(rec: T, fields:
     }
   }
   return out as T;
+}
+
+// Response encryption (in-transit in addition to HTTPS) using AES-256-GCM
+// Gated by env DATA_ENCRYPTION_ENABLED === 'true' and client header 'X-Enc: 1'
+export function encryptResponsePayload(body: unknown) {
+  const key = getKey();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const json = Buffer.from(JSON.stringify(body), 'utf8');
+  const enc = Buffer.concat([cipher.update(json), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return {
+    alg: 'AES-256-GCM',
+    ver: 1,
+    iv: b64url(iv),
+    ciphertext: b64url(enc),
+    tag: b64url(tag),
+  };
+}
+
+export function maybeEncryptForRequest(reqHeaders: Headers, body: unknown) {
+  const enabled = String(process.env.DATA_ENCRYPTION_ENABLED || '').toLowerCase() === 'true';
+  const wants = (reqHeaders.get('x-enc') || reqHeaders.get('X-Enc')) === '1';
+  if (!enabled || !wants) return body;
+  return encryptResponsePayload(body);
 }
