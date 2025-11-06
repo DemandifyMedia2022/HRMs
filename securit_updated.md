@@ -29,7 +29,7 @@ Email: medhara.davidraju@demandifymedia.com
 DOCUMENT CONTROL
 ----------------
 Version History:
-  Version 1.0 - Initial Security Audit Report - January 2025
+  Version 1.0 - Initial Security Audit Report - Nov 2025
 
 Distribution List:
   - Development Team Lead
