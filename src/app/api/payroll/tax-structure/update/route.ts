@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { handleError } from '@/lib/error-handler';
 
 const prisma = new PrismaClient();
 
@@ -25,32 +26,55 @@ export async function POST(request: NextRequest) {
     taxData.Full_name = user[0].Full_name;
     taxData.emp_code = user[0].emp_code;
 
+    // Whitelist allowed fields and sanitize input
+    const allowedFields = [
+      'Full_name',
+      'emp_code',
+      'basic_salary',
+      'hra',
+      'transport_allowance',
+      'medical_allowance',
+      'other_allowances',
+      'pf_contribution',
+      'esi_contribution',
+      'professional_tax',
+      'income_tax',
+      'other_deductions'
+    ];
+
+    const sanitizedData: Record<string, any> = {};
+    for (const field of allowedFields) {
+      if (field in taxData && (taxData as any)[field] !== undefined) {
+        (sanitizedData as any)[field] = (taxData as any)[field];
+      }
+    }
+
     // Check if record exists
     const existing = await (prisma as any).$queryRawUnsafe(`SELECT * FROM Tax WHERE user_id = ?`, userId);
 
     if (existing && existing.length > 0) {
       // Update
-      const fields = Object.keys(taxData)
+      if (Object.keys(sanitizedData).length === 0) {
+        return NextResponse.json({ success: false, message: 'No valid fields to update' }, { status: 400 });
+      }
+      const fields = Object.keys(sanitizedData)
         .map(k => `${k} = ?`)
         .join(', ');
-      const values = [...Object.values(taxData), userId];
+      const values = [...Object.values(sanitizedData), userId];
       await (prisma as any).$queryRawUnsafe(`UPDATE Tax SET ${fields} WHERE user_id = ?`, ...values);
     } else {
       // Insert
-      taxData.user_id = userId;
-      const fields = Object.keys(taxData).join(', ');
-      const placeholders = Object.keys(taxData)
-        .map(() => '?')
-        .join(', ');
+      const insertFields = [...Object.keys(sanitizedData), 'user_id'];
+      const placeholders = insertFields.map(() => '?').join(', ');
+      const insertValues = [...Object.values(sanitizedData), userId];
       await (prisma as any).$queryRawUnsafe(
-        `INSERT INTO Tax (${fields}) VALUES (${placeholders})`,
-        ...Object.values(taxData)
+        `INSERT INTO Tax (${insertFields.join(', ')}) VALUES (${placeholders})`,
+        ...insertValues
       );
     }
 
     return NextResponse.json({ success: true, message: 'Tax structure updated successfully' });
   } catch (error: any) {
-    console.error('Tax update error:', error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return handleError(error, request);
   }
 }

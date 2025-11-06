@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
 import { verifyToken } from '@/lib/auth';
+import { getRequiredEnv } from '@/lib/env';
 
-const DB_NAME = process.env.DB_NAME || 'demandkb_lms1';
+const DB_NAME = getRequiredEnv('DB_NAME');
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  host: getRequiredEnv('DB_HOST'),
+  user: getRequiredEnv('DB_USER'),
+  password: getRequiredEnv('DB_PASSWORD'),
   database: DB_NAME,
   waitForConnections: true,
   connectionLimit: 10

@@ -4,8 +4,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { requireAuth } from '@/lib/middleware';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('campaigns:upload');
 
 const uploadDir = path.join(process.cwd(), 'uploads', 'campaign-scripts');
+const MAX_PDF_SIZE = 50 * 1024 * 1024;
 
 function isPdf(buffer: Buffer): boolean {
   // PDF files start with '%PDF-'
@@ -23,6 +27,13 @@ export async function POST(req: NextRequest) {
 
     await fs.mkdir(uploadDir, { recursive: true });
 
+    if (file.size > MAX_PDF_SIZE) {
+      return NextResponse.json(
+        { error: `File size exceeds maximum allowed size of ${Math.floor(MAX_PDF_SIZE / 1024 / 1024)}MB` },
+        { status: 413 }
+      );
+    }
+
     const arrayBuffer = await file.arrayBuffer();
     const buf = Buffer.from(arrayBuffer);
     // Validate: allow only PDF
@@ -36,7 +47,7 @@ export async function POST(req: NextRequest) {
     const url = `/api/files/campaign-scripts/${safeName}`;
     return NextResponse.json({ url });
   } catch (err: any) {
-    console.error('campaign script upload error', err);
+    logger.error('campaign script upload error', { error: String(err?.message || err) });
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }

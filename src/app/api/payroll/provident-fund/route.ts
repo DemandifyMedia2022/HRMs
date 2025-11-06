@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { createLogger } from '@/lib/logger';
 
 const prisma = new PrismaClient();
+const logger = createLogger('payroll:provident-fund');
 
 // GET - Fetch provident fund settings
 export async function GET(req: NextRequest) {
@@ -13,7 +15,7 @@ export async function GET(req: NextRequest) {
       data: providentFunds.length > 0 ? providentFunds[0] : null
     });
   } catch (error: any) {
-    console.error('Error fetching provident fund:', error);
+    logger.error('Error fetching provident fund', { error: error?.message });
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to fetch provident fund data' },
       { status: 500 }
@@ -81,7 +83,7 @@ export async function POST(req: NextRequest) {
       data: result
     });
   } catch (error: any) {
-    console.error('Error saving provident fund:', error);
+    logger.error('Error saving provident fund', { error: error?.message });
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to save provident fund data' },
       { status: 500 }

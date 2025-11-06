@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('payroll:labour-welfare-fund');
 
 export async function GET(request: NextRequest) {
   try {
@@ -107,7 +110,7 @@ export async function GET(request: NextRequest) {
       data: slabs
     });
   } catch (error: any) {
-    console.error('Error fetching labour welfare fund slabs:', error);
+    logger.error('Error fetching labour welfare fund slabs', { error: error?.message });
     return NextResponse.json(
       { success: false, error: 'Failed to fetch labour welfare fund slabs', details: error.message },
       { status: 500 }
@@ -153,7 +156,7 @@ export async function POST(request: NextRequest) {
 
     // Save to database - implement your database logic here
     // For now, just return success
-    console.log('Saving labour welfare fund slab:', body);
+    logger.info('Saving labour welfare fund slab');
 
     return NextResponse.json({
       success: true,
@@ -161,7 +164,7 @@ export async function POST(request: NextRequest) {
       data: body
     });
   } catch (error: any) {
-    console.error('Error saving labour welfare fund slab:', error);
+    logger.error('Error saving labour welfare fund slab', { error: error?.message });
     return NextResponse.json(
       { success: false, error: 'Failed to save labour welfare fund slab', details: error.message },
       { status: 500 }
@@ -200,7 +203,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update in database - implement your database logic here
-    console.log('Updating labour welfare fund slab:', body);
+    logger.info('Updating labour welfare fund slab', { id: String(body?.id || '') });
 
     return NextResponse.json({
       success: true,
@@ -208,7 +211,7 @@ export async function PUT(request: NextRequest) {
       data: body
     });
   } catch (error: any) {
-    console.error('Error updating labour welfare fund slab:', error);
+    logger.error('Error updating labour welfare fund slab', { error: error?.message });
     return NextResponse.json(
       { success: false, error: 'Failed to update labour welfare fund slab', details: error.message },
       { status: 500 }
@@ -247,14 +250,14 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete from database - implement your database logic here
-    console.log('Deleting labour welfare fund slab:', id);
+    logger.info('Deleting labour welfare fund slab', { id: String(id) });
 
     return NextResponse.json({
       success: true,
       message: 'Labour welfare fund slab deleted successfully'
     });
   } catch (error: any) {
-    console.error('Error deleting labour welfare fund slab:', error);
+    logger.error('Error deleting labour welfare fund slab', { error: error?.message });
     return NextResponse.json(
       { success: false, error: 'Failed to delete labour welfare fund slab', details: error.message },
       { status: 500 }

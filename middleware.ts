@@ -9,10 +9,7 @@ const protectedRoutes: Record<string, readonly string[]> = {
   '/pages/user': ['user']
 };
 
-// Rate limiting store (in production, use Redis or similar)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 100; // Max requests per window
+// Removed in-memory rate limiting (VULN-007 fix)
 
 // Security headers builder (per-request nonce)
 function buildSecurityHeaders(nonce: string) {
@@ -60,23 +57,7 @@ function isValidPath(pathname: string): boolean {
   return !suspiciousPatterns.some(pattern => pattern.test(pathname));
 }
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const key = `rate_limit_${ip}`;
-  const current = rateLimitStore.get(key);
-
-  if (!current || now > current.resetTime) {
-    rateLimitStore.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    return true;
-  }
-
-  if (current.count >= RATE_LIMIT_MAX_REQUESTS) {
-    return false;
-  }
-
-  current.count++;
-  return true;
-}
+// checkRateLimit removed
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -87,19 +68,24 @@ export function middleware(request: NextRequest) {
     request.headers.get('cf-connecting-ip') ||
     'unknown';
 
+  // Enforce HTTPS in production
+  if (process.env.NODE_ENV === 'production') {
+    const forwarded = request.headers.get('x-forwarded-proto');
+    const currentProto = forwarded || request.nextUrl.protocol.replace(':', '');
+    if (currentProto !== 'https') {
+      const url = request.nextUrl.clone();
+      url.protocol = 'https';
+      return NextResponse.redirect(url, 308);
+    }
+  }
+
   // Input validation and security checks
   if (!isValidPath(pathname)) {
     console.warn(`Blocked suspicious path attempt: ${pathname} from IP: ${clientIP}`);
     return applySecurityHeaders(new NextResponse('Bad Request', { status: 400 }), nonce);
   }
 
-  // Rate limiting
-  if (!checkRateLimit(clientIP)) {
-    console.warn(`Rate limit exceeded for IP: ${clientIP}`);
-    const resp = new NextResponse('Too Many Requests', { status: 429 });
-    resp.headers.set('Retry-After', '60');
-    return applySecurityHeaders(resp, nonce);
-  }
+  // Rate limiting removed (VULN-007)
 
   // Allow public routes and auth API endpoints
   if (pathname === '/') {

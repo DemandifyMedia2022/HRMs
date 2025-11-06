@@ -140,6 +140,7 @@ model users {
   Reimbursement_amount                      Int?
   months                                    Int?
   status                                    Int?      @db.TinyInt
+  extension                                 String?   @db.VarChar(64)
 }
 
 model crud_events {
@@ -387,6 +388,7 @@ model dm_form {
   qualifyleads_by   String?  @db.VarChar(255)
   f_date            DateTime @default(now()) @db.Timestamp(0)
   form_status       Int
+  f_script_url      String?  @db.VarChar(512)
 }
 
 model dm_task {
@@ -767,26 +769,54 @@ model attendance {
   short_break_duration   DateTime? @default(dbgenerated("('00:00:00')")) @db.Time(0)
 }
 
-model income_tax_slabs {
-  id             Int       @id @default(autoincrement())
-  category       String    @db.VarChar(50)
-  serial         Int
-  tax_regime     String    @db.VarChar(10)
-  lower_limit    Int
-  upper_limit    Int
-  tax_percentage Decimal   @db.Decimal(5, 2)
-  created_at     DateTime? @default(now()) @db.Timestamp(0)
-  updated_at     DateTime? @default(now()) @db.Timestamp(0)
+model call_data {
+  id               BigInt    @id @default(autoincrement())
+  extension        String?   @db.VarChar(64)
+  destination      String?   @db.VarChar(64)
+  direction        String?   @db.VarChar(16)
+  status           String?   @db.VarChar(32)
+  start_time       DateTime? @db.DateTime(0)
+  answer_time      DateTime? @db.DateTime(0)
+  end_time         DateTime? @db.DateTime(0)
+  duration_seconds Int?
+  cause            String?   @db.VarChar(255)
+  meta             String?   @db.Text
+  created_at       DateTime  @default(now()) @db.Timestamp(0)
+  user_name        String?   @db.VarChar(255)
+  recording_url    String?   @db.Text
+  source_number    String?   @db.VarChar(64)
+  region           String?   @db.VarChar(64)
 }
 
-model letter {
-  id        String   @id @db.Char(36)
-  userId    String?  @db.VarChar(64)
-  slug      String   @db.VarChar(100)
-  title     String   @db.VarChar(200)
-  filename  String   @db.VarChar(255)
-  data      String   @db.LongText
-  createdAt DateTime @default(now()) @db.Timestamp(0)
+model campaigns {
+  id              BigInt    @id @default(autoincrement())
+  c_id            String    @db.VarChar(64)
+  f_campaign_name String    @db.VarChar(255)
+  f_start_date    DateTime? @db.Date
+  f_end_date      DateTime? @db.Date
+  f_assignto      String?   @db.VarChar(255)
+  f_allocation    Int?
+  f_method        String?   @db.VarChar(255)
+  f_script        String?   @db.Text
+  f_script_url    String?   @db.VarChar(512)
+  f_status        Boolean   @default(true)
+  created_at      DateTime  @default(now()) @db.Timestamp(0)
+}
 
-  @@index([slug], map: "Letter_slug_idx")
+model extensions {
+  id         BigInt   @id @default(autoincrement())
+  extension  String   @unique(map: "extension") @db.VarChar(64)
+  username   String?  @db.VarChar(128)
+  password   String?  @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model sip_credentials {
+  id           BigInt   @id @default(autoincrement())
+  email        String   @unique(map: "email") @db.VarChar(255)
+  extension    String?  @db.VarChar(64)
+  sip_password String?  @db.VarChar(255)
+  updated_at   DateTime @default(now()) @db.Timestamp(0)
+  created_at   DateTime @default(now()) @db.Timestamp(0)
 }

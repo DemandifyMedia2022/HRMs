@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { createLogger } from '@/lib/logger';
 
 const prisma = new PrismaClient();
+const logger = createLogger('payroll:emp-details');
 
 // GET all employees
 export async function GET(request: NextRequest) {
   try {
-    console.log('Fetching employees from database...');
+    logger.debug('Fetching employees from database');
     const employeesData = await prisma.users.findMany({
       select: {
         id: true,
@@ -64,7 +66,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    console.log(`Found ${employeesData.length} employees`);
+    logger.info('Fetched employees', { count: employeesData.length });
 
     // Convert BigInt to string for JSON serialization
     const employees = employeesData.map(emp => ({

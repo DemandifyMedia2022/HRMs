@@ -8,6 +8,21 @@ import bcrypt from 'bcryptjs';
 import { sendMail } from '@/lib/mailer';
 import { encryptField } from '@/lib/crypto';
 import { requireRoles } from '@/lib/middleware';
+import { createLogger } from '@/lib/logger';
+
+const MAX_DOC_SIZE = 50 * 1024 * 1024;
+
+function validatePassword(password: string): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (password.length < 8) errors.push('Password must be at least 8 characters long');
+  if (!/[a-z]/.test(password)) errors.push('Password must contain at least one lowercase letter');
+  if (!/[A-Z]/.test(password)) errors.push('Password must contain at least one uppercase letter');
+  if (!/[0-9]/.test(password)) errors.push('Password must contain at least one number');
+  if (!/[^a-zA-Z0-9]/.test(password)) errors.push('Password must contain at least one special character');
+  const common = ['password', '12345678', 'qwerty', 'abc123'];
+  if (common.some(c => password.toLowerCase().includes(c))) errors.push('Password is too common');
+  return { valid: errors.length === 0, errors };
+}
 
 async function ensureDir(dir: string) {
   await fs.mkdir(dir, { recursive: true });
@@ -22,9 +37,13 @@ function detectAllowed(buf: Buffer): 'pdf' | 'png' | 'jpg' | 'jpeg' | 'webp' | n
 }
 
 async function saveFile(file: File, folder: string, userSlug: string) {
+  if (file.size > MAX_DOC_SIZE) {
+    throw new Error(`File size exceeds maximum allowed size of ${Math.floor(MAX_DOC_SIZE / 1024 / 1024)}MB`);
+  }
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
   const kind = detectAllowed(buffer);
+
   if (!kind) throw new Error('Unsupported file type');
   const ext = path.extname(file.name) || '';
   const base = path.basename(file.name, ext).replace(/[^a-z0-9_-]/gi, '_');
@@ -115,6 +134,14 @@ export async function POST(req: NextRequest) {
     }
     if (!name) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+    }
+
+    const pwdCheck = validatePassword(plainPassword);
+    if (!pwdCheck.valid) {
+      return NextResponse.json(
+        { error: 'Password does not meet requirements', errors: pwdCheck.errors },
+        { status: 400 }
+      );
     }
 
     // Hash password with bcrypt (cost 12) to match login route expectations
@@ -227,8 +254,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ id: createdId, ok: true }, { status: 201 });
   } catch (e: any) {
-    console.error('/api/employees error:', e);
+    const logger = createLogger('employees');
     const message = typeof e?.message === 'string' ? e.message : 'Failed to create employee';
+    logger.error('Create employee error', { error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

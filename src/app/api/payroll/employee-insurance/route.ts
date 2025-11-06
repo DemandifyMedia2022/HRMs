@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { createLogger } from '@/lib/logger';
 
 const prisma = new PrismaClient();
+const logger = createLogger('payroll:employee-insurance');
 
 // GET - Fetch employee insurance settings
 export async function GET(req: NextRequest) {
@@ -13,7 +15,7 @@ export async function GET(req: NextRequest) {
       data: insurance.length > 0 ? insurance[0] : null
     });
   } catch (error: any) {
-    console.error('Error fetching employee insurance:', error);
+    logger.error('Error fetching employee insurance', { error: error?.message });
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to fetch employee insurance data' },
       { status: 500 }
@@ -68,7 +70,7 @@ export async function POST(req: NextRequest) {
       data: result
     });
   } catch (error: any) {
-    console.error('Error saving employee insurance:', error);
+    logger.error('Error saving employee insurance', { error: error?.message });
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to save employee insurance data' },
       { status: 500 }

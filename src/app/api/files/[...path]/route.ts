@@ -3,8 +3,9 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import { promises as fsp } from 'fs';
-import { createReadStream, statSync } from 'fs';
+import { statSync } from 'fs';
 import { requireAuth } from '@/lib/middleware';
+import { prisma } from '@/lib/prisma';
 
 function detectContentType(buf: Buffer): string {
   // Minimal magic-bytes detection
@@ -37,6 +38,25 @@ export async function GET(req: NextRequest, ctx: { params: { path: string[] } })
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Authorization: non-admin/hr can only access their own uploads subfolder
+    if (auth.role !== 'admin' && auth.role !== 'hr') {
+      // Resolve the current user to derive the same slug used when saving uploads
+      let userSlug = 'user';
+      try {
+        const user = await prisma.users.findUnique({ where: { id: BigInt(auth.id) } as any });
+        const name = (user as any)?.name || (user as any)?.Full_name || '';
+        userSlug = String(name)
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, '_')
+          .replace(/[^a-z0-9_-]/g, '_') || 'user';
+      } catch {}
+      const userDir = path.resolve(baseDir, path.join('uploads', userSlug));
+      if (!abs.startsWith(userDir)) {
+        return NextResponse.json({ error: 'Forbidden - File access denied' }, { status: 403 });
+      }
+    }
+
     // Ensure file exists and is a file
     let st: { isFile: () => boolean; size: number } | null = null;
     try {
@@ -58,7 +78,7 @@ export async function GET(req: NextRequest, ctx: { params: { path: string[] } })
 
     // For simplicity and reliability in App Router, read into memory
     const data = await fsp.readFile(abs);
-    const res = new NextResponse(data, {
+    const res = new NextResponse(new Uint8Array(data), {
       status: 200,
       headers: {
         'Content-Type': contentType,

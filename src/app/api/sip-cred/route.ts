@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
 import { verifyToken } from '@/lib/auth';
+import { getRequiredEnv, getRequiredInt } from '@/lib/env';
+import type { RowDataPacket } from 'mysql2/promise';
 
-const DB_NAME = process.env.MYSQL_DATABASE || 'demandkb_lms1';
+const DB_NAME = getRequiredEnv('DB_NAME');
 
 const pool = mysql.createPool({
-  host: process.env.MYSQL_HOST || 'localhost',
-  user: process.env.MYSQL_USER || 'root',
-  password: process.env.MYSQL_PASSWORD || '',
+  host: getRequiredEnv('DB_HOST'),
+  user: getRequiredEnv('DB_USER'),
+  password: getRequiredEnv('DB_PASSWORD'),
   database: DB_NAME,
   waitForConnections: true,
-  connectionLimit: 10
+  connectionLimit: 10,
+  port: getRequiredInt('DB_PORT')
 });
 
 async function ensureTable() {
@@ -41,17 +44,16 @@ export async function GET(req: NextRequest) {
     await ensureTable();
     const email = getAuthEmail(req);
     if (!email) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    const [rows] = await pool.execute(
+    const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT email, extension, IF(sip_password IS NULL OR sip_password = '', 0, 1) AS hasPassword FROM ${DB_NAME}.sip_credentials WHERE email = ? LIMIT 1`,
       [email]
     );
-    // @ts-ignore
-    const rec = Array.isArray(rows) && rows.length ? rows[0] : null;
+    const rec = rows && rows.length ? (rows[0] as RowDataPacket) : null;
     return NextResponse.json({
       email,
-      extension: rec?.extension || '',
+      extension: (rec?.extension as string) || '',
       // Do NOT return the actual password; only indicate presence
-      hasPassword: !!rec?.hasPassword
+      hasPassword: !!(rec as any)?.hasPassword
     });
   } catch (e: any) {
     return NextResponse.json({ error: String(e?.message || e) }, { status: 500 });
