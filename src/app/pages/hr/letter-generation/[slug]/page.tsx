@@ -450,7 +450,7 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
   const handleDownloadPdfMake = async () => {
     try {
       if (!showPreview || !cfg) return
-      
+
       const today = new Date()
       const yyyy = today.getFullYear()
       const mm = String(today.getMonth() + 1).padStart(2, '0')
@@ -810,63 +810,101 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
             <CardContent>
               <form onSubmit={onSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {cfg.fields.map((f) => (
-                  <div key={f.name} className="space-y-1.5">
-                    <Label htmlFor={`f-${f.name}`}>{f.label}</Label>
-                    {f.name === 'salutation' ? (
-                      <Select
-                        value={String(formData[f.name] ?? (cfg?.defaultData?.[f.name] ?? 'Mr.'))}
-                        onValueChange={(v) => handleChange(f.name, v)}
-                      >
-                        <SelectTrigger id={`f-${f.name}`} className="w-full">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Mr.">Mr.</SelectItem>
-                          <SelectItem value="Mrs.">Mrs.</SelectItem>
-                          <SelectItem value="Ms.">Ms.</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : f.name === 'manager' ? (
-                      <Select
-                        value={String(formData[f.name] ?? (cfg?.defaultData?.[f.name] ?? ''))}
-                        onValueChange={(v) => handleChange(f.name, v)}
-                      >
-                        <SelectTrigger id={`f-${f.name}`} className="w-full">
-                          <SelectValue placeholder="Select Manager" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Sunny Ashpal(Managing Director)">Sunny Ashpal (Managing Director)</SelectItem>
-                          <SelectItem value="Viresh Kumbhar(Head of Operation)">Viresh Kumbhar (Head of Operation)</SelectItem>
-                          <SelectItem value="Mrinmoy Buzarbaruah (Head of Quality)">Mrinmoy Buzarbaruah (Head of Quality)</SelectItem>
-                          <SelectItem value="Shagufi Imtiyaz(Digital Marketing Manager)">Shagufi Imtiyaz (Digital Marketing Manager)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : f.name === 'companyName' ? (
-                      <Input id={`f-${f.name}`} value={COMPANY_NAME} readOnly disabled />
-                    ) : (
-                      <Input
-                        id={`f-${f.name}`}
-                        type={f.type ?? 'text'}
-                        value={String(formData[f.name] ?? (cfg?.defaultData?.[f.name] ?? ''))}
-                        placeholder={
-                          cfg?.defaultData && f.name in cfg.defaultData
-                            ? String(cfg.defaultData[f.name] ?? '')
-                            : ''
-                        }
-                        onChange={(e) => handleChange(f.name, e.target.value)}
-                        required
-                      />
-                    )}
+                  {cfg.fields.map((f) => (
+                    <div key={f.name} className="space-y-1.5">
+                      <Label htmlFor={`f-${f.name}`}>{f.label}</Label>
+                      {f.name === 'salutation' ? (
+                        <Select
+                          value={String(formData[f.name] ?? (cfg?.defaultData?.[f.name] ?? 'Mr.'))}
+                          onValueChange={(v) => handleChange(f.name, v)}
+                        >
+                          <SelectTrigger id={`f-${f.name}`} className="w-full">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Mr.">Mr.</SelectItem>
+                            <SelectItem value="Mrs.">Mrs.</SelectItem>
+                            <SelectItem value="Ms.">Ms.</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : f.name === 'manager' ? (
+                        <Select
+                          value={String(formData[f.name] ?? (cfg?.defaultData?.[f.name] ?? ''))}
+                          onValueChange={(v) => handleChange(f.name, v)}
+                        >
+                          <SelectTrigger id={`f-${f.name}`} className="w-full">
+                            <SelectValue placeholder="Select Manager" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Sunny Ashpal(Managing Director)">Sunny Ashpal (Managing Director)</SelectItem>
+                            <SelectItem value="Viresh Kumbhar(Head of Operation)">Viresh Kumbhar (Head of Operation)</SelectItem>
+                            <SelectItem value="Mrinmoy Buzarbaruah (Head of Quality)">Mrinmoy Buzarbaruah (Head of Quality)</SelectItem>
+                            <SelectItem value="Shagufi Imtiyaz(Digital Marketing Manager)">Shagufi Imtiyaz (Digital Marketing Manager)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : f.name === 'companyName' ? (
+                        <Input id={`f-${f.name}`} value={COMPANY_NAME} readOnly disabled />
+                      ) : (
+                        <Input
+                          id={`f-${f.name}`}
+                          type={f.type ?? 'text'}
+                          value={String(formData[f.name] ?? (cfg?.defaultData?.[f.name] ?? ''))}
+                          placeholder={
+                            cfg?.defaultData && f.name in cfg.defaultData
+                              ? String(cfg.defaultData[f.name] ?? '')
+                              : ''
+                          }
+                          onChange={(e) => handleChange(f.name, e.target.value)}
+                          required
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 sm:mt-2 justify-items-start">
+                  {/* Left column — vertical stack */}
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      type="submit"
+                      className="w-50 sm:w-54"
+                    >
+                      Generate Letter
+                    </Button>
+
+                    <Button
+                      type="button"
+                      onClick={handleDownloadPdfMake}
+                      disabled={!showPreview}
+                      variant="default"
+                      className="w-50 sm:w-54"
+                    >
+                      Download PDF
+                    </Button>
                   </div>
-                ))}
+
+                  {/* Right column — vertical stack */}
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      type="button"
+                      onClick={handlePreviewPdfMake}
+                      disabled={!showPreview}
+                      variant="secondary"
+                      className="w-50 sm:w-54"
+                    >
+                      Preview PDF
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowPreview(false)}
+                      className="w-50 sm:w-54"
+                    >
+                      Clear Preview
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2 pt-1 justify-end">
-                  <Button type="submit">Generate Letter</Button>
-                  <Button type="button" onClick={handlePreviewPdfMake} disabled={!showPreview} variant="secondary">Preview PDF</Button>
-                  <Button type="button" onClick={handleDownloadPdfMake} disabled={!showPreview} variant="default">Download PDF</Button>
-                  <Button type="button" variant="outline" onClick={() => setShowPreview(false)}>Clear Preview</Button>
-                </div>
+
               </form>
             </CardContent>
           </Card>
@@ -898,9 +936,8 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed bottom-4 right-4 px-4 py-2 rounded shadow-md text-sm ${
-            toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
-          }`}
+          className={`fixed bottom-4 right-4 px-4 py-2 rounded shadow-md text-sm ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+            }`}
           role="status"
           aria-live="polite"
         >
