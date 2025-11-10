@@ -166,7 +166,7 @@ export default function AdminAttendancePage() {
 
   return (
     <div className="p-4 space-y-6">
-      <SidebarConfig role="admin" />
+      <SidebarConfig role="hr" />
       <Card className="border-muted/40 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
