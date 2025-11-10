@@ -2,15 +2,18 @@ export const runtime = 'nodejs';
 
 import mysql from 'mysql2/promise';
 import { NextResponse } from 'next/server';
+import { getRequiredEnv, getRequiredInt } from '@/lib/env';
+import { createLogger } from '@/lib/logger';
 
-const DB_NAME = process.env.DB_NAME || 'newhrmsreactdb';
+const logger = createLogger('admin:leads-by-status');
+const DB_NAME = getRequiredEnv('DB_NAME');
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || '127.0.0.1',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  host: getRequiredEnv('DB_HOST'),
+  user: getRequiredEnv('DB_USER'),
+  password: getRequiredEnv('DB_PASSWORD'),
   database: DB_NAME,
-  port: Number(process.env.DB_PORT || 3306),
+  port: getRequiredInt('DB_PORT'),
   waitForConnections: true,
   connectionLimit: 5
 });
@@ -31,7 +34,7 @@ export async function GET() {
 
     return NextResponse.json(rows);
   } catch (err) {
-    console.error('Error fetching leads by status:', err);
+    logger.error('Error fetching leads by status', { error: String((err as any)?.message || err) });
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }

@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
 import { verifyToken } from '@/lib/auth';
+import { getRequiredEnv, getRequiredInt } from '@/lib/env';
+import type { RowDataPacket } from 'mysql2/promise';
 
-const DB_NAME = process.env.MYSQL_DATABASE || 'demandkb_lms1';
+const DB_NAME = getRequiredEnv('DB_NAME');
 
 const pool = mysql.createPool({
-  host: process.env.MYSQL_HOST || 'localhost',
-  user: process.env.MYSQL_USER || 'root',
-  password: process.env.MYSQL_PASSWORD || '',
+  host: getRequiredEnv('DB_HOST'),
+  user: getRequiredEnv('DB_USER'),
+  password: getRequiredEnv('DB_PASSWORD'),
   database: DB_NAME,
   waitForConnections: true,
-  connectionLimit: 10
+  connectionLimit: 10,
+  port: getRequiredInt('DB_PORT')
 });
 
 async function ensureSchema() {
@@ -48,19 +51,20 @@ export async function GET(req: NextRequest) {
     if (!email) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
     // 1) Find user's assigned extension
-    const [urows] = await pool.execute(`SELECT extension FROM ${DB_NAME}.users WHERE email = ? LIMIT 1`, [email]);
-    // @ts-ignore
-    const user = Array.isArray(urows) && urows.length ? urows[0] : null;
+    const [urows] = await pool.execute<RowDataPacket[]>(
+      `SELECT extension FROM ${DB_NAME}.users WHERE email = ? LIMIT 1`,
+      [email]
+    );
+    const user = urows && urows.length ? (urows[0] as RowDataPacket) : null;
     const ext = (user?.extension || '').toString();
     if (!ext) return NextResponse.json({ extension: '', password: '', assigned: false });
 
     // 2) Get credentials for that extension
-    const [erows] = await pool.execute(
+    const [erows] = await pool.execute<RowDataPacket[]>(
       `SELECT extension, username, password FROM ${DB_NAME}.extensions WHERE extension = ? LIMIT 1`,
       [ext]
     );
-    // @ts-ignore
-    const rec = Array.isArray(erows) && erows.length ? erows[0] : null;
+    const rec = erows && erows.length ? (erows[0] as RowDataPacket) : null;
     if (!rec) return NextResponse.json({ extension: ext, password: '', assigned: true, found: false });
 
     return NextResponse.json({

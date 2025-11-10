@@ -2,15 +2,18 @@ export const runtime = 'nodejs';
 
 import mysql from 'mysql2/promise';
 import { NextResponse } from 'next/server';
+import { getRequiredEnv, getRequiredInt } from '@/lib/env';
+import { createLogger } from '@/lib/logger';
 
-const DB_NAME = process.env.DB_NAME || 'demandkb_lms1';
+const logger = createLogger('call-data:list');
+const DB_NAME = getRequiredEnv('DB_NAME');
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || '127.0.0.1',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  host: getRequiredEnv('DB_HOST'),
+  user: getRequiredEnv('DB_USER'),
+  password: getRequiredEnv('DB_PASSWORD'),
   database: DB_NAME,
-  port: Number(process.env.DB_PORT || 3306),
+  port: getRequiredInt('DB_PORT'),
   waitForConnections: true,
   connectionLimit: 5
 });
@@ -34,7 +37,7 @@ export async function GET(req: Request) {
     const [rows] = await pool.execute(sql, params);
     return NextResponse.json({ data: rows });
   } catch (err: any) {
-    console.error('call-data/list GET error', err);
+    logger.error('GET error', { error: String(err?.message || err) });
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }

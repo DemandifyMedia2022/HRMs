@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { createLogger } from '@/lib/logger';
 
 const prisma = new PrismaClient();
+const logger = createLogger('events');
 
 // GET all events or filter by date range
 export async function GET(request: NextRequest) {
@@ -63,7 +65,7 @@ export async function GET(request: NextRequest) {
       data: serializedEvents
     });
   } catch (error) {
-    console.error('Events GET error:', error);
+    logger.error('GET error', { error: error instanceof Error ? error.message : 'Unknown error' });
     return NextResponse.json(
       {
         success: false,
@@ -111,7 +113,7 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Events POST error:', error);
+    logger.error('POST error', { error: error instanceof Error ? error.message : 'Unknown error' });
     return NextResponse.json(
       {
         success: false,
@@ -160,7 +162,7 @@ export async function PUT(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Events PUT error:', error);
+    logger.error('PUT error', { error: error instanceof Error ? error.message : 'Unknown error' });
     return NextResponse.json(
       {
         success: false,
@@ -198,7 +200,7 @@ export async function DELETE(request: NextRequest) {
       message: 'Event deleted successfully!'
     });
   } catch (error) {
-    console.error('Events DELETE error:', error);
+    logger.error('DELETE error', { error: error instanceof Error ? error.message : 'Unknown error' });
     return NextResponse.json(
       {
         success: false,

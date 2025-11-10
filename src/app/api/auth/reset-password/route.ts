@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
+import { handleError } from '@/lib/error-handler';
+import crypto from 'crypto';
 
 const OTP_TTL_MINUTES = Number(process.env.OTP_TTL_MINUTES || 15);
+
+function validatePassword(password: string): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (password.length < 8) errors.push('Password must be at least 8 characters long');
+  if (!/[a-z]/.test(password)) errors.push('Password must contain at least one lowercase letter');
+  if (!/[A-Z]/.test(password)) errors.push('Password must contain at least one uppercase letter');
+  if (!/[0-9]/.test(password)) errors.push('Password must contain at least one number');
+  if (!/[^a-zA-Z0-9]/.test(password)) errors.push('Password must contain at least one special character');
+  const common = ['password', '12345678', 'qwerty', 'abc123'];
+  if (common.some(c => password.toLowerCase().includes(c))) errors.push('Password is too common');
+  return { valid: errors.length === 0, errors };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +26,20 @@ export async function POST(req: NextRequest) {
     }
 
     const rec = await (prisma as any).password_reset_tokens.findUnique({ where: { email } });
-    if (!rec || String(rec.token) !== String(otp)) {
+    if (!rec) {
+      // Perform dummy constant-time op to reduce timing side-channel on unknown emails
+      crypto.timingSafeEqual(Buffer.from('dummy'), Buffer.from('dummy'));
+      return NextResponse.json({ message: 'Invalid OTP' }, { status: 400 });
+    }
+
+    function constantTimeEquals(a: string, b: string): boolean {
+      if (a.length !== b.length) return false;
+      const aBuf = Buffer.from(a, 'utf8');
+      const bBuf = Buffer.from(b, 'utf8');
+      return crypto.timingSafeEqual(aBuf, bBuf);
+    }
+
+    if (!constantTimeEquals(String(rec.token), String(otp))) {
       return NextResponse.json({ message: 'Invalid OTP' }, { status: 400 });
     }
 
@@ -24,6 +51,14 @@ export async function POST(req: NextRequest) {
         await (prisma as any).password_reset_tokens.delete({ where: { email } }).catch(() => {});
         return NextResponse.json({ message: 'OTP expired' }, { status: 400 });
       }
+    }
+
+    const validation = validatePassword(newPassword);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { message: 'Password does not meet requirements', errors: validation.errors },
+        { status: 400 }
+      );
     }
 
     const user = await (prisma as any).users.findUnique({ where: { email } });
@@ -40,6 +75,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: 'Password updated' });
   } catch (e: any) {
-    return NextResponse.json({ message: 'Reset error', details: e?.message }, { status: 500 });
+    return handleError(e, req);
   }
 }

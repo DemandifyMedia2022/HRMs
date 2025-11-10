@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('payroll:professional-tax-slabs');
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,9 +29,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch professional tax slabs from database (matches Laravel: DB::table('slabs')->get())
-    console.log('Fetching data from slabs table...');
+    logger.debug('Fetching data from slabs table...');
     const slabs = await prisma.slabs.findMany();
-    console.log('Fetched slab records:', slabs.length);
+    logger.info('Fetched slab records', { count: slabs.length });
 
     // Use first record if multiple exist, or return defaults if none
     const slab = slabs.length > 0 ? slabs[0] : null;
@@ -149,7 +152,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error: any) {
-    console.error('Error fetching professional tax slabs:', error);
+    logger.error('Error fetching professional tax slabs', { error: error?.message });
     return NextResponse.json(
       { success: false, error: 'Failed to fetch professional tax slabs', details: error.message },
       { status: 500 }
@@ -272,8 +275,7 @@ export async function POST(request: NextRequest) {
 
     // Laravel: DB::table('slabs')->updateOrInsert($match, $data)
     // Prisma equivalent: upsert with where condition
-    console.log('Performing updateOrInsert with match:', matchCondition);
-    console.log('Data to save:', slabData);
+    logger.debug('Performing updateOrInsert', { match: matchCondition });
 
     // Check if record exists with state and branch
     const existingSlab = await prisma.slabs.findFirst({
@@ -283,14 +285,14 @@ export async function POST(request: NextRequest) {
     let result;
     if (existingSlab) {
       // Update existing slab (matches updateOrInsert update behavior)
-      console.log('Updating existing slab with id:', existingSlab.id);
+      logger.info('Updating existing slab', { id: String(existingSlab.id) });
       result = await prisma.slabs.update({
         where: { id: existingSlab.id },
         data: slabData
       });
     } else {
       // Create new slab (matches updateOrInsert insert behavior)
-      console.log('Creating new slab for state:', matchCondition.state, 'branch:', slabData.branch);
+      logger.info('Creating new slab', { state: matchCondition.state, branch: slabData.branch });
       result = await prisma.slabs.create({
         data: slabData
       });
@@ -302,7 +304,7 @@ export async function POST(request: NextRequest) {
       id: String(result.id)
     };
 
-    console.log('Saved successfully, returning result');
+    logger.info('Saved successfully');
 
     return NextResponse.json({
       success: true,
@@ -310,7 +312,7 @@ export async function POST(request: NextRequest) {
       data: resultData
     });
   } catch (error: any) {
-    console.error('Error saving professional tax slabs:', error);
+    logger.error('Error saving professional tax slabs', { error: error?.message });
     return NextResponse.json(
       { success: false, error: 'Failed to save professional tax slabs', details: error.message },
       { status: 500 }

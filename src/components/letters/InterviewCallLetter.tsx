@@ -65,13 +65,13 @@ export const InterviewCallLetter: React.FC<InterviewCallLetterProps> = ({ data }
           <strong>To:</strong>
           <br />
           <b>
-            {data.salutation}. {capitalizedName}
+            {data.salutation} {capitalizedName}
           </b>
         </p>
         <br />
 
         <p>
-          Dear {data.salutation}. {capitalizedName},
+          Dear {data.salutation} {capitalizedName},
         </p>
         <br />
 

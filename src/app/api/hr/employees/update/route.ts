@@ -6,6 +6,11 @@ import { promises as fs } from 'fs';
 import crypto from 'crypto';
 import { encryptPatch } from '@/lib/crypto';
 import { requireRoles } from '@/lib/middleware';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('hr:employees:update');
+
+const MAX_DOC_SIZE = 50 * 1024 * 1024;
 
 // Allowlist of updatable fields in users table (Prisma model fields)
 const ALLOWED: Record<string, true> = {
@@ -131,9 +136,13 @@ export async function POST(req: NextRequest) {
         await fs.mkdir(dir, { recursive: true });
       }
       async function saveFile(file: File, folder: string) {
+        if (file.size > MAX_DOC_SIZE) {
+          throw new Error(`File size exceeds maximum allowed size of ${Math.floor(MAX_DOC_SIZE / 1024 / 1024)}MB`);
+        }
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
         const kind = detectAllowed(buffer);
+
         if (!kind) throw new Error('Unsupported file type');
         const ext = path.extname(file.name) || '';
         const base = path.basename(file.name, ext).replace(/[^a-z0-9_-]/gi, '_');
@@ -247,8 +256,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    console.error('/api/hr/employees/update error:', e);
     const msg = typeof e?.message === 'string' ? e.message : 'Failed to update employee';
+    logger.error('update error', { error: msg });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

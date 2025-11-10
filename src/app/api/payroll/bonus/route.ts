@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { createLogger } from '@/lib/logger';
 
 const prisma = new PrismaClient();
+const logger = createLogger('payroll:bonus');
 
 // GET - Fetch bonus settings
 export async function GET(req: NextRequest) {
@@ -13,7 +15,7 @@ export async function GET(req: NextRequest) {
       data: bonus.length > 0 ? bonus[0] : null
     });
   } catch (error: any) {
-    console.error('Error fetching bonus:', error);
+    logger.error('Error fetching bonus', { error: error?.message });
     return NextResponse.json({ success: false, error: error.message || 'Failed to fetch bonus data' }, { status: 500 });
   } finally {
     await prisma.$disconnect();
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
       data: result
     });
   } catch (error: any) {
-    console.error('Error saving bonus:', error);
+    logger.error('Error saving bonus', { error: error?.message });
     return NextResponse.json({ success: false, error: error.message || 'Failed to save bonus data' }, { status: 500 });
   } finally {
     await prisma.$disconnect();

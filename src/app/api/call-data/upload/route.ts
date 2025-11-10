@@ -4,6 +4,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { requireAuth } from '@/lib/middleware';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('call-data:upload');
+
+const MAX_AUDIO_SIZE = 100 * 1024 * 1024;
 
 function detectAudioType(buf: Buffer): 'webm' | 'ogg' | 'wav' | 'mp3' | null {
   if (buf.length >= 4 && buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) return 'webm'; // EBML
@@ -22,6 +27,13 @@ export async function POST(req: NextRequest) {
     const file = formData.get('file') as File | null;
     if (!file) return NextResponse.json({ error: 'Missing file' }, { status: 400 });
 
+    if (file.size > MAX_AUDIO_SIZE) {
+      return NextResponse.json(
+        { error: `File size exceeds maximum allowed size of ${Math.floor(MAX_AUDIO_SIZE / 1024 / 1024)}MB` },
+        { status: 413 }
+      );
+    }
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const baseDir = path.join(process.cwd(), 'uploads', 'call-recordings');
@@ -37,7 +49,7 @@ export async function POST(req: NextRequest) {
     const url = `/api/files/call-recordings/${safeName}`;
     return NextResponse.json({ url });
   } catch (err: any) {
-    console.error('upload error', err);
+    logger.error('upload error', { error: String(err?.message || err) });
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }

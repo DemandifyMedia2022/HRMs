@@ -294,12 +294,12 @@ export default function EmployeeSalaryStructurePage() {
               <header className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <Link href="/payroll/employee-salary">
+                    <Link href="/pages/hr/payroll/employee-salary-structure">
                       <Button variant="ghost" size="sm">
                         ← Back
                       </Button>
                     </Link>
-                    <Link href="/dashboard">
+                    <Link href="/pages/hr">
                       <Button variant="ghost" size="sm">
                         Dashboard
                       </Button>

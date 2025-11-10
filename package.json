@@ -47,6 +47,7 @@
     "html2canvas": "^1.4.1",
     "html2pdf": "^0.0.11",
     "html2pdf.js": "^0.12.1",
+    "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.3",
     "jssip": "^3.10.1",
@@ -84,17 +85,26 @@
     "typescript": "^5"
   },
   "eslintConfig": {
-    "extends": ["next/core-web-vitals"],
+    "extends": [
+      "next/core-web-vitals"
+    ],
     "rules": {
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": [
         "warn",
-        { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "ignoreRestSiblings": true }
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "ignoreRestSiblings": true
+        }
       ]
     },
     "overrides": [
       {
-        "files": ["src/**/*.d.ts", "src/types/**/*.d.ts"],
+        "files": [
+          "src/**/*.d.ts",
+          "src/types/**/*.d.ts"
+        ],
         "rules": {
           "@typescript-eslint/no-explicit-any": "off"
         }

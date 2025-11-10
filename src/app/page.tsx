@@ -43,8 +43,8 @@ function HomePageInner() {
     setLoading(true);
     
     try {
-      // STEP 1: Login - Validate credentials and get token
-      // "You say you're Sir Email-Password? Here's your entry token."
+      // STEP 1: Login - Validate credentials; server sets httpOnly cookies
+      // "You say you're Sir Email-Password? Here's your entry token (cookie)."
       if (CAN_LOG) console.log(' Sending login request...');
       const loginRes = await fetch('/api/auth/login', {
         method: 'POST',
@@ -61,78 +61,22 @@ function HomePageInner() {
       }
       
       const loginData = await loginRes.json();
-      
-      if (!loginData.success || !loginData.token) {
-        setError('Login failed. No token received.');
+      if (!loginData?.success) {
+        setError('Login failed');
         setLoading(false);
         return;
       }
 
-      if (CAN_LOG) {
-        console.log(' Token generated');
-        console.log('🔐 Encrypted Token:', loginData.token);
-        console.log('👤 User ID:', loginData.userId);
-      }
-
-      // STEP 2: Validate token
-      // "Show token. Let me verify it's authentic."
-      if (CAN_LOG) console.log('\n Validating token...');
-      const validateRes = await fetch('/api/auth/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: loginData.token })
-      });
-
-      if (!validateRes.ok) {
-        const data = await validateRes.json().catch(() => ({}));
-        setError(data?.message || 'Token validation failed');
+      // STEP 2: Read session via /api/auth/me (relies on httpOnly cookie)
+      if (CAN_LOG) console.log(' Checking session via /api/auth/me ...');
+      const meRes = await fetch('/api/auth/me', { credentials: 'include' });
+      if (!meRes.ok) {
+        setError('Session check failed');
         setLoading(false);
         return;
       }
-
-      const validateData = await validateRes.json();
-      
-      if (!validateData.success) {
-        setError('Token validation failed');
-        setLoading(false);
-        return;
-      }
-
-      if (CAN_LOG) {
-        console.log(' Token is valid');
-        console.log('📋 Validation Response:', validateData);
-      }
-
-      // STEP 3: Fetch user details with validated token
-      // "Let me check your official scrolls... oh you're a Knight (role admin)."
-      if (CAN_LOG) console.log('\nFetching user details from database...');
-      const detailsRes = await fetch('/api/auth/user-details', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: loginData.token })
-      });
-
-      if (!detailsRes.ok) {
-        const data = await detailsRes.json().catch(() => ({}));
-        setError(data?.message || 'Failed to fetch user details');
-        setLoading(false);
-        return;
-      }
-
-      const detailsData = await detailsRes.json();
-      
-      if (!detailsData.success) {
-        setError('Failed to fetch user details');
-        setLoading(false);
-        return;
-      }
-      
-      if (CAN_LOG) {
-        console.log('User details retrieved');
-        console.log('Role:', detailsData?.user?.role ?? detailsData?.role);
-      }
-
-      const role = String((detailsData?.user?.role ?? detailsData?.role ?? 'user')).toLowerCase();
+      const meData = await meRes.json();
+      const role = String(meData?.role || 'user').toLowerCase();
 
       // STEP 4: Redirect based on role
       // "Proceed to your designated area."

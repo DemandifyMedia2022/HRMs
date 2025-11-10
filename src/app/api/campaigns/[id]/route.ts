@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
+import { getRequiredEnv, getRequiredInt } from '@/lib/env';
 
-const DB_NAME = process.env.MYSQL_DATABASE || 'demandkb_lms1';
+const DB_NAME = getRequiredEnv('DB_NAME');
 
 const pool = mysql.createPool({
-  host: process.env.MYSQL_HOST || 'localhost',
-  user: process.env.MYSQL_USER || 'root',
-  password: process.env.MYSQL_PASSWORD || '',
+  host: getRequiredEnv('DB_HOST'),
+  user: getRequiredEnv('DB_USER'),
+  password: getRequiredEnv('DB_PASSWORD'),
   database: DB_NAME,
   waitForConnections: true,
-  connectionLimit: 10
+  connectionLimit: 10,
+  port: getRequiredInt('DB_PORT')
 });
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {

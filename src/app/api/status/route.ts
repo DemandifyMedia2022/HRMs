@@ -1,13 +1,12 @@
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
+import { handleError } from '@/lib/error-handler';
+import { getRequiredEnv, getRequiredInt } from '@/lib/env';
 
 export async function GET(req: Request) {
   try {
-    const DB_NAME = process.env.DB_NAME;
-    if (!DB_NAME) {
-      return NextResponse.json({ error: 'DB_NAME env not set' }, { status: 500 });
-    }
+    const DB_NAME = getRequiredEnv('DB_NAME');
     const { searchParams } = new URL(req.url);
     const page = Math.max(1, Number(searchParams.get('page') || 1));
     const pageSize = Math.min(100, Math.max(1, Number(searchParams.get('pageSize') || 20)));
@@ -16,11 +15,11 @@ export async function GET(req: Request) {
     const mysql = await import('mysql2/promise');
 
     const pool = mysql.createPool({
-      host: process.env.DB_HOST || '127.0.0.1',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
       database: DB_NAME,
-      port: Number(process.env.DB_PORT || 3306),
+      port: getRequiredInt('DB_PORT'),
       waitForConnections: true,
       connectionLimit: 5
     });
@@ -52,7 +51,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ data: rows, total, page, pageSize });
   } catch (err: any) {
-    console.error('Error fetching status:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return handleError(err, req);
   }
 }

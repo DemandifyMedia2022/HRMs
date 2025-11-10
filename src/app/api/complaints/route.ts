@@ -5,6 +5,37 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { requireAuth } from '@/lib/middleware';
+import { createLogger } from '@/lib/logger';
+import { z } from 'zod';
+
+const logger = createLogger('complaints');
+
+const MAX_ATTACHMENT_SIZE = 50 * 1024 * 1024;
+
+const complaintSchema = z.object({
+  name: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces'),
+  department: z.enum(['sales', 'marketing', 'quality', 'it', 'csm', 'operation', 'development', 'hr']),
+  Complaint_Type: z.enum([
+    'Technical',
+    'Non-Technical',
+    'HR',
+    'Admin',
+    // Additional values observed in downstream switch/use
+    'HRMs',
+    'HARITECH HRMS Portal Issue',
+    'HariDialer',
+    'HR-related',
+    'Other',
+    'General'
+  ]),
+  Technical_SubType: z.string().optional(),
+  Reson: z.string().min(10).max(1000),
+  added_by_user: z.string().email()
+});
 
 export async function GET(req: Request) {
   try {
@@ -60,21 +91,41 @@ export async function POST(req: NextRequest) {
     const auth = requireAuth(req);
     if (auth instanceof NextResponse) return auth;
     const formData = await req.formData();
-    const name = formData.get('name') as string;
-    const department = formData.get('department') as string;
-    const complaintType = formData.get('Complaint_Type') as string;
-    const technicalSubType = formData.get('Technical_SubType') as string;
-    const reason = formData.get('Reson') as string;
-    const addedByUser = (formData.get('added_by_user') as string) || 'unknown';
-    const attachmentFile = formData.get('Attachment') as File | null;
+    const candidate = {
+      name: formData.get('name'),
+      department: formData.get('department'),
+      Complaint_Type: formData.get('Complaint_Type'),
+      Technical_SubType: formData.get('Technical_SubType') ?? undefined,
+      Reson: formData.get('Reson'),
+      added_by_user: formData.get('added_by_user')
+    } as Record<string, unknown>;
 
-    if (!name || !department || !complaintType || !reason) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const validation = complaintSchema.safeParse(candidate);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: validation.error.issues },
+        { status: 400 }
+      );
     }
+
+    const validated = validation.data;
+    const name = validated.name;
+    const department = validated.department;
+    const complaintType = validated.Complaint_Type;
+    const technicalSubType = validated.Technical_SubType || '';
+    const reason = validated.Reson;
+    const addedByUser = validated.added_by_user;
+    const attachmentFile = formData.get('Attachment') as File | null;
 
     let attachmentPath: string | null = null;
     if (attachmentFile && attachmentFile.size > 0) {
       try {
+        if (attachmentFile.size > MAX_ATTACHMENT_SIZE) {
+          return NextResponse.json(
+            { error: `File size exceeds maximum allowed size of ${Math.floor(MAX_ATTACHMENT_SIZE / 1024 / 1024)}MB` },
+            { status: 413 }
+          );
+        }
         const bytes = await attachmentFile.arrayBuffer();
         const buffer = Buffer.from(bytes);
         const kind = detectAllowed(buffer);
@@ -94,11 +145,10 @@ export async function POST(req: NextRequest) {
         if (existsSync(filePath)) {
           attachmentPath = `/api/files/complaint_attachments/${fileName}`;
         } else {
-          console.error('File was not saved:', filePath);
+          logger.error('File was not saved');
         }
       } catch (uploadError) {
-        console.error('File upload error:', uploadError);
-        console.error('Upload directory:', join(process.cwd(), 'uploads', 'complaint_attachments'));
+        logger.error('File upload error', { error: (uploadError as any)?.message });
       }
     }
 
@@ -147,11 +197,8 @@ export async function POST(req: NextRequest) {
           break;
       }
 
-      // Get user email for reply-to only
-      const userRow = await prisma.$queryRaw<Array<{ email: string | null }>>`
-        SELECT email FROM users WHERE Full_name = ${addedByUser} OR name = ${addedByUser} LIMIT 1
-      `;
-      const userEmail = userRow?.[0]?.email ? String(userRow[0].email) : undefined;
+      // Use provided user email for reply-to
+      const userEmail = addedByUser || undefined;
 
       // Send only to department email, not to the user
       const recipients = [deptEmail];
@@ -197,7 +244,7 @@ export async function POST(req: NextRequest) {
         text: `New complaint by ${name} (${userEmail || 'N/A'}). Department: ${department}. Type: ${fullType}. Reason: ${String(reason)}. View: ${link}`
       });
     } catch (emailError) {
-      console.error('Failed to send email:', emailError);
+      logger.error('Failed to send email', { error: (emailError as any)?.message });
       // Continue even if email fails
     }
 
@@ -207,6 +254,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (e: any) {
     const message = typeof e?.message === 'string' ? e.message : 'Failed to create complaint';
+    logger.error('Create complaint error', { error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -288,7 +336,7 @@ export async function PATCH(req: Request) {
           });
         }
       } catch (emailError) {
-        console.error('Failed to send acknowledgment email:', emailError);
+        logger.error('Failed to send acknowledgment email', { error: (emailError as any)?.message });
         // Don't fail the request if email fails
       }
     }
@@ -338,7 +386,7 @@ export async function PATCH(req: Request) {
           });
         }
       } catch (emailError) {
-        console.error('Failed to send resolution email:', emailError);
+        logger.error('Failed to send resolution email', { error: (emailError as any)?.message });
         // Don't fail the request if email fails
       }
     }
@@ -346,6 +394,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ ok: true, message: 'Complaint updated successfully' });
   } catch (e: any) {
     const message = typeof e?.message === 'string' ? e.message : 'Failed to update complaint';
+    logger.error('Update complaint error', { error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('payroll:tax-slabs-details');
 
 export async function GET(request: NextRequest) {
   // Authentication
@@ -16,14 +19,14 @@ export async function GET(request: NextRequest) {
   }
 
   if (!token) {
-    console.error('Tax slabs API: No token found - missing access_token cookie or authorization header');
+    logger.error('No token found');
     return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
   }
 
   try {
     verifyToken(token);
   } catch (error) {
-    console.error('Tax slabs API: Token verification failed:', error);
+    logger.error('Token verification failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return NextResponse.json({ success: false, error: 'Invalid session' }, { status: 401 });
   }
 
@@ -100,7 +103,7 @@ export async function GET(request: NextRequest) {
       );
     }
   } catch (error: any) {
-    console.error('Error fetching tax slabs:', error);
+    logger.error('Error fetching tax slabs', { error: error?.message });
     return NextResponse.json(
       { success: false, error: 'Failed to fetch tax slabs', details: error.message },
       { status: 500 }

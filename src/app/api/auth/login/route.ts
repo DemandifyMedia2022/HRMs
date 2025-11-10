@@ -1,6 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { comparePassword, generateToken, generateRefreshToken, mapTypeToRole } from '@/lib/auth';
+import { handleError } from '@/lib/error-handler';
+import { getRequiredEnv } from '@/lib/env';
+import crypto from 'crypto';
+
+const MAX_LOGIN_ATTEMPTS = Number(process.env.MAX_LOGIN_ATTEMPTS || 5);
+const LOCKOUT_DURATION_MS = Number(process.env.LOCKOUT_DURATION_MS || 15 * 60 * 1000);
+const ATTEMPT_WINDOW_SEC = Number(process.env.LOGIN_ATTEMPT_WINDOW_SEC || 60 * 60); // 1 hour window
+
+function encryptToken(plain: string): string {
+  const secret = getRequiredEnv('RESPONSE_ENC_SECRET');
+  const key = crypto.createHash('sha256').update(secret).digest();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const ciphertext = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `${iv.toString('base64')}.${ciphertext.toString('base64')}.${tag.toString('base64')}`;
+}
+
+async function checkAccountLockout(_email: string): Promise<{ locked: boolean; remainingTime?: number }> {
+  return { locked: false };
+}
+
+async function recordFailedAttempt(_email: string): Promise<void> {
+  // no-op (rate limiting/lockout disabled)
+}
+
+async function clearFailedAttempts(_email: string): Promise<void> {
+  // no-op (rate limiting/lockout disabled)
+}
 
 /**
  * POST /api/auth/login
@@ -14,16 +43,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
     }
 
+    const lock = await checkAccountLockout(email);
+    if (lock.locked) {
+      return NextResponse.json(
+        {
+          message: 'Account temporarily locked due to too many failed attempts',
+          remainingTime: lock.remainingTime
+        },
+        { status: 429 }
+      );
+    }
+
     const user = await (prisma as any).users.findUnique({ where: { email } });
     if (!user) {
+      await recordFailedAttempt(email);
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
     const dbHash: string = user.password || '';
     const normalizedHash = dbHash.startsWith('$2y$') ? '$2a$' + dbHash.slice(4) : dbHash;
     const valid = comparePassword(password, normalizedHash);
     if (!valid) {
+      await recordFailedAttempt(email);
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
+
+    await clearFailedAttempts(email);
 
     // Determine role strictly from DB `type` column
     const dept = (user as any).department ?? null;
@@ -39,17 +83,16 @@ export async function POST(req: NextRequest) {
       department: deptLower as any
     });
     const refreshToken = generateRefreshToken({ id: idNum });
-    //Heeloo
+    const isProd = process.env.NODE_ENV === 'production';
+    const csrfToken = crypto.randomUUID().replace(/-/g, '');
+    const tokenEncrypted = encryptToken(token);
     // Return ONLY token and success message - no user details yet
     const res = NextResponse.json({
       success: true,
       message: 'Login successful. Token generated.',
-      // token, // Return token for client to validate
-      // userId: idNum // Only return user ID
+      tokenEncrypted,
+      csrfToken
     });
-
-    const isProd = process.env.NODE_ENV === 'production';
-    const csrfToken = crypto.randomUUID().replace(/-/g, '');
     // Short-lived access token (e.g., 15 minutes)
     res.cookies.set('access_token', token, {
       httpOnly: true,
@@ -58,9 +101,9 @@ export async function POST(req: NextRequest) {
       path: '/',
       maxAge: 60 * 15 // 15 minutes
     });
-    // CSRF token (double-submit cookie) - non-HttpOnly so client can read and send in header
+    // CSRF token cookie (double-submit; httpOnly to prevent JS access)
     res.cookies.set('csrf_token', csrfToken, {
-      httpOnly: false,
+      httpOnly: true,
       sameSite: 'strict',
       secure: isProd,
       path: '/',
@@ -91,6 +134,6 @@ export async function POST(req: NextRequest) {
 
     return res;
   } catch (e: any) {
-    return NextResponse.json({ message: 'Login error', details: e.message }, { status: 500 });
+    return handleError(e, req);
   }
 }
