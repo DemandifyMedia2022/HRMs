@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { SidebarConfig } from '@/components/sidebar-config';
 
 type Me = { email: string; role: string; name?: string | null };
 
@@ -65,11 +64,10 @@ export default function Page() {
     load();
   }, []);
 
-  const showHr = role === 'hr' || role === 'admin';
+  const showHr = role === 'hr' || role === 'admin' || role === 'user';
 
   return (
     <div className="p-4 space-y-6">
-      <SidebarConfig role={role as any} />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Notifications</h1>
         <Button variant="outline" onClick={load} disabled={loading}>

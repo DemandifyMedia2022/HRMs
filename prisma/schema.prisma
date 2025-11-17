@@ -9,7 +9,7 @@ datasource db {
 
 model NpAttendance {
   id         Int       @id @default(autoincrement())
-  employeeId Int       @map("employee_id")
+  employeeId String    @map("employee_id") @db.VarChar(11)
   empName    String?   @map("emp_name") @db.VarChar(255)
   date       DateTime  @db.Date
   inTime     DateTime? @map("in_time") @db.Time(0)

@@ -305,31 +305,6 @@ export default function AdminPage() {
               </div>
             )}
           </div>
-          <div className="feedback-section">
-            <div className="flex items-center gap-3 flex-nowrap">
-              <button 
-                onClick={() => { resetFeedback(); setShowFeedbackModal(true); }}
-                className="inline-flex h-10 min-w-[140px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-green-600 px-4 text-sm font-semibold text-white shadow-lg hover:from-emerald-700 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-              >
-                <IconMessage className="mr-2 h-4 w-4" />
-                Survey Form
-              </button>
-              <a 
-                href="https://www.ambitionbox.com/overview/demandify-media-overview" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 px-4 text-sm font-semibold text-white shadow-lg hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                AmbitionBox
-              </a>
-              <Link
-                href="/pages/hr/survey-feedbacks"
-                className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-full bg-gradient-to-r from-slate-600 to-slate-700 px-4 text-sm font-semibold text-white shadow-lg hover:from-slate-700 hover:to-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-              >
-                All Feedbacks
-              </Link>
-            </div>
-          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

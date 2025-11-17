@@ -6,7 +6,8 @@ import { verifyToken } from '@/lib/auth';
 const protectedRoutes: Record<string, readonly string[]> = {
   '/pages/admin': ['admin'],
   '/pages/hr': ['hr'],
-  '/pages/user': ['user']
+  '/pages/user': ['user'],
+  '/pages/survey-form': ['admin', 'hr', 'user']
 };
 
 // Removed in-memory rate limiting (VULN-007 fix)
@@ -160,7 +161,8 @@ export function middleware(request: NextRequest) {
       /^\/pages\/user(\/.*)?$/,
       /^\/pages\/account$/,
       /^\/pages\/settings$/,
-      /^\/pages\/notifications$/
+      /^\/pages\/notifications$/,
+      /^\/pages\/survey-form$/
     ];
     
     const isValidPage = validPagePatterns.some(pattern => pattern.test(pathname));

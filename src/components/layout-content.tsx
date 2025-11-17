@@ -7,6 +7,7 @@ import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { SidebarConfigProvider, SidebarConfig, type UserRole } from '@/components/sidebar-config';
 import { useAuth } from '@/hooks/useAuth';
+import { HelpBotWidget } from '@/components/help-bot-widget';
 
 // Separate component for pages with sidebar to maintain consistent hook calls
 function PageWithSidebar({ children }: { children: React.ReactNode }) {
@@ -65,6 +66,7 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <SidebarConfigProvider>
       {showSidebar ? <PageWithSidebar>{children}</PageWithSidebar> : children}
+      {showSidebar && <HelpBotWidget />}
     </SidebarConfigProvider>
   );
 }

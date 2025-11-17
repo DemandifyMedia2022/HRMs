@@ -27,7 +27,9 @@ import {
   IconUserCheck,
   IconNotification,
   IconList,
-  IconClock
+  IconClock,
+  IconBriefcase,
+  IconMessage
 } from '@tabler/icons-react';
 
 import { NavDocuments } from '@/components/nav-documents';
@@ -102,7 +104,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         ]
       }
     ],
-    navSecondary: [{ title: 'Notifications', url: '/pages/notifications', icon: IconNotification }],
+    navSecondary: [{ title: 'Survey Form', url: '/pages/survey-form', icon: IconMessage }],
     documents: [
       {
         name: 'Campaigns',
@@ -160,7 +162,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         ]
       }
     ],
-    navSecondary: [{ title: ' Notifications', url: '/pages/notifications', icon: IconNotification }],
+    navSecondary: [{ title: 'Survey Form', url: '/pages/survey-form', icon: IconMessage }],
     documents: [
       {
         name: 'Operation',
@@ -253,6 +255,16 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
       },
       { title: 'Bank Challan', url: '/pages/hr/bank-challan', icon: IconCash },
       {
+        title: 'Feedback',
+        url: '#',
+        icon: IconChartBar,
+        children: [
+          { title: 'Feedback', url: '/pages/hr/survey-feedbacks', icon: IconReport },
+          { title: 'Survey Form', url: '/pages/survey-form', icon: IconFileDescription },
+          { title: 'Ambition Box', url: 'https://www.ambitionbox.com/overview/demandify-media-overview', icon: IconBriefcase }
+        ]
+      },
+      {
         title: 'Employee Details',
         url: '#',
         icon: IconFileDescription,
@@ -264,7 +276,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         ]
       }
     ],
-    navSecondary: [{ title: 'Notifications', url: '/pages/notifications', icon: IconNotification }],
+    navSecondary: [],
     documents: [
       { name: 'Letter Generation', url: '/pages/hr/letter-generation', icon: IconFileWord },
       { name: 'Events', url: '/pages/hr/events', icon: IconCalendar }
