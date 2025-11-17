@@ -16,6 +16,7 @@ model NpAttendance {
   outTime    DateTime? @map("out_time") @db.Time(0)
   loginHours DateTime? @map("login_hours") @db.Time(0)
   status     String?   @db.VarChar(255)
+  shiftTime  String?   @map("shift_time") @db.VarChar(255)
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
   totalHours DateTime? @map("total_hours") @db.Time(0)
@@ -179,6 +180,125 @@ model shift_time {
   group_name   String @db.VarChar(255)
 }
 
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model dm_form {
+  f_id              Int      @id @default(autoincrement())
+  f_campaign_name   String?  @db.VarChar(255)
+  f_lead            String?  @db.VarChar(255)
+  f_resource_name   String?  @db.VarChar(255)
+  f_data_source     String?  @db.VarChar(255)
+  f_salutation      String?  @db.VarChar(255)
+  f_first_name      String?  @db.Text
+  f_last_name       String?  @db.Text
+  f_job_title       String?  @db.VarChar(255)
+  f_department      String?  @db.VarChar(255)
+  f_job_level       String?  @db.VarChar(255)
+  f_email_add       String?  @db.VarChar(255)
+  Secondary_Email   String?  @db.VarChar(255)
+  f_conatct_no      String?  @db.VarChar(50)
+  f_company_name    String?  @db.VarChar(255)
+  f_website         String?  @db.VarChar(1000)
+  f_address1        String?  @db.VarChar(1000)
+  f_city            String?  @db.VarChar(255)
+  f_state           String?  @db.VarChar(255)
+  f_zip_code        String?  @db.VarChar(255)
+  f_country         String?  @db.VarChar(255)
+  f_emp_size        String?  @db.VarChar(255)
+  f_industry        String?  @db.VarChar(255)
+  f_sub_industry    String?  @db.VarChar(255)
+  f_revenue         String?  @db.VarChar(255)
+  f_revenue_link    String?  @db.VarChar(1000)
+  f_profile_link    String?  @db.Text
+  f_company_link    String?  @db.Text
+  f_address_link    String?  @db.Text
+  f_cq1             String?  @db.VarChar(255)
+  f_cq2             String?  @db.Text
+  f_cq3             String?  @db.VarChar(255)
+  f_cq4             String?  @db.VarChar(255)
+  f_cq5             String?  @db.VarChar(255)
+  f_cq6             String?  @db.VarChar(255)
+  f_cq7             String?  @db.VarChar(255)
+  f_cq8             String?  @db.VarChar(255)
+  f_cq9             String?  @db.VarChar(255)
+  f_cq10            String?  @db.VarChar(255)
+  f_asset_name1     String?  @db.VarChar(255)
+  f_asset_name2     String?  @db.VarChar(255)
+  f_call_recording  String?  @db.VarChar(255)
+  f_email_status    String?  @db.VarChar(255)
+  f_qa_status       String?  @db.VarChar(255)
+  f_dq_reason1      String?  @db.VarChar(255)
+  f_dq_reason2      String?  @db.VarChar(255)
+  f_dq_reason3      String?  @db.VarChar(255)
+  f_dq_reason4      String?  @db.VarChar(255)
+  f_qa_comments     String?  @db.Text
+  f_call_rating     String?  @db.VarChar(255)
+  f_call_notes      String?  @db.Text
+  feedback          String?  @db.Text
+  f_call_links      String?  @db.VarChar(255)
+  f_qa_name         String?  @db.VarChar(255)
+  f_audit_date      String?  @db.VarChar(55)
+  f_delivary_status String?  @db.VarChar(11)
+  f_delivary_date   String?  @db.VarChar(11)
+  f_delivary_by     String?  @db.VarChar(11)
+  f_reject_reason   String?  @db.VarChar(255)
+  added_by_user_id  String?  @db.VarChar(55)
+  qualifyleads_by   String?  @db.VarChar(255)
+  f_date            DateTime @default(now()) @db.Timestamp(0)
+  form_status       Int
+  f_script_url      String?  @db.VarChar(512)
+}
+
+model campaigns {
+  id              BigInt    @id @default(autoincrement())
+  c_id            String    @db.VarChar(64)
+  f_campaign_name String    @db.VarChar(255)
+  f_start_date    DateTime? @db.Date
+  f_end_date      DateTime? @db.Date
+  f_assignto      String?   @db.VarChar(255)
+  f_allocation    Int?
+  f_method        String?   @db.VarChar(255)
+  f_script        String?   @db.Text
+  f_script_url    String?   @db.VarChar(512)
+  f_status        Boolean   @default(true)
+  created_at      DateTime  @default(now()) @db.Timestamp(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model attendance {
+  id                     Int       @id @default(autoincrement())
+  name                   String?   @db.VarChar(255)
+  username               String?   @db.VarChar(255)
+  email                  String    @db.VarChar(255)
+  date                   DateTime  @db.Date
+  shift_time             String    @db.VarChar(55)
+  new_shift_time         String?   @db.VarChar(255)
+  login_time             String    @db.VarChar(255)
+  added_by_user          String?   @db.VarChar(255)
+  logout_time            String    @db.VarChar(255)
+  logout_reason          String    @db.VarChar(11)
+  login_hours            String    @db.VarChar(55)
+  login_status           String?   @db.VarChar(255)
+  status                 String    @db.VarChar(11)
+  morning_break_start    DateTime? @db.Time(0)
+  morning_break_end      DateTime? @db.Time(0)
+  morning_break_duration String?   @db.VarChar(255)
+  lunch_break_start      DateTime? @db.Time(0)
+  lunch_break_end        DateTime? @db.Time(0)
+  lunch_break_duration   String?   @db.VarChar(255)
+  evening_break_start    DateTime? @db.Time(0)
+  evening_break_end      DateTime? @db.Time(0)
+  evening_break_duration String?   @db.VarChar(255)
+  idle_time              DateTime? @db.Time(0)
+  created_at             DateTime? @db.Timestamp(0)
+  updated_at             DateTime? @db.Timestamp(0)
+  password               String    @db.VarChar(255)
+  type                   String    @db.VarChar(255)
+  start_time             DateTime? @db.Time(0)
+  end_time               DateTime? @db.Time(0)
+  working_hours          DateTime? @db.Time(0)
+  short_break_duration   DateTime? @default(dbgenerated("('00:00:00')")) @db.Time(0)
+}
+
 model birthday_wishes {
   id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
   user_id    BigInt    @db.UnsignedBigInt
@@ -192,6 +312,25 @@ model bonus {
   id      Int     @id @default(autoincrement())
   user_id Int?
   bonus   String? @db.VarChar(255)
+}
+
+model call_data {
+  id               BigInt    @id @default(autoincrement())
+  extension        String?   @db.VarChar(64)
+  destination      String?   @db.VarChar(64)
+  direction        String?   @db.VarChar(16)
+  status           String?   @db.VarChar(32)
+  start_time       DateTime? @db.DateTime(0)
+  answer_time      DateTime? @db.DateTime(0)
+  end_time         DateTime? @db.DateTime(0)
+  duration_seconds Int?
+  cause            String?   @db.VarChar(255)
+  meta             String?   @db.Text
+  created_at       DateTime  @default(now()) @db.Timestamp(0)
+  user_name        String?   @db.VarChar(255)
+  recording_url    String?   @db.Text
+  source_number    String?   @db.VarChar(64)
+  region           String?   @db.VarChar(64)
 }
 
 model deleted_user_informations {
@@ -323,74 +462,6 @@ model dispositions {
   dispositions String? @db.VarChar(255)
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model dm_form {
-  f_id              Int      @id @default(autoincrement())
-  f_campaign_name   String?  @db.VarChar(255)
-  f_lead            String?  @db.VarChar(255)
-  f_resource_name   String?  @db.VarChar(255)
-  f_data_source     String?  @db.VarChar(255)
-  f_salutation      String?  @db.VarChar(255)
-  f_first_name      String?  @db.Text
-  f_last_name       String?  @db.Text
-  f_job_title       String?  @db.VarChar(255)
-  f_department      String?  @db.VarChar(255)
-  f_job_level       String?  @db.VarChar(255)
-  f_email_add       String?  @db.VarChar(255)
-  Secondary_Email   String?  @db.VarChar(255)
-  f_conatct_no      String?  @db.VarChar(50)
-  f_company_name    String?  @db.VarChar(255)
-  f_website         String?  @db.VarChar(1000)
-  f_address1        String?  @db.VarChar(1000)
-  f_city            String?  @db.VarChar(255)
-  f_state           String?  @db.VarChar(255)
-  f_zip_code        String?  @db.VarChar(255)
-  f_country         String?  @db.VarChar(255)
-  f_emp_size        String?  @db.VarChar(255)
-  f_industry        String?  @db.VarChar(255)
-  f_sub_industry    String?  @db.VarChar(255)
-  f_revenue         String?  @db.VarChar(255)
-  f_revenue_link    String?  @db.VarChar(1000)
-  f_profile_link    String?  @db.Text
-  f_company_link    String?  @db.Text
-  f_address_link    String?  @db.Text
-  f_cq1             String?  @db.VarChar(255)
-  f_cq2             String?  @db.Text
-  f_cq3             String?  @db.VarChar(255)
-  f_cq4             String?  @db.VarChar(255)
-  f_cq5             String?  @db.VarChar(255)
-  f_cq6             String?  @db.VarChar(255)
-  f_cq7             String?  @db.VarChar(255)
-  f_cq8             String?  @db.VarChar(255)
-  f_cq9             String?  @db.VarChar(255)
-  f_cq10            String?  @db.VarChar(255)
-  f_asset_name1     String?  @db.VarChar(255)
-  f_asset_name2     String?  @db.VarChar(255)
-  f_call_recording  String?  @db.VarChar(255)
-  f_email_status    String?  @db.VarChar(255)
-  f_qa_status       String?  @db.VarChar(255)
-  f_dq_reason1      String?  @db.VarChar(255)
-  f_dq_reason2      String?  @db.VarChar(255)
-  f_dq_reason3      String?  @db.VarChar(255)
-  f_dq_reason4      String?  @db.VarChar(255)
-  f_qa_comments     String?  @db.Text
-  f_call_rating     String?  @db.VarChar(255)
-  f_call_notes      String?  @db.Text
-  feedback          String?  @db.Text
-  f_call_links      String?  @db.VarChar(255)
-  f_qa_name         String?  @db.VarChar(255)
-  f_audit_date      String?  @db.VarChar(55)
-  f_delivary_status String?  @db.VarChar(11)
-  f_delivary_date   String?  @db.VarChar(11)
-  f_delivary_by     String?  @db.VarChar(11)
-  f_reject_reason   String?  @db.VarChar(255)
-  added_by_user_id  String?  @db.VarChar(55)
-  qualifyleads_by   String?  @db.VarChar(255)
-  f_date            DateTime @default(now()) @db.Timestamp(0)
-  form_status       Int
-  f_script_url      String?  @db.VarChar(512)
-}
-
 model dm_task {
   c_id            Int      @id @default(autoincrement())
   f_campaign_name String   @db.VarChar(50)
@@ -413,6 +484,15 @@ model employee_insurance {
   employee_esi String? @db.VarChar(255)
   negative     String? @db.VarChar(255)
   physical     String? @db.VarChar(255)
+}
+
+model extensions {
+  id         BigInt   @id @default(autoincrement())
+  extension  String   @unique(map: "extension") @db.VarChar(64)
+  username   String?  @db.VarChar(128)
+  password   String?  @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @default(now()) @db.Timestamp(0)
 }
 
 model failed_jobs {
@@ -571,6 +651,15 @@ model provident_fund {
   process               String?  @db.VarChar(255)
   fund                  String?  @db.VarChar(255)
   vpf                   String?  @db.VarChar(255)
+}
+
+model sip_credentials {
+  id           BigInt   @id @default(autoincrement())
+  email        String   @unique(map: "email") @db.VarChar(255)
+  extension    String?  @db.VarChar(64)
+  sip_password String?  @db.VarChar(255)
+  updated_at   DateTime @default(now()) @db.Timestamp(0)
+  created_at   DateTime @default(now()) @db.Timestamp(0)
 }
 
 model slabs {
@@ -733,108 +822,19 @@ model tax_setting {
   component              String? @db.VarChar(255)
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model attendance {
-  id                     Int       @id @default(autoincrement())
-  name                   String?   @db.VarChar(255)
-  username               String?   @db.VarChar(255)
-  email                  String    @db.VarChar(255)
-  date                   DateTime  @db.Date
-  shift_time             String    @db.VarChar(55)
-  new_shift_time         String?   @db.VarChar(255)
-  login_time             String    @db.VarChar(255)
-  added_by_user          String?   @db.VarChar(255)
-  logout_time            String    @db.VarChar(255)
-  logout_reason          String    @db.VarChar(11)
-  login_hours            String    @db.VarChar(55)
-  login_status           String?   @db.VarChar(255)
-  status                 String    @db.VarChar(11)
-  morning_break_start    DateTime? @db.Time(0)
-  morning_break_end      DateTime? @db.Time(0)
-  morning_break_duration String?   @db.VarChar(255)
-  lunch_break_start      DateTime? @db.Time(0)
-  lunch_break_end        DateTime? @db.Time(0)
-  lunch_break_duration   String?   @db.VarChar(255)
-  evening_break_start    DateTime? @db.Time(0)
-  evening_break_end      DateTime? @db.Time(0)
-  evening_break_duration String?   @db.VarChar(255)
-  idle_time              DateTime? @db.Time(0)
-  created_at             DateTime? @db.Timestamp(0)
-  updated_at             DateTime? @db.Timestamp(0)
-  password               String    @db.VarChar(255)
-  type                   String    @db.VarChar(255)
-  start_time             DateTime? @db.Time(0)
-  end_time               DateTime? @db.Time(0)
-  working_hours          DateTime? @db.Time(0)
-  short_break_duration   DateTime? @default(dbgenerated("('00:00:00')")) @db.Time(0)
-}
+model Survey_Feedback {
+  id        BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  overall   Int
+  culture   Int
+  balance   Int
+  salary    Int
+  growth    Int
+  manager   Int
+  policies  Int
+  recommend Int
+  comments  String?   @db.Text
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
 
-model call_data {
-  id               BigInt    @id @default(autoincrement())
-  extension        String?   @db.VarChar(64)
-  destination      String?   @db.VarChar(64)
-  direction        String?   @db.VarChar(16)
-  status           String?   @db.VarChar(32)
-  start_time       DateTime? @db.DateTime(0)
-  answer_time      DateTime? @db.DateTime(0)
-  end_time         DateTime? @db.DateTime(0)
-  duration_seconds Int?
-  cause            String?   @db.VarChar(255)
-  meta             String?   @db.Text
-  created_at       DateTime  @default(now()) @db.Timestamp(0)
-  user_name        String?   @db.VarChar(255)
-  recording_url    String?   @db.Text
-  source_number    String?   @db.VarChar(64)
-  region           String?   @db.VarChar(64)
-}
-
-model campaigns {
-  id              BigInt    @id @default(autoincrement())
-  c_id            String    @db.VarChar(64)
-  f_campaign_name String    @db.VarChar(255)
-  f_start_date    DateTime? @db.Date
-  f_end_date      DateTime? @db.Date
-  f_assignto      String?   @db.VarChar(255)
-  f_allocation    Int?
-  f_method        String?   @db.VarChar(255)
-  f_script        String?   @db.Text
-  f_script_url    String?   @db.VarChar(512)
-  f_status        Boolean   @default(true)
-  created_at      DateTime  @default(now()) @db.Timestamp(0)
-}
-
-model extensions {
-  id         BigInt   @id @default(autoincrement())
-  extension  String   @unique(map: "extension") @db.VarChar(64)
-  username   String?  @db.VarChar(128)
-  password   String?  @db.VarChar(255)
-  created_at DateTime @default(now()) @db.Timestamp(0)
-  updated_at DateTime @default(now()) @db.Timestamp(0)
-}
-
-model sip_credentials {
-  id           BigInt   @id @default(autoincrement())
-  email        String   @unique(map: "email") @db.VarChar(255)
-  extension    String?  @db.VarChar(64)
-  sip_password String?  @db.VarChar(255)
-  updated_at   DateTime @default(now()) @db.Timestamp(0)
-  created_at   DateTime @default(now()) @db.Timestamp(0)
-}
-
-model extensions {
-  id         BigInt   @id @default(autoincrement())
-  extension  String   @unique(map: "extension") @db.VarChar(64)
-  username   String?  @db.VarChar(128)
-  password   String?  @db.VarChar(255)
-  created_at DateTime @default(now()) @db.Timestamp(0)
-  updated_at DateTime @default(now()) @db.Timestamp(0)
-}
-
-model sip_credentials {
-  id           BigInt   @id @default(autoincrement())
-  email        String   @unique(map: "email") @db.VarChar(255)
-  extension    String?  @db.VarChar(64)
-  sip_password String?  @db.VarChar(255)
-  updated_at   DateTime @default(now()) @db.Timestamp(0)
-  created_at   DateTime @default(now()) @db.Timestamp(0)
+  @@map("Survey_Feedback")
 }

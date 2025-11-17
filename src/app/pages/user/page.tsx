@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, ReferenceLine, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
-import { IconCalendar, IconClock, IconChartDonut, IconHistory, IconGift } from '@tabler/icons-react';
+import { IconCalendar, IconClock, IconChartDonut, IconHistory, IconGift, IconMessage } from '@tabler/icons-react';
 
 export default function UserPage() {
   const { user, loading } = useRouteGuard('user');
@@ -240,6 +240,23 @@ export default function UserPage() {
             <div>
               <h1 className="text-2xl font-semibold leading-tight">Welcome, {user.name} <span className="align-middle"></span></h1>
             </div>
+          </div>
+          <div className="flex items-center gap-3 flex-nowrap">
+            <Link
+              href="/pages/hr?survey=1"
+              className="inline-flex h-10 min-w-[140px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-green-600 px-4 text-sm font-semibold text-white shadow-lg hover:from-emerald-700 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            >
+              <IconMessage className="h-4 w-4" />
+              Survey Form
+            </Link>
+            <a
+              href="https://www.ambitionbox.com/overview/demandify-media-overview"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 px-4 text-sm font-semibold text-white shadow-lg hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              AmbitionBox
+            </a>
           </div>
           {(todayEvents?.birthdays?.length || 0) > 0 || (todayEvents?.anniversaries?.length || 0) > 0 ? (
             <div className="ml-auto">

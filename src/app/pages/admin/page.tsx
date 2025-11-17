@@ -22,7 +22,7 @@ import {
   Tooltip
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
-import { IconCalendar, IconChartBar, IconChartDonut, IconUsers, IconGift } from '@tabler/icons-react';
+import { IconCalendar, IconChartBar, IconChartDonut, IconUsers, IconGift, IconMessage } from '@tabler/icons-react';
 
 export default function AdminPage() {
   const { user, loading } = useRouteGuard('admin');
@@ -209,18 +209,27 @@ export default function AdminPage() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-3">
-            
             <div>
-            <h1 className="text-2xl font-semibold">Welcome, {user.name || user.email}</h1>
+              <h1 className="text-2xl font-semibold">Welcome, {user.name || user.email}</h1>
             </div>
           </div>
-
-        {(todayEvents?.birthdays?.length || 0) > 0 || (todayEvents?.anniversaries?.length || 0) > 0 ? (
-          <div className="ml-auto">
-            
+          <div className="flex items-center gap-3 flex-nowrap">
+            <Link
+              href="/pages/hr?survey=1"
+              className="inline-flex h-10 min-w-[140px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-green-600 px-4 text-sm font-semibold text-white shadow-lg hover:from-emerald-700 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            >
+              <IconMessage className="h-4 w-4" />
+              Survey Form
+            </Link>
+            <a
+              href="https://www.ambitionbox.com/overview/demandify-media-overview"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 px-4 text-sm font-semibold text-white shadow-lg hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              AmbitionBox
+            </a>
           </div>
-        ) : null}
-
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

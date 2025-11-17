@@ -35,7 +35,9 @@ export async function GET(req: NextRequest) {
         a.status             AS status,
         s.shift_time         AS shiftTime
       FROM npattendance a
-      LEFT JOIN users u ON u.emp_code COLLATE utf8mb4_unicode_ci = a.employee_id COLLATE utf8mb4_unicode_ci
+      LEFT JOIN users u ON 
+        CONVERT(u.emp_code USING utf8mb4) COLLATE utf8mb4_unicode_ci =
+        CONVERT(a.employee_id USING utf8mb4) COLLATE utf8mb4_unicode_ci
       LEFT JOIN shift_time s ON s.biomatric_id = a.employee_id
       WHERE a.date BETWEEN ${start} AND ${end}
       ORDER BY a.employee_id ASC, a.date ASC

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { SidebarConfig } from '@/components/sidebar-config';
 import { useRouteGuard } from '@/hooks/useRouteGuard';
@@ -22,9 +23,10 @@ import {
   Tooltip
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
-import { IconCalendar, IconGift, IconChartBar } from '@tabler/icons-react';
+import { IconCalendar, IconGift, IconChartBar, IconMessage } from '@tabler/icons-react';
 
 export default function AdminPage() {
+  const searchParams = useSearchParams();
   const { user, loading } = useRouteGuard('admin');
   const [year] = useState<number>(new Date().getFullYear());
   const [month, setMonth] = useState<number>(new Date().getMonth());
@@ -60,6 +62,99 @@ export default function AdminPage() {
     year: number;
     items: { month: number; types: { type: string; count: number }[] }[];
   } | null>(null);
+  // Feedback modal state
+  interface FeedbackState {
+    overall: number;
+    culture: number;
+    balance: number;
+    salary: number;
+    growth: number;
+    manager: number;
+    policies: number;
+    recommend: number;
+    comments: string;
+  }
+
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState>({
+    overall: 0,
+    culture: 0,
+    balance: 0,
+    salary: 0,
+    growth: 0,
+    manager: 0,
+    policies: 0,
+    recommend: 0,
+    comments: ''
+  });
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showFeedbackSuccess, setShowFeedbackSuccess] = useState(false);
+
+  const resetFeedback = () => {
+    setFeedback({
+      overall: 0,
+      culture: 0,
+      balance: 0,
+      salary: 0,
+      growth: 0,
+      manager: 0,
+      policies: 0,
+      recommend: 0,
+      comments: ''
+    });
+  };
+
+  const handleFeedbackChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFeedback(prev => ({
+      ...prev,
+      [name]: name === 'comments' ? value : parseInt(value, 10)
+    }));
+  };
+
+  const handleRatingClick = (questionId: keyof FeedbackState, value: number) => {
+    setFeedback(prev => ({
+      ...prev,
+      [questionId]: value
+    }));
+  };
+
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    // Optimistically close the modal right away
+    setShowFeedbackModal(false);
+    // Immediately clear previous inputs so reopening shows a clean form
+    resetFeedback();
+    
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(feedback),
+      });
+
+      if (response.ok) {
+        setFeedbackSubmitted(true);
+        resetFeedback();
+        // ensure submitted flag reset for next open
+        setFeedbackSubmitted(false);
+        // show success toast briefly
+        setShowFeedbackSuccess(true);
+        setTimeout(() => setShowFeedbackSuccess(false), 3000);
+      } else {
+        console.error('Failed to submit feedback');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const [leaveRequests, setLeaveRequests] = useState<{
     status: string;
     total: number;
@@ -77,6 +172,14 @@ export default function AdminPage() {
   } | null>(null);
 
   // Load dashboard aggregates
+  useEffect(() => {
+    // open survey modal if ?survey=1 present
+    const s = searchParams?.get('survey');
+    if (s === '1') {
+      setShowFeedbackModal(true);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     let ignore = false;
     (async () => {
@@ -193,6 +296,39 @@ export default function AdminPage() {
           <div>
             <h1 className="text-2xl font-semibold">Welcome, {user.name || user.email}</h1>
             <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString()}</p>
+            {showFeedbackSuccess && (
+              <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+                <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Feedback submitted successfully.
+              </div>
+            )}
+          </div>
+          <div className="feedback-section">
+            <div className="flex items-center gap-3 flex-nowrap">
+              <button 
+                onClick={() => { resetFeedback(); setShowFeedbackModal(true); }}
+                className="inline-flex h-10 min-w-[140px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-green-600 px-4 text-sm font-semibold text-white shadow-lg hover:from-emerald-700 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              >
+                <IconMessage className="mr-2 h-4 w-4" />
+                Survey Form
+              </button>
+              <a 
+                href="https://www.ambitionbox.com/overview/demandify-media-overview" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 px-4 text-sm font-semibold text-white shadow-lg hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                AmbitionBox
+              </a>
+              <Link
+                href="/pages/hr/survey-feedbacks"
+                className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-full bg-gradient-to-r from-slate-600 to-slate-700 px-4 text-sm font-semibold text-white shadow-lg hover:from-slate-700 hover:to-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+              >
+                All Feedbacks
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -334,6 +470,149 @@ export default function AdminPage() {
 
         {error ? <div className="text-sm text-red-600">{error}</div> : null}
       </div>
+
+      {/* Feedback Modal */}
+      {showFeedbackModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => {
+            setShowFeedbackModal(false);
+            setFeedbackSubmitted(false);
+            resetFeedback();
+          }}
+        >
+          <div
+            className="w-full max-w-2xl my-8 rounded-2xl bg-white p-0 shadow-2xl ring-1 ring-black/5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <h2 className="text-lg font-semibold">Employee Feedback Survey</h2>
+              <button
+                onClick={() => {
+                  setShowFeedbackModal(false);
+                  setFeedbackSubmitted(false);
+                  resetFeedback();
+                }}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Close"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {feedbackSubmitted ? (
+              <div className="text-center py-8">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                  <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="mt-3 text-lg font-medium text-gray-900">Thank You!</h3>
+                <p className="mt-2 text-sm text-gray-500">Your feedback has been submitted successfully.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleFeedbackSubmit}>
+                <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pr-2 px-6 py-4">
+                  {[
+                    { id: 'overall', label: 'How would you rate your overall experience at our company?' },
+                    { id: 'culture', label: 'How would you rate our company culture?' },
+                    { id: 'balance', label: 'How would you rate your work-life balance?' },
+                    { id: 'salary', label: 'How satisfied are you with your salary and benefits?' },
+                    { id: 'growth', label: 'How would you rate your opportunities for growth and development?' },
+                    { id: 'manager', label: 'How would you rate your relationship with your manager?' },
+                    { id: 'policies', label: 'How would you rate our company policies and procedures?' },
+                    { id: 'recommend', label: 'How likely are you to recommend our company as a great place to work?' },
+                  ].map((question) => (
+                    <div key={question.id} className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        {question.label}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex items-center space-x-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => handleRatingClick(question.id as keyof FeedbackState, star)}
+                            className={`text-2xl transition-transform duration-150 ${Number(feedback[question.id as keyof FeedbackState]) >= star ? 'text-yellow-400 drop-shadow' : 'text-gray-300'} hover:text-yellow-400 hover:scale-110 focus:outline-none`}
+                            aria-label={`Rate ${star} star${star>1?'s':''}`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                        <span className="ml-2 text-sm text-gray-500">
+                          {Number(feedback[question.id as keyof FeedbackState]) || 0}/5
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div>
+                    <label htmlFor="comments" className="block text-sm font-medium text-gray-700">
+                      Additional Comments
+                    </label>
+                    <textarea
+                      id="comments"
+                      name="comments"
+                      rows={3}
+                      className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      value={feedback.comments}
+                      onChange={handleFeedbackChange}
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4 border-t mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowFeedbackModal(false)}
+                      className="rounded-full border border-gray-300 bg-white py-2 px-5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="inline-flex justify-center rounded-full border border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 py-2 px-5 text-sm font-semibold text-white shadow-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Success toast */}
+      {showFeedbackSuccess && (
+        <div
+          className="fixed bottom-6 right-6 z-[9999] flex items-start gap-3 rounded-xl border border-green-200 bg-white p-4 shadow-2xl animate-in fade-in zoom-in-95"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+            <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <div>
+            <div className="font-semibold text-gray-900">Feedback submitted</div>
+            <div className="text-sm text-gray-600">Thanks for sharing your feedback.</div>
+          </div>
+          <button
+            onClick={() => setShowFeedbackSuccess(false)}
+            className="ml-2 inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100"
+            aria-label="Dismiss notification"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
     </>
   );
 }

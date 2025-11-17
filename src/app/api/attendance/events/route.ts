@@ -46,7 +46,9 @@ export async function GET(req: NextRequest) {
         u.Full_name   AS fullName,
         a.shift_time  AS shiftTime
       FROM npattendance a
-      LEFT JOIN users u ON u.emp_code COLLATE utf8mb4_unicode_ci = a.employee_id COLLATE utf8mb4_unicode_ci
+      LEFT JOIN users u ON 
+        CONVERT(u.emp_code USING utf8mb4) COLLATE utf8mb4_unicode_ci =
+        CONVERT(a.employee_id USING utf8mb4) COLLATE utf8mb4_unicode_ci
       WHERE a.date BETWEEN ${startOfYear} AND ${endOfYear}
       ORDER BY a.employee_id ASC, a.date ASC
     `;
