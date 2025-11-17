@@ -262,9 +262,9 @@ export async function POST(request: NextRequest) {
               inTime,
               outTime,
               clockTimes: JSON.stringify(clockTimes),
-              totalHours: totalHoursDate,
-              loginHours: workingHoursDate,
-              breakHours: breakHoursDate,
+              totalHours: totalHoursDate as any,
+              loginHours: workingHoursDate as any,
+              breakHours: breakHoursDate as any,
               shiftTime: resolvedShift || undefined,
               status: statusFinal,
             },
@@ -277,9 +277,9 @@ export async function POST(request: NextRequest) {
               inTime,
               outTime,
               clockTimes: JSON.stringify(clockTimes),
-              totalHours: totalHoursDate,
-              loginHours: workingHoursDate,
-              breakHours: breakHoursDate,
+              totalHours: totalHoursDate as any,
+              loginHours: workingHoursDate as any,
+              breakHours: breakHoursDate as any,
               shiftTime: resolvedShift || existingRecord.shiftTime || undefined,
               status: statusFinal,
             },
@@ -476,7 +476,7 @@ async function handleJsonAttendance(url: string, overwriteShift?: boolean) {
         // Existing employee name from prior entries if available
         const employeeIdStr = String(employeeID);
         const existingEmployee = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeIdStr },
+          where: { employeeId: employeeIdNum as any },
           select: { empName: true },
         });
         const employeeName: string = existingEmployee?.empName || log['employee_name'] || 'Unknown';
@@ -486,11 +486,9 @@ async function handleJsonAttendance(url: string, overwriteShift?: boolean) {
         const workingSeconds = parseHmsToSeconds(loginHoursStr);
         const totalHoursRaw: string | undefined = log['total_hours'] || undefined;
         const breakHoursRaw: string | undefined = log['break_hours'] || undefined;
-        const totalSecondsJson = parseHmsToSeconds(totalHoursRaw || '00:00:00');
-        const breakSecondsJson = parseHmsToSeconds(breakHoursRaw || '00:00:00');
+        const totalHoursDateJson = secondsToTimeDate(parseHmsToSeconds(totalHoursRaw || '00:00:00'));
         const loginHoursDateJson = secondsToTimeDate(workingSeconds);
-        const totalHoursDateJson = secondsToTimeDate(totalSecondsJson);
-        const breakHoursDateJson = secondsToTimeDate(breakSecondsJson);
+        const breakHoursDateJson = secondsToTimeDate(parseHmsToSeconds(breakHoursRaw || '00:00:00'));
 
         // Clock times array (HH:mm)
         let clockTimes: string[] = Array.isArray(log['clock_times']) ? (log['clock_times'] as string[]) : [];
@@ -568,9 +566,9 @@ async function handleJsonAttendance(url: string, overwriteShift?: boolean) {
             where: { id: existingRecord.id },
             data: {
               outTime,
-              loginHours: loginHoursDateJson,
-              totalHours: totalHoursDateJson,
-              breakHours: breakHoursDateJson,
+              loginHours: loginHoursDateJson as any,
+              totalHours: totalHoursDateJson as any,
+              breakHours: breakHoursDateJson as any,
               clockTimes: JSON.stringify(mergedClockTimes),
               shiftTime: resolvedShift || existingRecord.shiftTime || undefined,
               status: statusFinalJson,
@@ -585,9 +583,9 @@ async function handleJsonAttendance(url: string, overwriteShift?: boolean) {
               date: new Date(cycleDate),
               inTime,
               outTime,
-              loginHours: loginHoursDateJson,
-              totalHours: totalHoursDateJson,
-              breakHours: breakHoursDateJson,
+              loginHours: loginHoursDateJson as any,
+              totalHours: totalHoursDateJson as any,
+              breakHours: breakHoursDateJson as any,
               clockTimes: JSON.stringify(clockTimes),
               shiftTime: resolvedShift || undefined,
               status: statusFinalJson,

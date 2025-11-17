@@ -136,31 +136,41 @@ export default function AdminAttendancePage() {
     return data.find(u => u.employeeName?.toLowerCase().includes(q) || String(u.employeeId).toLowerCase().includes(q));
   }, [query, data]);
 
-  useEffect(() => {
-    let ignore = false;
-    async function run() {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await fetch(`/api/attendance/events?year=${year}`, { cache: 'no-store' });
-        if (!res.ok) {
-          const t = await res.text();
-          throw new Error(t || `Failed: ${res.status}`);
-        }
-        const json = await res.json();
-        if (!ignore) {
-          setData(json.result || []);
-          setHolidays(json.holidays || []);
-        }
-      } catch (e: any) {
-        if (!ignore) setError(e?.message || 'Failed to load');
-      } finally {
-        if (!ignore) setLoading(false);
+  // Centralized load function so we can call it on mount, year change and event changes
+  const loadForYear = async (y: number) => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/attendance/events?year=${y}`, { cache: 'no-store' });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `Failed: ${res.status}`);
       }
+      const json = await res.json();
+      setData(json.result || []);
+      setHolidays(json.holidays || []);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to load');
+    } finally {
+      setLoading(false);
     }
-    run();
+  };
+
+  // Load on mount and when year changes
+  useEffect(() => {
+    loadForYear(year);
+  }, [year]);
+
+  // Refresh when events/holidays change (after creating/updating events)
+  useEffect(() => {
+    const handler = () => loadForYear(year);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('events:changed', handler);
+    }
     return () => {
-      ignore = true;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('events:changed', handler);
+      }
     };
   }, [year]);
 
@@ -313,7 +323,6 @@ export default function AdminAttendancePage() {
 
               return (
                 <section key={`${u.employeeId}-${u.employeeName}`} className="space-y-3">
-                  <SidebarConfig role="hr" />
                   <div className="flex items-center justify-between">
                     <div className="font-medium">
                       {u.employeeName} <span className="text-muted-foreground">({u.employeeId})</span>
@@ -389,19 +398,19 @@ export default function AdminAttendancePage() {
                         ))}
                         {cells.map((c, idx) => {
                           const status = c.ev?.extendedProps?.status || c.ev?.title || '';
-                          const statusLc = status.toLowerCase();
-                          const isPresent = status === 'Present' || statusLc.startsWith('present');
-                          const isAbsent = status === 'Absent' || statusLc.startsWith('absent');
-                          const isPresentWithNote = isPresent && status !== 'Present';
+                          const sLc = status.toLowerCase();
+                          const isPresent = status === 'Present' || sLc.startsWith('present');
+                          const isAbsent = status === 'Absent' || sLc.startsWith('absent');
+                          const isHalf = sLc.includes('half');
+                          const isPresentVariant = isPresent && (sLc.includes('late') || sLc.includes('early'));
                           const base =
                             isPresent
                               ? { border: '#10b981', bg: 'bg-emerald-50/50', text: 'text-emerald-700' }
                               : isAbsent
                                 ? { border: '#ef4444', bg: 'bg-red-50/50', text: 'text-red-700' }
-                                : statusLc.includes('half')
+                                : isHalf
                                   ? { border: '#f59e0b', bg: 'bg-amber-50/50', text: 'text-amber-700' }
                                   : { border: '#d1d5db', bg: 'bg-white', text: 'text-muted-foreground' };
-                          const textClass = isPresentWithNote ? 'text-amber-700' : base.text;
                           const has = Boolean(c.day);
                           const isWeekend = c.dateStr
                             ? (() => {
@@ -468,15 +477,13 @@ export default function AdminAttendancePage() {
                                       className="inline-block rounded px-1 border"
                                       style={{ borderColor: cellBorder }}
                                     >
-                                      <span className={`font-medium ${textClass}`}>
+                                      <span className={`font-medium ${isPresentVariant ? 'text-yellow-600' : base.text}`}>
                                         {c.ev.extendedProps.status || c.ev.title}
                                       </span>
                                     </span>
                                   </div>
                                   <div className="text-[11px] text-muted-foreground">
-                                    {c.ev.extendedProps.shift_time
-                                      ? c.ev.extendedProps.shift_time
-                                      : `${formatTime(c.ev.extendedProps.in_time)} - ${formatTime(c.ev.extendedProps.out_time)}`}
+                                    {formatTime(c.ev.extendedProps.in_time)} - {formatTime(c.ev.extendedProps.out_time)}
                                   </div>
                                   <div className="text-[11px] text-muted-foreground">
                                     Work {formatDuration(c.ev.extendedProps.login_hours)}
@@ -536,29 +543,16 @@ export default function AdminAttendancePage() {
               <div className="flex items-center gap-2">
                 {(() => {
                   const s = selected.event?.extendedProps?.status || selected.event?.title || '';
-                  const sLc = s.toLowerCase();
-                  const isPres = s === 'Present' || sLc.startsWith('present');
-                  const isAbs = s === 'Absent' || sLc.startsWith('absent');
-                  const isPresWithNote = isPres && s !== 'Present';
-                  const baseCls =
-                    isPres
-                      ? 'border-emerald-500 bg-emerald-50'
-                      : isAbs
-                        ? 'border-red-500 bg-red-50'
-                        : sLc.includes('half')
-                          ? 'border-amber-500 bg-amber-50'
-                          : 'border-gray-300';
-                  const textCls = isPresWithNote
-                    ? 'text-amber-700'
-                    : isPres
-                      ? 'text-emerald-700'
-                      : isAbs
-                        ? 'text-red-700'
-                        : sLc.includes('half')
-                          ? 'text-amber-700'
-                          : 'text-muted-foreground';
+                  const cls =
+                    s === 'Present'
+                      ? 'border-emerald-500 text-emerald-700 bg-emerald-50'
+                      : s === 'Absent'
+                        ? 'border-red-500 text-red-700 bg-red-50'
+                        : s.toLowerCase().includes('half')
+                          ? 'border-amber-500 text-amber-700 bg-amber-50'
+                          : 'border-gray-300 text-muted-foreground';
                   return (
-                    <Badge variant="outline" className={`${baseCls} ${textCls}`}>
+                    <Badge variant="outline" className={cls}>
                       {s || 'Status'}
                     </Badge>
                   );

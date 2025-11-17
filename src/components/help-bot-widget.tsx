@@ -243,7 +243,7 @@ export function HelpBotWidget() {
         >
           <video
             src="/Chatbot.webm"
-            className="h-26 w-26 rounded-full"
+            className="h-28 w-28 rounded-full"
             autoPlay
             loop
             muted

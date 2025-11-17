@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { SidebarConfig } from '@/components/sidebar-config';
 
 // Types aligned with existing Attendance events endpoint
 type EventItem = {
@@ -224,7 +223,6 @@ export default function AdminAttendanceBulkPage() {
 
   return (
     <div className="p-4 space-y-6">
-      <SidebarConfig role="hr" />
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-xl font-semibold">Bulk Update Attendance</h1>
         <div className="flex items-center gap-2">
@@ -318,16 +316,22 @@ export default function AdminAttendanceBulkPage() {
                     <SelectTrigger className="w-[160px]">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
-                    <SelectContent>
+                    {/* <SelectContent>
                       <SelectItem value="Present">Present</SelectItem>
                       <SelectItem value="Half-day">Half-day</SelectItem>
-                      <SelectItem value="Absent">Absent</SelectItem>  
-                      <SelectItem value="Week Off">Week Off</SelectItem>      
-                      <SelectItem value="Paid Leave">Paid Leave</SelectItem>
-                      <SelectItem value="Sick Leave(FullDay)">Sick Leave - FullDay</SelectItem>
-                      <SelectItem value="work From Home">Work From Home</SelectItem>
+                      <SelectItem value="Absent">Absent</SelectItem>
                       <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
+                    </SelectContent> */}
+                      <SelectContent>
+                                          <SelectItem value="Present">Present</SelectItem>
+                                          <SelectItem value="Half-day">Half-day</SelectItem>
+                                          <SelectItem value="Absent">Absent</SelectItem>  
+                                          <SelectItem value="Week Off">Week Off</SelectItem>      
+                                          <SelectItem value="Paid Leave">Paid Leave</SelectItem>
+                                          <SelectItem value="Sick Leave(FullDay)">Sick Leave - FullDay</SelectItem>
+                                          <SelectItem value="work From Home">Work From Home</SelectItem>
+                                          <SelectItem value="Other">Other</SelectItem>
+                                        </SelectContent>
                   </Select>
                 </div>
                 <div className="ml-auto flex items-center gap-2">
@@ -395,10 +399,11 @@ export default function AdminAttendanceBulkPage() {
                     const has = Boolean(c.day);
                     const isSelected = c.dateStr ? selectedDates.has(c.dateStr) : false;
                     const statusText = c.ev?.extendedProps?.status || c.ev?.title || '';
-                    const statusLc = statusText.toLowerCase();
-                    const isPresent = statusText === 'Present' || statusLc.startsWith('present');
-                    const isAbsent = statusText === 'Absent' || statusLc.startsWith('absent');
-                    const isHalf = statusLc.includes('half');
+                    const sLc = statusText.toLowerCase();
+                    const isPresent = statusText === 'Present' || sLc.startsWith('present');
+                    const isPresentVariant = isPresent && (sLc.includes('late') || sLc.includes('early'));
+                    const isAbsent = statusText === 'Absent' || sLc.startsWith('absent');
+                    const isHalf = sLc.includes('half');
                     const baseBorder = isPresent
                       ? '#22c55e'
                       : isAbsent
@@ -437,7 +442,7 @@ export default function AdminAttendanceBulkPage() {
                             <div className="mt-auto text-[11px] text-blue-600">{leaveType}</div>
                           )
                         ) : c.ev ? (
-                          <div className={`mt-auto text-[11px] ${isPresent ? 'text-emerald-700' : isAbsent ? 'text-red-700' : isHalf ? 'text-amber-700' : 'text-gray-600'}`}>
+                          <div className={`mt-auto text-[11px] ${isPresentVariant ? 'text-yellow-600' : isPresent ? 'text-emerald-700' : isAbsent ? 'text-red-700' : isHalf ? 'text-amber-700' : 'text-gray-600'}`}>
                             {statusText || '—'}
                           </div>
                         ) : isWeekend ? (
