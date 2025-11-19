@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+import type React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import Login07 from '@/components/login-07';
 
 function HomePageInner() {
   const router = useRouter();
@@ -108,51 +110,15 @@ function HomePageInner() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-2xl">Sign in</CardTitle>
-            <CardDescription>Enter your email and password to continue</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-              <div className="flex justify-end">
-                <Button asChild variant="link" className="px-0 text-sm">
-                  <Link href="/forgot-password">Forgot password?</Link>
-                </Button>
-              </div>
-              {error && <p className="text-sm text-red-600">{error}</p>}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Signing in...' : 'Sign in'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <Login07
+      email={email}
+      password={password}
+      loading={loading}
+      error={error}
+      onEmailChange={setEmail}
+      onPasswordChange={setPassword}
+      onSubmit={handleSubmit}
+    />
   );
 }
 
