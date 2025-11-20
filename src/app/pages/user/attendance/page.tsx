@@ -114,7 +114,7 @@ export default function Page() {
           setMeName(String(m?.name || ''));
           if (m?.emp_code != null) setMeEmpCode(String(m.emp_code));
         }
-      } catch {}
+      } catch { }
     }
     init();
     return () => {
@@ -179,12 +179,19 @@ export default function Page() {
   );
 
   const selectedUser = useMemo(() => {
+    // 1. Try matching by employee code if available
+    if (meEmpCode) {
+      const byCode = data.find(u => String(u.employeeId) === String(meEmpCode));
+      if (byCode) return byCode;
+    }
+
+    // 2. Fallback to name matching
     if (!meName) return undefined;
     const q = meName.trim().toLowerCase();
     return (
       data.find(u => u.employeeName?.toLowerCase() === q) || data.find(u => u.employeeName?.toLowerCase().includes(q))
     );
-  }, [data, meName]);
+  }, [data, meName, meEmpCode]);
 
   const calendar = useMemo(() => {
     const monthStart = new Date(Date.UTC(year, month, 1));
@@ -329,10 +336,10 @@ export default function Page() {
                             : { border: '#d1d5db', bg: 'bg-white', text: 'text-gray-600' };
                     const isWeekend = c.dateStr
                       ? (() => {
-                          const d = new Date(c.dateStr + 'T00:00:00');
-                          const w = d.getDay();
-                          return w === 0 || w === 6;
-                        })()
+                        const d = new Date(c.dateStr + 'T00:00:00');
+                        const w = d.getDay();
+                        return w === 0 || w === 6;
+                      })()
                       : false;
                     const leaveType = c.dateStr ? calendar.leaveMap.get(c.dateStr) : undefined;
                     const holiday = c.dateStr ? calendar.holidayMap.get(c.dateStr) : undefined;
@@ -500,7 +507,7 @@ export default function Page() {
                   try {
                     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
                     if (Array.isArray(parsed)) times = parsed as string[];
-                  } catch {}
+                  } catch { }
                   return times.length > 0 ? (
                     <div className="space-y-2">
                       <div className="text-gray-600">Clock Times</div>

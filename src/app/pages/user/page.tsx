@@ -151,11 +151,13 @@ export default function UserPage() {
 
   const selectedUser = useMemo(() => {
     if (!me) return undefined;
+    // 1. Try matching by employee code if available
     const empCode = (me as any)?.emp_code != null ? String((me as any).emp_code) : null;
     if (empCode) {
       const byCode = data.find((u: any) => String(u.employeeId) === empCode);
       if (byCode) return byCode;
     }
+    // 2. Fallback to name matching
     const nm = String(me.name || '')
       .trim()
       .toLowerCase();

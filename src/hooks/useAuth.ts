@@ -8,6 +8,7 @@ export type AuthUser = {
   email: string;
   role: UserRole;
   department: string | null;
+  emp_code: string | null;
 };
 
 export function useAuth() {
@@ -30,7 +31,8 @@ export function useAuth() {
             name: data.name || 'User',
             email: data.email || '',
             role,
-            department: (data.department ?? null) as string | null
+            department: (data.department ?? null) as string | null,
+            emp_code: (data.emp_code ?? null) as string | null
           });
         } else {
           setUser(null);
