@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import { useSidebarConfig, type SidebarData, type UserRole } from '@/components/sidebar-config';
 import {
   IconChartBar,
@@ -360,9 +361,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">HRMS</span>
+              <a href="#" className="flex items-center gap-3">
+                <div className="relative h-8 w-8 rounded-md bg-white/5 flex items-center justify-center overflow-hidden">
+                  <Image
+                    src="/HRMS-Logo.svg"
+                    alt="HRMS logo"
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+                <div className="flex flex-col leading-tight">
+                  <span className="text-lg font-semibold tracking-tight">HRMS</span>
+                  
+                </div>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

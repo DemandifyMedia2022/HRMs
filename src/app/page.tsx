@@ -1,13 +1,8 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import type React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import Login07 from '@/components/login-07';
 
 function HomePageInner() {
@@ -123,20 +118,5 @@ function HomePageInner() {
 }
 
 export default function HomePage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-2xl">Loading...</CardTitle>
-              <CardDescription>Please wait</CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </div>
-    }>
-      <HomePageInner />
-    </Suspense>
-  );
+  return <HomePageInner />;
 }
