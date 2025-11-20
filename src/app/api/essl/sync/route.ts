@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // SOAP mode: Get date range from request or use dynamic defaults
     // Default from: latest attendance date (00:00:00); if none, yesterday 00:00:00
-    const lastRecord = await prisma.npAttendance.findFirst({
+    const lastRecord = await prisma.npattendance.findFirst({
       orderBy: { date: 'desc' },
       select: { date: true },
     });
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     const attendanceData = parseAttendanceData(strDataList);
-    
+
     let insertedCount = 0;
     let updatedCount = 0;
 
@@ -171,10 +171,10 @@ export async function POST(request: NextRequest) {
           return `${yyyy}-${mm}-${dd}`;
         })();
 
-        const existingRecord = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeIdStr, date: new Date(startDateStr) },
+        const existingRecord = await prisma.npattendance.findFirst({
+          where: { employee_id: employeeIdStr, date: new Date(startDateStr) },
         });
-        let resolvedShift: string | null = overwriteShift ? null : (existingRecord?.shiftTime ?? null);
+        let resolvedShift: string | null = overwriteShift ? null : (existingRecord?.shift_time ?? null);
         if (!resolvedShift) {
           const shift = await prisma.shift_time.findFirst({
             where: { biomatric_id: employeeIdNum },
@@ -245,42 +245,42 @@ export async function POST(request: NextRequest) {
         const statusWithNote = statusNote.length > 0 ? `${status} (${statusNote.join(', ')})` : status;
         const statusFinal = isOngoing ? '' : statusWithNote;
 
-        const existingEmployee = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeIdStr },
-          select: { empName: true },
+        const existingEmployee = await prisma.npattendance.findFirst({
+          where: { employee_id: employeeIdStr },
+          select: { emp_name: true },
         });
-        const employeeName = existingEmployee?.empName || 'Unknown';
+        const employeeName = existingEmployee?.emp_name || 'Unknown';
 
         // existingRecord already fetched above
 
         if (!existingRecord) {
-          await prisma.npAttendance.create({
+          await prisma.npattendance.create({
             data: {
-              employeeId: employeeIdStr,
-              empName: employeeName,
+              employee_id: employeeIdStr,
+              emp_name: employeeName,
               date: new Date(startDateStr),
-              inTime,
-              outTime,
-              clockTimes: JSON.stringify(clockTimes),
-              totalHours: totalHoursDate as any,
-              loginHours: workingHoursDate as any,
-              breakHours: breakHoursDate as any,
-              shiftTime: resolvedShift || undefined,
+              in_time: inTime,
+              out_time: outTime,
+              clock_times: JSON.stringify(clockTimes),
+              total_hours: totalHoursDate as any,
+              login_hours: workingHoursDate as any,
+              break_hours: breakHoursDate as any,
+              shift_time: resolvedShift || undefined,
               status: statusFinal,
             },
           });
           insertedCount++;
         } else {
-          await prisma.npAttendance.update({
+          await prisma.npattendance.update({
             where: { id: existingRecord.id },
             data: {
-              inTime,
-              outTime,
-              clockTimes: JSON.stringify(clockTimes),
-              totalHours: totalHoursDate as any,
-              loginHours: workingHoursDate as any,
-              breakHours: breakHoursDate as any,
-              shiftTime: resolvedShift || existingRecord.shiftTime || undefined,
+              in_time: inTime,
+              out_time: outTime,
+              clock_times: JSON.stringify(clockTimes),
+              total_hours: totalHoursDate as any,
+              login_hours: workingHoursDate as any,
+              break_hours: breakHoursDate as any,
+              shift_time: resolvedShift || existingRecord.shift_time || undefined,
               status: statusFinal,
             },
           });
@@ -299,9 +299,9 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('ESSL Sync Error:', error);
     return NextResponse.json(
-      { 
-        error: 'Failed to sync attendance data', 
-        details: error.message 
+      {
+        error: 'Failed to sync attendance data',
+        details: error.message
       },
       { status: 500 }
     );
@@ -354,7 +354,7 @@ function formatSeconds(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-  
+
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
@@ -415,7 +415,7 @@ function parseShiftString(input: string): { startMinutes: number; endMinutes: nu
   return { startMinutes: start, endMinutes: end };
 }
 
- 
+
 
 // GET endpoint to trigger sync (for testing)
 export async function GET(request: NextRequest) {
@@ -475,11 +475,11 @@ async function handleJsonAttendance(url: string, overwriteShift?: boolean) {
 
         // Existing employee name from prior entries if available
         const employeeIdStr = String(employeeID);
-        const existingEmployee = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeIdNum as any },
-          select: { empName: true },
+        const existingEmployee = await prisma.npattendance.findFirst({
+          where: { employee_id: employeeIdNum as any },
+          select: { emp_name: true },
         });
-        const employeeName: string = existingEmployee?.empName || log['employee_name'] || 'Unknown';
+        const employeeName: string = existingEmployee?.emp_name || log['employee_name'] || 'Unknown';
 
         // Times/metrics
         const loginHoursStr: string | undefined = log['working_hours'] || undefined;
@@ -504,10 +504,10 @@ async function handleJsonAttendance(url: string, overwriteShift?: boolean) {
         }
 
         // Resolve shift: prefer stored npattendance.shiftTime for that date, fallback to shift_time table
-        const existingRecord = await prisma.npAttendance.findFirst({
-          where: { employeeId: employeeIdStr, date: new Date(cycleDate) },
+        const existingRecord = await prisma.npattendance.findFirst({
+          where: { employee_id: employeeIdStr, date: new Date(cycleDate) },
         });
-        let resolvedShift: string | null = overwriteShift ? null : (existingRecord?.shiftTime ?? null);
+        let resolvedShift: string | null = overwriteShift ? null : (existingRecord?.shift_time ?? null);
         if (!resolvedShift) {
           const shiftRow = await prisma.shift_time.findFirst({
             where: { biomatric_id: employeeIdNum },
@@ -558,36 +558,36 @@ async function handleJsonAttendance(url: string, overwriteShift?: boolean) {
         if (existingRecord) {
           // Merge clock times
           const existingClockTimes = (() => {
-            try { return JSON.parse(existingRecord.clockTimes || '[]'); } catch { return []; }
+            try { return JSON.parse(existingRecord.clock_times || '[]'); } catch { return []; }
           })();
           const mergedClockTimes = Array.from(new Set([...(existingClockTimes || []), ...clockTimes])).sort();
 
-          await prisma.npAttendance.update({
+          await prisma.npattendance.update({
             where: { id: existingRecord.id },
             data: {
-              outTime,
-              loginHours: loginHoursDateJson as any,
-              totalHours: totalHoursDateJson as any,
-              breakHours: breakHoursDateJson as any,
-              clockTimes: JSON.stringify(mergedClockTimes),
-              shiftTime: resolvedShift || existingRecord.shiftTime || undefined,
+              out_time: outTime,
+              login_hours: loginHoursDateJson as any,
+              total_hours: totalHoursDateJson as any,
+              break_hours: breakHoursDateJson as any,
+              clock_times: JSON.stringify(mergedClockTimes),
+              shift_time: resolvedShift || existingRecord.shift_time || undefined,
               status: statusFinalJson,
             },
           });
           updated++;
         } else {
-          await prisma.npAttendance.create({
+          await prisma.npattendance.create({
             data: {
-              employeeId: employeeIdStr,
-              empName: employeeName,
+              employee_id: employeeIdStr,
+              emp_name: employeeName,
               date: new Date(cycleDate),
-              inTime,
-              outTime,
-              loginHours: loginHoursDateJson as any,
-              totalHours: totalHoursDateJson as any,
-              breakHours: breakHoursDateJson as any,
-              clockTimes: JSON.stringify(clockTimes),
-              shiftTime: resolvedShift || undefined,
+              in_time: inTime,
+              out_time: outTime,
+              login_hours: loginHoursDateJson as any,
+              total_hours: totalHoursDateJson as any,
+              break_hours: breakHoursDateJson as any,
+              clock_times: JSON.stringify(clockTimes),
+              shift_time: resolvedShift || undefined,
               status: statusFinalJson,
             },
           });

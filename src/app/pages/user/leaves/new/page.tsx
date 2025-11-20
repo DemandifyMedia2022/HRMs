@@ -54,7 +54,7 @@ export default function NewLeavePage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || 'Failed to submit leave');
       }
-      router.push('/pages/hr');
+      router.push('/pages/user');
       router.refresh();
     } catch (err: any) {
       setError(err?.message || 'Something went wrong');
@@ -132,7 +132,7 @@ export default function NewLeavePage() {
               </div>
 
               <CardFooter className="flex flex-col gap-2 px-0 sm:flex-row sm:justify-end sm:gap-3">
-                <Button type="button" variant="outline" onClick={() => router.push('/pages/user')}>
+                <Button type="button" variant="outline" onClick={() => router.back()}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={submitting}>

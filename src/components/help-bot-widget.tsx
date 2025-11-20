@@ -121,31 +121,30 @@ export function HelpBotWidget() {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2">
+      <div className="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2 pointer-events-none">
         <div
-          className={`mb-2 w-96 max-w-[95vw] rounded-lg border bg-background shadow-xl origin-bottom-right transform transition-all duration-200 ${
-            open ? 'opacity-100 translate-y-0 scale-100' : 'pointer-events-none opacity-0 translate-y-2 scale-95'
-          }`}
+          className={`mb-2 w-96 max-w-[95vw] rounded-lg border bg-background shadow-xl origin-bottom-right transform transition-all duration-200 ${open ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'pointer-events-none opacity-0 translate-y-2 scale-95'
+            }`}
         >
           <div className="flex items-center justify-between border-b px-3 py-2">
-  <div className="flex items-center gap-2">
-    <img
-      src="/robot-assistant.png"
-      alt="Dexo"
-      className="h-6 w-6"
-    />
-    <h1 className="text-lg font-semibold text-primary">Dexo</h1>
-  </div>
+            <div className="flex items-center gap-2">
+              <img
+                src="/robot-assistant.png"
+                alt="Dexo"
+                className="h-6 w-6"
+              />
+              <h1 className="text-lg font-semibold text-primary">Dexo</h1>
+            </div>
 
-  <Button
-    variant="ghost"
-    size="icon"
-    className="h-6 w-6"
-    onClick={() => setOpen(false)}
-  >
-    <IconX className="h-4 w-4" />
-  </Button>
-</div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setOpen(false)}
+            >
+              <IconX className="h-4 w-4" />
+            </Button>
+          </div>
           <div>
             <div className="flex max-h-[60vh] flex-col">
               <ScrollArea className="h-80 px-3 py-2">
@@ -238,7 +237,7 @@ export function HelpBotWidget() {
 
         <Button
           size="icon"
-          className="h-24 w-24 rounded-full bg-white"
+          className="h-24 w-24 rounded-full bg-white pointer-events-auto"
           onClick={() => setOpen(prev => !prev)}
         >
           <video

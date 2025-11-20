@@ -1,22 +1,10 @@
 export const runtime = 'nodejs';
 
-import mysql from 'mysql2/promise';
 import { NextResponse } from 'next/server';
-import { getRequiredEnv, getRequiredInt } from '@/lib/env';
+import { prisma } from '@/lib/prisma';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('admin:resource-stats');
-const DB_NAME = getRequiredEnv('DB_NAME');
-
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  port: getRequiredInt('DB_PORT'),
-  waitForConnections: true,
-  connectionLimit: 5
-});
 
 export async function GET() {
   try {
@@ -26,39 +14,39 @@ export async function GET() {
     const yyyyMmDd = now.toISOString().slice(0, 10); // YYYY-MM-DD
 
     // Get all resource names seen in the current month
-    const [namesRows] = await pool.query(
-      `SELECT DISTINCT f_resource_name AS resource_name
-       FROM ${DB_NAME}.dm_form
-       WHERE YEAR(f_date) = ? AND MONTH(f_date) = ? AND f_resource_name IS NOT NULL AND TRIM(f_resource_name) <> ''`,
-      [yyyy, mm]
-    );
+    const namesRows = await prisma.$queryRaw<any[]>`
+      SELECT DISTINCT f_resource_name AS resource_name
+      FROM dm_form
+      WHERE YEAR(f_date) = ${yyyy} 
+        AND MONTH(f_date) = ${mm} 
+        AND f_resource_name IS NOT NULL 
+        AND TRIM(f_resource_name) <> ''
+    `;
 
     // Monthly counts
-    const [monthlyRows] = await pool.query(
-      `SELECT f_resource_name AS resource_name, COUNT(*) AS total
-       FROM ${DB_NAME}.dm_form
-       WHERE MONTH(f_date) = ? AND YEAR(f_date) = ?
-       GROUP BY f_resource_name`,
-      [mm, yyyy]
-    );
+    const monthlyRows = await prisma.$queryRaw<any[]>`
+      SELECT f_resource_name AS resource_name, COUNT(*) AS total
+      FROM dm_form
+      WHERE MONTH(f_date) = ${mm} AND YEAR(f_date) = ${yyyy}
+      GROUP BY f_resource_name
+    `;
 
     // Daily counts (today)
-    const [dailyRows] = await pool.query(
-      `SELECT f_resource_name AS resource_name, COUNT(*) AS total
-       FROM ${DB_NAME}.dm_form
-       WHERE DATE(f_date) = ?
-       GROUP BY f_resource_name`,
-      [yyyyMmDd]
-    );
+    const dailyRows = await prisma.$queryRaw<any[]>`
+      SELECT f_resource_name AS resource_name, COUNT(*) AS total
+      FROM dm_form
+      WHERE DATE(f_date) = ${yyyyMmDd}
+      GROUP BY f_resource_name
+    `;
 
     // Build maps for quick lookup
     const monthlyMap = new Map<string, number>();
-    for (const r of monthlyRows as any[]) monthlyMap.set(r.resource_name, Number(r.total));
+    for (const r of monthlyRows) monthlyMap.set(r.resource_name, Number(r.total));
     const dailyMap = new Map<string, number>();
-    for (const r of dailyRows as any[]) dailyMap.set(r.resource_name, Number(r.total));
+    for (const r of dailyRows) dailyMap.set(r.resource_name, Number(r.total));
 
     // Ensure all names appear with zero if missing
-    const names = (namesRows as any[]).map(r => r.resource_name);
+    const names = namesRows.map(r => r.resource_name);
     const monthly = names.map(n => ({ resource_name: n, total: monthlyMap.get(n) ?? 0 }));
     const daily = names.map(n => ({ resource_name: n, total: dailyMap.get(n) ?? 0 }));
 
