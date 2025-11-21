@@ -11,6 +11,7 @@ function HomePageInner() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState('');
   const CAN_LOG = process.env.NODE_ENV !== 'production';
 
@@ -29,6 +30,8 @@ function HomePageInner() {
         }
       } catch {
         // Not logged in, stay on login page
+      } finally {
+        setInitialLoading(false);
       }
     };
     checkAuth();
@@ -38,7 +41,7 @@ function HomePageInner() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     try {
       // STEP 1: Login - Validate credentials; server sets httpOnly cookies
       // "You say you're Sir Email-Password? Here's your entry token (cookie)."
@@ -49,14 +52,14 @@ function HomePageInner() {
         body: JSON.stringify({ email, password }),
         credentials: 'include'
       });
-      
+
       if (!loginRes.ok) {
         const data = await loginRes.json().catch(() => ({}));
         setError(data?.message || 'Invalid credentials');
         setLoading(false);
         return;
       }
-      
+
       const loginData = await loginRes.json();
       if (!loginData?.success) {
         setError('Login failed');
@@ -95,7 +98,7 @@ function HomePageInner() {
           router.push('/pages/user');
         }
       }
-      
+
       if (CAN_LOG) console.log('\n Authentication flow completed successfully!');
     } catch (err) {
       console.error('Login error:', err);
@@ -103,6 +106,18 @@ function HomePageInner() {
       setLoading(false);
     }
   };
+
+  // Show loading state during initial auth check
+  if (initialLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Login07
