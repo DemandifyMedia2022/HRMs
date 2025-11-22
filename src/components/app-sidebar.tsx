@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useSidebarConfig, type SidebarData, type UserRole } from '@/components/sidebar-config';
 import {
   IconChartBar,
@@ -105,7 +106,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         ]
       }
     ],
-    navSecondary: [{ title: 'Survey Form', url: '/pages/survey-form', icon: IconMessage }],
+    navSecondary: [],
     documents: [
       {
         name: 'Campaigns',
@@ -163,7 +164,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         ]
       }
     ],
-    navSecondary: [{ title: 'Survey Form', url: '/pages/survey-form', icon: IconMessage }],
+    navSecondary: [],
     documents: [
       {
         name: 'Operation',
@@ -261,7 +262,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         icon: IconChartBar,
         children: [
           { title: 'Feedback', url: '/pages/hr/survey-feedbacks', icon: IconReport },
-          { title: 'Survey Form', url: '/pages/survey-form', icon: IconFileDescription },
+
           { title: 'Ambition Box', url: 'https://www.ambitionbox.com/overview/demandify-media-overview', icon: IconBriefcase }
         ]
       },
@@ -300,10 +301,10 @@ function mergeData(base: SidebarData, overrides?: Partial<SidebarData>): Sidebar
   // If user override is provided, use it with fallback to base for missing fields
   const userData = overrides.user
     ? {
-        name: overrides.user.name ?? base.user.name,
-        email: overrides.user.email ?? base.user.email,
-        avatar: overrides.user.avatar ?? base.user.avatar
-      }
+      name: overrides.user.name ?? base.user.name,
+      email: overrides.user.email ?? base.user.email,
+      avatar: overrides.user.avatar ?? base.user.avatar
+    }
     : base.user;
 
   // console.log("✅ Merged sidebar data - Final user:", userData)
@@ -316,11 +317,25 @@ function mergeData(base: SidebarData, overrides?: Partial<SidebarData>): Sidebar
   };
 }
 
+
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { role, dataOverrides } = useSidebarConfig();
   const base = baseDataByRole[role as keyof typeof baseDataByRole] ?? baseDataByRole.user;
   const data = mergeData(base, dataOverrides);
   const { user } = useAuth();
+
+  const dashboardUrl = React.useMemo(() => {
+    switch (role) {
+      case 'admin':
+        return '/pages/admin';
+      case 'hr':
+        return '/pages/hr';
+      case 'user':
+      default:
+        return '/pages/user';
+    }
+  }, [role]);
 
   const allowedTeamLeadEmails = React.useMemo(
     () => new Set(['asfiya.pathan@demandifymedia.com', 'tejal.kamble@demandifymedia.com']),
@@ -361,7 +376,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
-              <a href="#" className="flex items-center gap-3">
+              <Link href={dashboardUrl} className="flex items-center gap-3">
                 <div className="relative h-8 w-8 rounded-md bg-white/5 flex items-center justify-center overflow-hidden">
                   <Image
                     src="/HRMS-Logo.svg"
@@ -373,9 +388,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="flex flex-col leading-tight">
                   <span className="text-lg font-semibold tracking-tight">HRMS</span>
-                  
+
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

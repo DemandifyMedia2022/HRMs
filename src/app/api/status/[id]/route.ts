@@ -9,22 +9,30 @@ import { getRequiredEnv, getRequiredInt } from '@/lib/env';
 
 const logger = createLogger('status:[id]');
 
-const DB_NAME = getRequiredEnv('DB_NAME');
+let pool: mysql.Pool | null = null;
 
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  port: getRequiredInt('DB_PORT'),
-  waitForConnections: true,
-  connectionLimit: 5
-});
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_NAME'),
+      port: getRequiredInt('DB_PORT'),
+      waitForConnections: true,
+      connectionLimit: 5
+    });
+  }
+  return pool;
+}
 
 // GET /api/status/[id] - Get single record
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const [rows] = await pool.execute(`SELECT * FROM ${DB_NAME}.dm_form WHERE f_id = ?`, [params.id]);
+    const { id } = await params;
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
+    const [rows] = await pool.execute(`SELECT * FROM ${DB_NAME}.dm_form WHERE f_id = ?`, [id]);
     // @ts-ignore
     const record = rows[0];
     if (!record) {
@@ -37,7 +45,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 // PATCH /api/status/[id] - Update status fields
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Authentication required
     const authed = requireAuth(req);
@@ -45,6 +53,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     // Authorization: only admin or hr can update
     const authz = requireRoles(req, 'admin', 'hr');
     if (authz instanceof NextResponse) return authz;
+
+    const DB_NAME = getRequiredEnv('DB_NAME');
 
     const body = await req.json();
     const allowedFields = [
@@ -88,15 +98,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const setClause = Object.keys(updates)
       .map(key => `${key} = ?`)
       .join(', ');
-    const values = [...Object.values(updates), params.id];
+    const { id } = await params;
+    const values = [...Object.values(updates), id];
 
     const qualifiedTable = `${DB_NAME}.dm_form`;
     const sql = `UPDATE ${qualifiedTable} SET ${setClause} WHERE f_id = ?`;
 
+    const pool = getPool();
     const [result] = await pool.execute(sql, values);
     // @ts-ignore
     const affected = result?.affectedRows ?? 0;
-    logger.info('PATCH result', { id: params.id, affected });
+    logger.info('PATCH result', { id, affected });
 
     if (affected === 0) {
       return NextResponse.json({ error: 'Record not found or no changes applied', affected }, { status: 404 });

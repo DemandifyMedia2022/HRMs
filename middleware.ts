@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // Define protected routes and their required roles
 const protectedRoutes: Record<string, readonly string[]> = {
   '/pages/admin': ['admin'],
   '/pages/hr': ['hr'],
-  '/pages/user': ['user'],
-  '/pages/survey-form': ['admin', 'hr', 'user']
+  '/pages/user': ['user']
 };
-
-// Removed in-memory rate limiting (VULN-007 fix)
 
 // Security headers builder (per-request nonce)
 function buildSecurityHeaders(nonce: string) {
@@ -58,8 +56,6 @@ function isValidPath(pathname: string): boolean {
   return !suspiciousPatterns.some(pattern => pattern.test(pathname));
 }
 
-// checkRateLimit removed
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method.toUpperCase();
@@ -86,7 +82,21 @@ export function middleware(request: NextRequest) {
     return applySecurityHeaders(new NextResponse('Bad Request', { status: 400 }), nonce);
   }
 
-  // Rate limiting removed (VULN-007)
+  // Rate limiting (VULN-019)
+  if (pathname.startsWith('/api/')) {
+    const limitResult = checkRateLimit(clientIP, 100, 60000); // 100 requests per minute
+    if (!limitResult.success) {
+      return new NextResponse(JSON.stringify({ message: 'Too many requests' }), {
+        status: 429,
+        headers: {
+          'content-type': 'application/json',
+          'X-RateLimit-Limit': '100',
+          'X-RateLimit-Remaining': String(limitResult.remaining),
+          'X-RateLimit-Reset': String(limitResult.reset)
+        }
+      });
+    }
+  }
 
   // Allow public routes and auth API endpoints
   if (pathname === '/') {
@@ -140,7 +150,12 @@ export function middleware(request: NextRequest) {
         );
       }
       try {
-        verifyToken(apiToken);
+        const user = verifyToken(apiToken);
+        const response = NextResponse.next();
+        response.headers.set('x-user-role', user.role);
+        response.headers.set('x-user-id', String(user.id));
+        response.headers.set('x-user-department', user.department || '');
+        return applySecurityHeaders(response, nonce);
       } catch {
         return applySecurityHeaders(
           new NextResponse(JSON.stringify({ message: 'Unauthorized' }), {
@@ -164,9 +179,9 @@ export function middleware(request: NextRequest) {
       /^\/pages\/notifications$/,
       /^\/pages\/survey-form$/
     ];
-    
+
     const isValidPage = validPagePatterns.some(pattern => pattern.test(pathname));
-    
+
     if (!isValidPage) {
       console.warn(`Blocked invalid page route: ${pathname} from IP: ${clientIP}`);
       // Redirect to home instead of allowing invalid routes
@@ -206,6 +221,12 @@ export function middleware(request: NextRequest) {
       throw new Error('invalid user data');
     }
 
+    // Pass user context to downstream handlers via headers
+    const response = NextResponse.next();
+    response.headers.set('x-user-role', user.role);
+    response.headers.set('x-user-id', String(user.id));
+    response.headers.set('x-user-department', user.department || '');
+
     // Check role-based access for the matched route only
     const allowedRoles = protectedRoutes[matchedProtectedRoute];
     if (!allowedRoles.includes(user.role)) {
@@ -216,18 +237,7 @@ export function middleware(request: NextRequest) {
       return applySecurityHeaders(NextResponse.rewrite(url), nonce);
     }
 
-    // Additional check: Users can only access their own department's data
-    // This prevents users from different departments accessing each other's dashboards
-    if (user.role === 'user' && pathname.startsWith('/pages/user')) {
-      // Store user department in header for API routes to use
-      const response = NextResponse.next();
-      response.headers.set('x-user-department', user.department || '');
-      response.headers.set('x-user-id', user.id.toString());
-      response.headers.set('x-user-role', user.role);
-      return applySecurityHeaders(response, nonce);
-    }
-
-    return applySecurityHeaders(NextResponse.next(), nonce);
+    return applySecurityHeaders(response, nonce);
   } catch (error) {
     console.warn(`Authentication error for IP ${clientIP}: ${error instanceof Error ? error.message : 'Unknown error'}`);
 

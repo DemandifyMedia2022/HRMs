@@ -11,7 +11,6 @@ export async function GET(req: Request) {
     const page = Math.max(1, Number(searchParams.get('page') || 1));
     const pageSize = Math.min(100, Math.max(1, Number(searchParams.get('pageSize') || 20)));
     const offset = (page - 1) * pageSize;
-    // dynamic import avoids static bundling errors with Turbopack/Edge
     const mysql = await import('mysql2/promise');
 
     const pool = mysql.createPool({

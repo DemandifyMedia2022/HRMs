@@ -6,17 +6,22 @@ import { getRequiredEnv, getRequiredInt } from '@/lib/env';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('call-data:list');
-const DB_NAME = getRequiredEnv('DB_NAME');
+let pool: mysql.Pool | null = null;
 
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  port: getRequiredInt('DB_PORT'),
-  waitForConnections: true,
-  connectionLimit: 5
-});
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_NAME'),
+      port: getRequiredInt('DB_PORT'),
+      waitForConnections: true,
+      connectionLimit: 5
+    });
+  }
+  return pool;
+}
 
 export async function GET(req: Request) {
   try {
@@ -24,6 +29,8 @@ export async function GET(req: Request) {
     const userName = url.searchParams.get('user_name');
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '200', 10) || 200, 500);
 
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     let sql = `SELECT id, extension, user_name, destination, direction, status, start_time, answer_time, end_time, duration_seconds, cause, recording_url
                FROM ${DB_NAME}.call_data`;
     const params: any[] = [];

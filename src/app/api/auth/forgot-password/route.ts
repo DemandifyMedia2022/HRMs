@@ -4,7 +4,12 @@ import { sendMail } from '@/lib/mailer';
 import crypto from 'crypto';
 
 function generateOtp(): string {
-  return crypto.randomInt(100000, 1000000).toString();
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let otp = '';
+  for (let i = 0; i < 8; i++) {
+    otp += chars[crypto.randomInt(0, chars.length)];
+  }
+  return otp;
 }
 
 export async function POST(req: NextRequest) {
@@ -14,8 +19,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Email is required' }, { status: 400 });
     }
 
+    // TODO: Implement DB-based rate limiting
+    // Rate limiting removed as per user request to remove Redis
+
     const user = await (prisma as any).users.findUnique({ where: { email } });
     if (!user) {
+      // Dummy delay to prevent timing attacks (simulate email sending time)
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 500));
       return NextResponse.json({ message: 'If the email exists, an OTP has been sent.' });
     }
 
@@ -46,7 +56,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Failed to send email', error: res.error }, { status: 500 });
     }
 
-    return NextResponse.json({ message: 'OTP sent if the email exists' });
+    return NextResponse.json({ message: 'If the email exists, an OTP has been sent.' });
   } catch (e: any) {
     return NextResponse.json({ message: 'Request error', details: e?.message }, { status: 500 });
   }

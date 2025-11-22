@@ -19,16 +19,17 @@ function encryptToken(plain: string): string {
   return `${iv.toString('base64')}.${ciphertext.toString('base64')}.${tag.toString('base64')}`;
 }
 
+// TODO: Implement DB-based rate limiting since Redis is removed
 async function checkAccountLockout(_email: string): Promise<{ locked: boolean; remainingTime?: number }> {
   return { locked: false };
 }
 
 async function recordFailedAttempt(_email: string): Promise<void> {
-  // no-op (rate limiting/lockout disabled)
+  // no-op
 }
 
 async function clearFailedAttempts(_email: string): Promise<void> {
-  // no-op (rate limiting/lockout disabled)
+  // no-op
 }
 
 /**
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest) {
     // Short-lived access token (e.g., 15 minutes)
     res.cookies.set('access_token', token, {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'strict',
       secure: isProd,
       path: '/',
       maxAge: 60 * 15 // 15 minutes
@@ -109,12 +110,13 @@ export async function POST(req: NextRequest) {
       path: '/',
       maxAge: 60 * 60 // 1 hour
     });
-    // Session refresh token (no maxAge -> cleared on browser close). Token itself has server-side expiry.
+    // Session refresh token (30 days maxAge)
     res.cookies.set('refresh_token', refreshToken, {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'strict',
       secure: isProd,
-      path: '/'
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30 // 30 days
     });
 
     // Fire-and-forget: trigger ESSL attendance sync for realtime data on login
@@ -127,10 +129,10 @@ export async function POST(req: NextRequest) {
         const timeout = Number(process.env.ESSL_SYNC_TIMEOUT_MS || 5000);
         const to = setTimeout(() => controller.abort(), timeout);
         fetch(u, { method: 'POST', signal: controller.signal })
-          .catch(() => {})
+          .catch(() => { })
           .finally(() => clearTimeout(to));
       }
-    } catch {}
+    } catch { }
 
     return res;
   } catch (e: any) {

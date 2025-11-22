@@ -3,18 +3,25 @@ import mysql from 'mysql2/promise';
 import { verifyToken } from '@/lib/auth';
 import { getRequiredEnv } from '@/lib/env';
 
-const DB_NAME = getRequiredEnv('DB_NAME');
+let pool: mysql.Pool | null = null;
 
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10
-});
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_NAME'),
+      waitForConnections: true,
+      connectionLimit: 10
+    });
+  }
+  return pool;
+}
 
 async function ensureSchema() {
+  const pool = getPool();
+  const DB_NAME = getRequiredEnv('DB_NAME');
   await pool.execute(`CREATE TABLE IF NOT EXISTS ${DB_NAME}.extensions (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     extension VARCHAR(64) NOT NULL UNIQUE,
@@ -45,6 +52,8 @@ export async function GET(req: NextRequest) {
     const auth = getAuth(req);
     if (!auth) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     const [rows] = await pool.execute(
       `SELECT id, extension, username FROM ${DB_NAME}.extensions ORDER BY extension ASC`
     );
@@ -66,6 +75,8 @@ export async function POST(req: NextRequest) {
     const auth = getAuth(req);
     if (!auth) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     const [urows] = await pool.execute(`SELECT job_role FROM ${DB_NAME}.users WHERE email = ? LIMIT 1`, [auth.email]);
     const uarr = Array.isArray(urows) ? (urows as any[]) : [];
     const me = uarr.length ? uarr[0] : null;

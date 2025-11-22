@@ -1,36 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
 import { getRequiredEnv, getRequiredInt } from '@/lib/env';
+import { handleError } from '@/lib/error-handler';
 
-const DB_NAME = getRequiredEnv('DB_NAME');
+let pool: mysql.Pool | null = null;
 
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  port: getRequiredInt('DB_PORT')
-});
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_NAME'),
+      waitForConnections: true,
+      connectionLimit: 10,
+      port: getRequiredInt('DB_PORT')
+    });
+  }
+  return pool;
+}
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = parseInt(params.id, 10);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr, 10);
     if (!id) return NextResponse.json({ error: 'invalid id' }, { status: 400 });
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     const [rows] = await pool.execute(`SELECT * FROM ${DB_NAME}.campaigns WHERE id = ? LIMIT 1`, [id]);
     // @ts-ignore
     const rec = Array.isArray(rows) && rows.length ? rows[0] : null;
     if (!rec) return NextResponse.json({ error: 'not found' }, { status: 404 });
     return NextResponse.json({ data: rec });
   } catch (e: any) {
-    return NextResponse.json({ error: String(e?.message || e) }, { status: 500 });
+    return handleError(e, req);
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = parseInt(params.id, 10);
+    const role = req.headers.get('x-user-role');
+    if (role !== 'admin' && role !== 'hr') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
+
+    const { id: idStr } = await params;
+    const id = parseInt(idStr, 10);
     if (!id) return NextResponse.json({ error: 'invalid id' }, { status: 400 });
     const body = await req.json().catch(() => ({}));
     const fields = [
@@ -57,11 +72,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       }
     }
     if (!updates.length) return NextResponse.json({ error: 'no fields to update' }, { status: 400 });
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     const sql = `UPDATE ${DB_NAME}.campaigns SET ${updates.join(', ')} WHERE id = ?`;
     values.push(id);
     await pool.execute(sql, values);
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    return NextResponse.json({ error: String(e?.message || e) }, { status: 500 });
+    return handleError(e, req);
   }
 }

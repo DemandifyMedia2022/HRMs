@@ -3,18 +3,25 @@ import mysql from 'mysql2/promise';
 import { verifyToken } from '@/lib/auth';
 import { getRequiredEnv } from '@/lib/env';
 
-const DB_NAME = getRequiredEnv('DB_NAME');
+let pool: mysql.Pool | null = null;
 
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10
-});
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_NAME'),
+      waitForConnections: true,
+      connectionLimit: 10
+    });
+  }
+  return pool;
+}
 
 async function ensureSchema() {
+  const pool = getPool();
+  const DB_NAME = getRequiredEnv('DB_NAME');
   await pool.execute(`CREATE TABLE IF NOT EXISTS ${DB_NAME}.extensions (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     extension VARCHAR(64) NOT NULL UNIQUE,
@@ -45,9 +52,30 @@ export async function GET(req: NextRequest) {
     const auth = getAuth(req);
     if (!auth) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const [rows] = await pool.execute(
-      `SELECT id, extension, username FROM ${DB_NAME}.extensions ORDER BY extension ASC`
-    );
+    const role = req.headers.get('x-user-role');
+    const userId = req.headers.get('x-user-id');
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
+
+    let sql = `SELECT id, extension, username FROM ${DB_NAME}.extensions ORDER BY extension ASC`;
+    let params: any[] = [];
+
+    if (role === 'user' && userId) {
+      // Users can only see their own extension
+      // Assuming 'users' table has 'extension' column that links to 'extensions' table
+      // First get the user's extension
+      const [urows] = await pool.execute(`SELECT extension FROM ${DB_NAME}.users WHERE id = ?`, [userId]);
+      const uarr = Array.isArray(urows) ? (urows as any[]) : [];
+      const userExt = uarr.length ? uarr[0]?.extension : null;
+
+      if (!userExt) {
+        return NextResponse.json([]);
+      }
+      sql = `SELECT id, extension, username FROM ${DB_NAME}.extensions WHERE extension = ?`;
+      params = [userExt];
+    }
+
+    const [rows] = await pool.execute(sql, params);
     const arr = Array.isArray(rows) ? (rows as any[]) : [];
     const list = arr.map((r: any) => ({
       id: typeof r.id === 'bigint' ? Number(r.id) : r.id,
@@ -66,6 +94,8 @@ export async function POST(req: NextRequest) {
     const auth = getAuth(req);
     if (!auth) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     const [urows] = await pool.execute(`SELECT job_role FROM ${DB_NAME}.users WHERE email = ? LIMIT 1`, [auth.email]);
     const uarr = Array.isArray(urows) ? (urows as any[]) : [];
     const me = uarr.length ? uarr[0] : null;

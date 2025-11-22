@@ -3,17 +3,22 @@ import mysql from 'mysql2/promise';
 import { verifyToken } from '@/lib/auth';
 import { getRequiredEnv, getRequiredInt } from '@/lib/env';
 
-const DB_NAME = getRequiredEnv('DB_NAME');
+let pool: mysql.Pool | null = null;
 
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  port: getRequiredInt('DB_PORT')
-});
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_NAME'),
+      waitForConnections: true,
+      connectionLimit: 10,
+      port: getRequiredInt('DB_PORT')
+    });
+  }
+  return pool;
+}
 
 function getAuthEmail(req: NextRequest): string | null {
   try {
@@ -29,6 +34,8 @@ function getAuthEmail(req: NextRequest): string | null {
 async function requireTeamRole(req: NextRequest) {
   const email = getAuthEmail(req);
   if (!email) return { ok: false, res: NextResponse.json({ message: 'Unauthorized' }, { status: 401 }) };
+  const pool = getPool();
+  const DB_NAME = getRequiredEnv('DB_NAME');
   const [rows] = await pool.execute(`SELECT job_role FROM ${DB_NAME}.users WHERE email = ? LIMIT 1`, [email]);
   const arr = Array.isArray(rows) ? (rows as any[]) : [];
   const me = arr.length ? arr[0] : null;
@@ -45,21 +52,24 @@ async function requireTeamRole(req: NextRequest) {
   return { ok: true };
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const guard = await requireTeamRole(req);
     if (!guard.ok) return guard.res;
 
-    const userId = Number(params.id);
+    const { id: idStr } = await params;
+    const userId = Number(idStr);
     if (!Number.isFinite(userId)) return NextResponse.json({ message: 'Invalid user id' }, { status: 400 });
 
     const body = await req.json().catch(() => ({}));
     const extension = String(body?.extension ?? '').trim();
 
     // Ensure users table has extension column (best-effort)
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     try {
       await pool.execute(`ALTER TABLE ${DB_NAME}.users ADD COLUMN extension VARCHAR(64) NULL`);
-    } catch {}
+    } catch { }
 
     // Optional: validate extension exists in extensions table
     if (extension) {

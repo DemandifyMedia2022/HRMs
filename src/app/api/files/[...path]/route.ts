@@ -21,12 +21,12 @@ function detectContentType(buf: Buffer): string {
   return 'application/octet-stream';
 }
 
-export async function GET(req: NextRequest, ctx: { params: { path: string[] } }) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   try {
     const auth = requireAuth(req);
     if (auth instanceof NextResponse) return auth;
 
-    const parts = ctx.params?.path || [];
+    const { path: parts } = await ctx.params;
     if (!Array.isArray(parts) || !parts.length) {
       return NextResponse.json({ error: 'Missing file path' }, { status: 400 });
     }
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest, ctx: { params: { path: string[] } })
           .trim()
           .replace(/\s+/g, '_')
           .replace(/[^a-z0-9_-]/g, '_') || 'user';
-      } catch {}
+      } catch { }
       const userDir = path.resolve(baseDir, path.join('uploads', userSlug));
       if (!abs.startsWith(userDir)) {
         return NextResponse.json({ error: 'Forbidden - File access denied' }, { status: 403 });
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest, ctx: { params: { path: string[] } })
     let st: { isFile: () => boolean; size: number } | null = null;
     try {
       st = statSync(abs);
-    } catch {}
+    } catch { }
     if (!st || !st.isFile()) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }

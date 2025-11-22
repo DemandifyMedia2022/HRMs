@@ -8,20 +8,27 @@ import { getRequiredEnv, getRequiredInt } from '@/lib/env';
 
 const logger = createLogger('status:campaigns');
 
-const DB_NAME = getRequiredEnv('DB_NAME');
+let pool: mysql.Pool | null = null;
 
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  port: getRequiredInt('DB_PORT'),
-  waitForConnections: true,
-  connectionLimit: 5
-});
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_NAME'),
+      port: getRequiredInt('DB_PORT'),
+      waitForConnections: true,
+      connectionLimit: 5
+    });
+  }
+  return pool;
+}
 
 export async function GET() {
   try {
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     const sql = `SELECT DISTINCT f_campaign_name FROM ${DB_NAME}.dm_form WHERE f_campaign_name IS NOT NULL AND f_campaign_name != '' AND (f_qa_status IS NULL OR f_qa_status = '' OR f_qa_status = 'pending') ORDER BY f_campaign_name`;
     const [rows] = await pool.execute(sql);
     return NextResponse.json({ data: rows });

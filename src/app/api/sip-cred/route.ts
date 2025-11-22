@@ -4,19 +4,26 @@ import { verifyToken } from '@/lib/auth';
 import { getRequiredEnv, getRequiredInt } from '@/lib/env';
 import type { RowDataPacket } from 'mysql2/promise';
 
-const DB_NAME = getRequiredEnv('DB_NAME');
+let pool: mysql.Pool | null = null;
 
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  port: getRequiredInt('DB_PORT')
-});
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_NAME'),
+      waitForConnections: true,
+      connectionLimit: 10,
+      port: getRequiredInt('DB_PORT')
+    });
+  }
+  return pool;
+}
 
 async function ensureTable() {
+  const pool = getPool();
+  const DB_NAME = getRequiredEnv('DB_NAME');
   const sql = `CREATE TABLE IF NOT EXISTS ${DB_NAME}.sip_credentials (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -44,6 +51,8 @@ export async function GET(req: NextRequest) {
     await ensureTable();
     const email = getAuthEmail(req);
     if (!email) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT email, extension, IF(sip_password IS NULL OR sip_password = '', 0, 1) AS hasPassword FROM ${DB_NAME}.sip_credentials WHERE email = ? LIMIT 1`,
       [email]
@@ -70,6 +79,8 @@ export async function POST(req: NextRequest) {
     const sip_password = (body?.sip_password ?? '').toString();
 
     // Upsert
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     await pool.execute(
       `INSERT INTO ${DB_NAME}.sip_credentials (email, extension, sip_password) VALUES (?, ?, ?)
        ON DUPLICATE KEY UPDATE extension = VALUES(extension), sip_password = VALUES(sip_password)`,

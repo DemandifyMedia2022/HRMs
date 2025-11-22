@@ -309,12 +309,5 @@ export const helpTopics: HelpTopic[] = [
     description: 'View system wide notifications.',
     url: '/pages/notifications',
     role: 'all'
-  },
-  {
-    id: 'survey-form',
-    title: 'Survey form',
-    description: 'Open the employee survey form.',
-    url: '/pages/survey-form',
-    role: 'all'
   }
 ];

@@ -5,21 +5,27 @@ import { NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
 import { getRequiredEnv, getRequiredInt } from '@/lib/env';
 
-const DB_NAME = getRequiredEnv('DB_NAME');
-
 const logger = createLogger('call-data');
+let pool: mysql.Pool | null = null;
 
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  port: getRequiredInt('DB_PORT'),
-  waitForConnections: true,
-  connectionLimit: 5
-});
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_NAME'),
+      port: getRequiredInt('DB_PORT'),
+      waitForConnections: true,
+      connectionLimit: 5
+    });
+  }
+  return pool;
+}
 
 async function ensureTable() {
+  const pool = getPool();
+  const DB_NAME = getRequiredEnv('DB_NAME');
   const sql = `CREATE TABLE IF NOT EXISTS ${DB_NAME}.call_data (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     extension VARCHAR(64) NULL,
@@ -41,18 +47,19 @@ async function ensureTable() {
   // Best-effort ensure column exists even if table pre-existed without it
   try {
     await pool.execute(`ALTER TABLE ${DB_NAME}.call_data ADD COLUMN IF NOT EXISTS user_name VARCHAR(255) NULL`);
-  } catch {}
+  } catch { }
   try {
     await pool.execute(`ALTER TABLE ${DB_NAME}.call_data ADD COLUMN IF NOT EXISTS recording_url VARCHAR(255) NULL`);
-  } catch {}
+  } catch { }
   try {
     await pool.execute(`ALTER TABLE ${DB_NAME}.call_data ADD COLUMN IF NOT EXISTS source_number VARCHAR(64) NULL`);
-  } catch {}
+  } catch { }
 }
 
 export async function GET() {
   try {
     await ensureTable();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     return NextResponse.json({ ok: true, table: `${DB_NAME}.call_data` });
   } catch (err: any) {
     logger.error('GET error', { error: String(err?.message || err) });
@@ -79,6 +86,8 @@ export async function POST(req: Request) {
       meta
     } = body || {};
 
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     const sql = `INSERT INTO ${DB_NAME}.call_data (
       extension, source_number, user_name, destination, direction, status, start_time, answer_time, end_time, duration_seconds, cause, recording_url, meta
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;

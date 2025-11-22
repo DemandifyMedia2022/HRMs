@@ -132,6 +132,12 @@ function HomePageInner() {
   );
 }
 
+import { Suspense } from 'react';
+
 export default function HomePage() {
-  return <HomePageInner />;
+  return (
+    <Suspense fallback={null}>
+      <HomePageInner />
+    </Suspense>
+  );
 }

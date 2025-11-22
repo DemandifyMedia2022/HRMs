@@ -426,7 +426,7 @@ export default function PayslipPage() {
               if (/\boklch\(|\blch\(|\blab\(/i.test(txt)) {
                 n.setAttribute('style', txt.replace(/\boklch\([^)]*\)|\blch\([^)]*\)|\blab\([^)]*\)/gi, ''));
               }
-            } catch {}
+            } catch { }
           });
         }
       },
@@ -528,7 +528,7 @@ export default function PayslipPage() {
   if (loading) {
     return (
       <>
-        <SidebarConfig role="hr" />
+        <SidebarConfig role="user" />
         <div className="flex-1 p-4 md:p-6">
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground">Loading payslip data...</CardContent>
@@ -541,7 +541,7 @@ export default function PayslipPage() {
   if (!payslipData || !payslipData.employee || !payslipData.salaryDetails) {
     return (
       <>
-        <SidebarConfig role="hr" />
+        <SidebarConfig role="user" />
         <div className="flex-1 p-4 md:p-6">
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground">No payslip data available</CardContent>

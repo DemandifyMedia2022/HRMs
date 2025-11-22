@@ -5,21 +5,27 @@ import { NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
 import { getRequiredEnv, getRequiredInt } from '@/lib/env';
 
-const DB_NAME = getRequiredEnv('DB_NAME');
-
 const logger = createLogger('campaigns');
+let pool: mysql.Pool | null = null;
 
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  port: getRequiredInt('DB_PORT'),
-  waitForConnections: true,
-  connectionLimit: 5
-});
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_NAME'),
+      port: getRequiredInt('DB_PORT'),
+      waitForConnections: true,
+      connectionLimit: 5
+    });
+  }
+  return pool;
+}
 
 async function ensureTable() {
+  const pool = getPool();
+  const DB_NAME = getRequiredEnv('DB_NAME');
   const sql = `CREATE TABLE IF NOT EXISTS ${DB_NAME}.campaigns (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     c_id VARCHAR(64) NOT NULL,
@@ -37,12 +43,14 @@ async function ensureTable() {
   await pool.execute(sql);
   try {
     await pool.execute(`ALTER TABLE ${DB_NAME}.campaigns ADD COLUMN IF NOT EXISTS f_script_url VARCHAR(512) NULL`);
-  } catch {}
+  } catch { }
 }
 
 export async function GET() {
   try {
     await ensureTable();
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     const [rows] = await pool.execute(`SELECT * FROM ${DB_NAME}.campaigns ORDER BY id DESC LIMIT 500`);
     return NextResponse.json({ data: rows });
   } catch (err: any) {
@@ -72,6 +80,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'c_id and f_campaign_name are required' }, { status: 400 });
     }
 
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     const sql = `INSERT INTO ${DB_NAME}.campaigns
       (c_id, f_campaign_name, f_start_date, f_end_date, f_assignto, f_allocation, f_method, f_script, f_script_url, f_status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;

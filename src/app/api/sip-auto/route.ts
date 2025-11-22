@@ -4,20 +4,27 @@ import { verifyToken } from '@/lib/auth';
 import { getRequiredEnv, getRequiredInt } from '@/lib/env';
 import type { RowDataPacket } from 'mysql2/promise';
 
-const DB_NAME = getRequiredEnv('DB_NAME');
+let pool: mysql.Pool | null = null;
 
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  port: getRequiredInt('DB_PORT')
-});
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_NAME'),
+      waitForConnections: true,
+      connectionLimit: 10,
+      port: getRequiredInt('DB_PORT')
+    });
+  }
+  return pool;
+}
 
 async function ensureSchema() {
   // Create `extensions` table and add `extension` column on `users`
+  const pool = getPool();
+  const DB_NAME = getRequiredEnv('DB_NAME');
   await pool.execute(`CREATE TABLE IF NOT EXISTS ${DB_NAME}.extensions (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     extension VARCHAR(64) NOT NULL UNIQUE,
@@ -30,7 +37,7 @@ async function ensureSchema() {
   // Add column to users
   try {
     await pool.execute(`ALTER TABLE ${DB_NAME}.users ADD COLUMN extension VARCHAR(64) NULL`);
-  } catch {}
+  } catch { }
 }
 
 function getAuthEmail(req: NextRequest): string | null {
@@ -51,6 +58,8 @@ export async function GET(req: NextRequest) {
     if (!email) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
     // 1) Find user's assigned extension
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     const [urows] = await pool.execute<RowDataPacket[]>(
       `SELECT extension FROM ${DB_NAME}.users WHERE email = ? LIMIT 1`,
       [email]
@@ -89,6 +98,8 @@ export async function POST(req: NextRequest) {
     const extension = (body?.extension || '').toString().trim();
     if (!extension) return NextResponse.json({ error: 'extension required' }, { status: 400 });
 
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
     await pool.execute(`UPDATE ${DB_NAME}.users SET extension = ? WHERE email = ?`, [extension, email]);
     return NextResponse.json({ ok: true });
   } catch (e: any) {

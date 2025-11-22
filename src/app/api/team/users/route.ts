@@ -3,17 +3,22 @@ import { verifyToken } from '@/lib/auth';
 import mysql from 'mysql2/promise';
 import { getRequiredEnv, getRequiredInt } from '@/lib/env';
 
-const DB_NAME = getRequiredEnv('DB_NAME');
+let pool: mysql.Pool | null = null;
 
-const pool = mysql.createPool({
-  host: getRequiredEnv('DB_HOST'),
-  user: getRequiredEnv('DB_USER'),
-  password: getRequiredEnv('DB_PASSWORD'),
-  database: DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  port: getRequiredInt('DB_PORT')
-});
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: getRequiredEnv('DB_HOST'),
+      user: getRequiredEnv('DB_USER'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_NAME'),
+      waitForConnections: true,
+      connectionLimit: 10,
+      port: getRequiredInt('DB_PORT')
+    });
+  }
+  return pool;
+}
 
 function getAuthEmail(req: NextRequest): string | null {
   try {
@@ -38,16 +43,34 @@ export async function GET(req: NextRequest) {
     const email = getAuthEmail(req);
     if (!email) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
+    if (!email) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    const role = req.headers.get('x-user-role');
+    const department = req.headers.get('x-user-department');
+    const pool = getPool();
+    const DB_NAME = getRequiredEnv('DB_NAME');
+
     try {
       await pool.execute(`ALTER TABLE ${DB_NAME}.users ADD COLUMN extension VARCHAR(64) NULL`);
-    } catch {}
+    } catch { }
 
-    const [rows] = await pool.execute(
-      `SELECT id, name, email, COALESCE(extension, '') AS extension
+    let sql = `SELECT id, name, email, COALESCE(extension, '') AS extension
        FROM ${DB_NAME}.users
-       WHERE LOWER(COALESCE(department, '')) IN ('operation','sales')
-       ORDER BY name ASC`
-    );
+       WHERE LOWER(COALESCE(department, '')) IN ('operation','sales')`;
+    const params: any[] = [];
+
+    if (role !== 'admin') {
+      if (!department) {
+        // If no department and not admin, return empty or restricted list
+        // For now, let's assume they can't see anything if they don't have a department
+        return NextResponse.json([]);
+      }
+      sql += ` AND LOWER(department) = ?`;
+      params.push(department.toLowerCase());
+    }
+
+    sql += ` ORDER BY name ASC`;
+
+    const [rows] = await pool.execute(sql, params);
     const arr = Array.isArray(rows) ? (rows as any[]) : [];
     const list = arr.map((u: any) => {
       const rawName = (u.name || '').toString().trim()

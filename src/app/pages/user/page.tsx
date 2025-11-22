@@ -244,7 +244,7 @@ export default function UserPage() {
         </div>
 
         {/* Actions row placed above KPI cards */}
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex flex-nowrap items-center justify-end gap-2">
           <Button asChild variant="outline">
             <Link href="/pages/user/leaves/new">Request Leave</Link>
           </Button>
