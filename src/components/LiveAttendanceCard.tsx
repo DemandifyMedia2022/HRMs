@@ -93,7 +93,6 @@ export function LiveAttendanceCard({
                         <IconClock className="h-5 w-5 text-muted-foreground" />
                         Live Attendance
                     </CardTitle>
-                    <CardDescription>Unknown</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="text-center py-8 text-muted-foreground">
@@ -117,7 +116,7 @@ export function LiveAttendanceCard({
     return (
         <Card className={cn(
             "lg:col-span-1 transition-all duration-300",
-            data.isOngoing && "border-green-500/50 shadow-lg shadow-green-500/10"
+            data.isOngoing && "border-black/10 shadow-lg shadow-black/15"
         )}>
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -128,7 +127,7 @@ export function LiveAttendanceCard({
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                                 </span>
-                                <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-bold">
+                                <span className="bg-black bg-clip-text text-transparent font-bold">
                                     Live Attendance
                                 </span>
                             </>
@@ -197,7 +196,7 @@ export function LiveAttendanceCard({
                             <IconClock className="h-3.5 w-3.5" />
                             <span>Login</span>
                         </div>
-                        <div className="text-base font-mono font-bold text-green-600">
+                        <div className="text-lg font-bold tracking-wider text-green-600 tabular-nums">
                             {data.loginHours || '00:00:00'}
                         </div>
                     </div>
@@ -207,7 +206,7 @@ export function LiveAttendanceCard({
                             <IconPlayerPause className="h-3.5 w-3.5" />
                             <span>Break</span>
                         </div>
-                        <div className="text-base font-mono font-bold text-orange-600">
+                        <div className="text-lg font-bold tracking-wider text-orange-600 tabular-nums">
                             {data.breakHours || '00:00:00'}
                         </div>
                     </div>
@@ -217,7 +216,7 @@ export function LiveAttendanceCard({
                             <IconClock className="h-3.5 w-3.5" />
                             <span>Total</span>
                         </div>
-                        <div className="text-base font-mono font-bold text-blue-600">
+                        <div className="text-lg font-bold tracking-wider text-blue-600 tabular-nums">
                             {data.totalHours || '00:00:00'}
                         </div>
                     </div>
@@ -234,7 +233,7 @@ export function LiveAttendanceCard({
                                     <Badge
                                         key={index}
                                         variant="outline"
-                                        className="font-mono text-xs px-2 py-0.5 bg-slate-50"
+                                        className="text-xs px-2 py-0.5 bg-slate-50 tabular-nums font-medium"
                                     >
                                         {time}
                                     </Badge>
