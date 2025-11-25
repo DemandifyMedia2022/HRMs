@@ -23,6 +23,7 @@ import {
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { IconCalendar, IconChartBar, IconChartDonut, IconUsers, IconGift, IconMessage, IconUserCheck, IconUserX, IconHourglass, IconClock, IconHistory } from '@tabler/icons-react';
+import { LiveAttendanceCard } from '@/components/LiveAttendanceCard';
 
 export default function AdminPage() {
   const { user, loading } = useRouteGuard('admin');

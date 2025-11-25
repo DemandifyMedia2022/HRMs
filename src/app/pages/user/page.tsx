@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, ReferenceLine, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { IconCalendar, IconClock, IconChartDonut, IconHistory, IconGift, IconMessage, IconUserCheck, IconUserX, IconHourglass } from '@tabler/icons-react';
+import { LiveAttendanceCard } from '@/components/LiveAttendanceCard';
 
 export default function UserPage() {
   const { user, loading } = useRouteGuard('user');
@@ -303,38 +304,10 @@ export default function UserPage() {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="lg:col-span-1 relative overflow-hidden">
-            <div className="absolute -right-9 -bottom-7 opacity-10 pointer-events-none">
-              <IconCalendar className="w-68 h-67 text-primary" />
-            </div>
-            <CardHeader className="relative z-10">
-              <CardTitle>
-                <span className="flex items-center gap-2"><IconCalendar className="size-5 text-primary" /> Today</span>
-              </CardTitle>
-              <CardDescription>{todayISO}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 relative z-10">
-              {todayEvent ? (
-                <>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">{todayEvent.extendedProps?.status || todayEvent.title}</Badge>
-                  </div>
-                  <div className="text-sm">
-                    {formatTime(todayEvent.extendedProps?.in_time)} - {formatTime(todayEvent.extendedProps?.out_time)}
-                  </div>
-                  <div className="text-sm">
-                    Work{' '}
-                    {fmtHMS(toSecs(todayEvent.extendedProps?.total_hours ?? todayEvent.extendedProps?.login_hours))}
-                  </div>
-                  <Button asChild size="sm" variant="secondary">
-                    <Link href="/pages/user/attendance">View Full Attendance</Link>
-                  </Button>
-                </>
-              ) : (
-                <div className="text-sm text-muted-foreground">No record for today.</div>
-              )}
-            </CardContent>
-          </Card>
+          <LiveAttendanceCard
+            employeeId={String(user?.emp_code || '')}
+            showClockTimes={true}
+          />
 
           <Card className="lg:col-span-2">
             <CardHeader className="flex-row items-center justify-between">
