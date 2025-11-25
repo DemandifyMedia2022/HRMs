@@ -292,12 +292,12 @@ model dm_form {
   f_delivary_status String?  @db.VarChar(11)
   f_delivary_date   String?  @db.VarChar(11)
   f_delivary_by     String?  @db.VarChar(11)
-  f_reject_reason   String?  @db.VarChar(255)
   added_by_user_id  String?  @db.VarChar(55)
   qualifyleads_by   String?  @db.VarChar(255)
   f_date            DateTime @default(now()) @db.Timestamp(0)
   form_status       Int
   f_script_url      String?  @db.VarChar(512)
+  f_reject_reason   String?  @db.VarChar(255)
 }
 
 model dm_task {
@@ -818,4 +818,19 @@ model users {
   months                                    Int?
   status                                    Int?      @db.TinyInt
   extension                                 String?   @db.VarChar(64)
+}
+
+model survey_feedback {
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  overall    Int
+  culture    Int
+  balance    Int
+  salary     Int
+  growth     Int
+  manager    Int
+  policies   Int
+  recommend  Int
+  comments   String?   @db.Text
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  updated_at DateTime? @default(now()) @db.Timestamp(0)
 }
