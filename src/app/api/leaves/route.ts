@@ -81,35 +81,58 @@ export async function POST(req: Request) {
       }
     });
 
-    // Email notify HR users (best-effort)
+    // Email notify appropriate recipients based on applicant role
     try {
-      const hrs = await prisma.$queryRaw<Array<{ email: string | null }>>`
-        SELECT email FROM users 
-        WHERE email IS NOT NULL AND (
-          LOWER(department) = 'hr' OR UPPER(type) = 'HR'
-        )
+      let recipients: string[] = [];
+      let recipientType = '';
+      
+      // Check if requester is from HR department
+      const requester = await prisma.$queryRaw<Array<{ email: string | null; department: string | null; type: string | null }>>`
+        SELECT email, department, type FROM users WHERE Full_name = ${addedByUser} OR name = ${addedByUser} LIMIT 1
       `;
-      const to = (hrs || []).map(r => String(r.email)).filter(Boolean);
-
-      // requester email for reply-to
-      const requester = await prisma.$queryRaw<Array<{ email: string | null; department: string | null }>>`
-        SELECT email, department FROM users WHERE Full_name = ${addedByUser} OR name = ${addedByUser} LIMIT 1
-      `;
-      const requesterEmail = requester?.[0]?.email ? String(requester[0].email) : undefined;
       const requesterDept = requester?.[0]?.department ? String(requester[0].department) : '';
+      const requesterType = requester?.[0]?.type ? String(requester[0].type) : '';
+      const requesterEmail = requester?.[0]?.email ? String(requester[0].email) : undefined;
+      
+      // Determine recipients based on requester role
+      const isHRUser = requesterDept.toLowerCase() === 'hr' || requesterType.toUpperCase() === 'HR';
+      
+      if (isHRUser) {
+        // If HR user applies, notify Admin users
+        const admins = await prisma.$queryRaw<Array<{ email: string | null }>>`
+          SELECT email FROM users 
+          WHERE email IS NOT NULL AND (
+            LOWER(type) = 'admin' OR UPPER(type) = 'ADMIN'
+          )
+        `;
+        recipients = (admins || []).map(r => String(r.email)).filter(Boolean);
+        recipientType = 'Admin Team';
+      } else {
+        // If regular user applies, notify HR users
+        const hrs = await prisma.$queryRaw<Array<{ email: string | null }>>`
+          SELECT email FROM users 
+          WHERE email IS NOT NULL AND (
+            LOWER(department) = 'hr' OR UPPER(type) = 'HR'
+          )
+        `;
+        recipients = (hrs || []).map(r => String(r.email)).filter(Boolean);
+        recipientType = 'HR Team';
+      }
 
-      if (to.length > 0) {
+      if (recipients.length > 0) {
         const dateDisp =
           new Date(created.start_date as any).toISOString().split('T')[0] +
           (created.end_date && created.end_date !== created.start_date
             ? ` → ${new Date(created.end_date as any).toISOString().split('T')[0]}`
             : '');
         const subject = `📝 Leave Request Submitted by ${addedByUser}`;
-        const link = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/pages/hr/leaves`; // adjust to HR leaves page
+        const link = isHRUser 
+          ? `${process.env.NEXT_PUBLIC_BASE_URL || ''}/pages/admin/leaves` 
+          : `${process.env.NEXT_PUBLIC_BASE_URL || ''}/pages/hr/leaves`;
         const html = `
           <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #eee;'>
             <h2 style='color: #1a73e8; text-align: center;'>📋 Leave Request</h2>
-            <p>Dear HR Team,</p>
+            <p>Dear ${recipientType},</p>
             <p>A new leave request has been submitted. Please review the details below:</p>
             <p><strong>👤 User:</strong> ${addedByUser}</p>
             <p><strong>📧 Email:</strong> ${requesterEmail || 'N/A'}</p>
@@ -125,7 +148,7 @@ export async function POST(req: Request) {
           </div>
         `;
         await sendMail({
-          to,
+          to: recipients,
           subject,
           html,
           replyTo: requesterEmail,
@@ -164,22 +187,27 @@ export async function PATCH(req: Request) {
     });
     const after = await prisma.leavedata.findUnique({ where: { l_id: id } });
 
-    // Notify requester of decision changes (best-effort)
+    // Notify requester and appropriate parties of decision changes
     try {
       if (after) {
-        const userRow = await prisma.$queryRaw<Array<{ email: string | null }>>`
-          SELECT email FROM users WHERE Full_name = ${after.added_by_user} OR name = ${after.added_by_user} LIMIT 1
+        const userRow = await prisma.$queryRaw<Array<{ email: string | null; department: string | null; type: string | null }>>`
+          SELECT email, department, type FROM users WHERE Full_name = ${after.added_by_user} OR name = ${after.added_by_user} LIMIT 1
         `;
-        const toEmail = userRow?.[0]?.email ? String(userRow[0].email) : null;
+        const requesterInfo = userRow?.[0];
+        const toEmail = requesterInfo?.email ? String(requesterInfo.email) : null;
+        
+        // Define variables in proper scope for use in all conditional blocks
+        const startDisp = after.start_date ? new Date(after.start_date as any).toISOString().split('T')[0] : '';
+        const endDisp = after.end_date ? new Date(after.end_date as any).toISOString().split('T')[0] : '';
+        const dates = endDisp && endDisp !== startDisp ? `${startDisp} → ${endDisp}` : startDisp;
+        
+        const statusParts: string[] = [];
+        if (body?.HRapproval) statusParts.push(`HR: ${String(body.HRapproval)}`);
+        if (body?.Managerapproval) statusParts.push(`Manager: ${String(body.Managerapproval)}`);
+        
         if (toEmail) {
-          const startDisp = after.start_date ? new Date(after.start_date as any).toISOString().split('T')[0] : '';
-          const endDisp = after.end_date ? new Date(after.end_date as any).toISOString().split('T')[0] : '';
-          const dates = endDisp && endDisp !== startDisp ? `${startDisp} → ${endDisp}` : startDisp;
-          const link = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/pages/user/leaves`; // user view page
+          const link = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/pages/user/leaves`;
 
-          const statusParts: string[] = [];
-          if (body?.HRapproval) statusParts.push(`HR: ${String(body.HRapproval)}`);
-          if (body?.Managerapproval) statusParts.push(`Manager: ${String(body.Managerapproval)}`);
           const subject = `[HRMS] Your leave request update: ${statusParts.join(', ') || 'Updated'}`;
 
           const html = `
@@ -201,6 +229,79 @@ export async function PATCH(req: Request) {
             html,
             text: `Your leave request for ${dates} (${after.leave_type}) updated. ${statusParts.join(', ')}. View: ${link}`
           });
+        }
+
+        // Also notify other relevant parties if the request was made by HR and approved/rejected by Admin
+        // or if the request was made by user and approved/rejected by HR
+        const isHRRequester = requesterInfo?.department?.toLowerCase() === 'hr' || requesterInfo?.type?.toUpperCase() === 'HR';
+        
+        if (isHRRequester && (body?.HRapproval || body?.Managerapproval)) {
+          // Notify other HR members when HR's leave is approved/rejected
+          try {
+            const otherHRs = await prisma.$queryRaw<Array<{ email: string | null }>>`
+              SELECT email FROM users 
+              WHERE email IS NOT NULL AND (
+                LOWER(department) = 'hr' OR UPPER(type) = 'HR'
+              ) AND email != ${toEmail}
+            `;
+            const hrEmails = (otherHRs || []).map(r => String(r.email)).filter(Boolean);
+            
+            if (hrEmails.length > 0) {
+              const notifySubject = `[HRMS] HR Leave Request Update: ${after.added_by_user}`;
+              const notifyHtml = `
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #eee;'>
+                  <p>Dear HR Team,</p>
+                  <p>A leave request submitted by ${after.added_by_user} has been updated:</p>
+                  <ul>
+                    <li><strong>Dates:</strong> ${dates}</li>
+                    <li><strong>Type:</strong> ${after.leave_type}</li>
+                    ${body?.HRapproval ? `<li><strong>HR:</strong> ${String(body.HRapproval)}${body?.HRrejectReason ? ` — ${String(body.HRrejectReason)}` : ''}</li>` : ''}
+                    ${body?.Managerapproval ? `<li><strong>Manager:</strong> ${String(body.Managerapproval)}${body?.ManagerRejecjetReason ? ` — ${String(body.ManagerRejecjetReason)}` : ''}</li>` : ''}
+                  </ul>
+                </div>
+              `;
+              await sendMail({
+                to: hrEmails,
+                subject: notifySubject,
+                html: notifyHtml,
+                text: `HR leave request by ${after.added_by_user} updated. ${statusParts.join(', ')}.`
+              });
+            }
+          } catch {}
+        } else if (!isHRRequester && (body?.HRapproval || body?.Managerapproval)) {
+          // Notify Admin when user's leave is approved/rejected by HR (for record keeping)
+          try {
+            const admins = await prisma.$queryRaw<Array<{ email: string | null }>>`
+              SELECT email FROM users 
+              WHERE email IS NOT NULL AND (
+                LOWER(type) = 'admin' OR UPPER(type) = 'ADMIN'
+              )
+            `;
+            const adminEmails = (admins || []).map(r => String(r.email)).filter(Boolean);
+            
+            if (adminEmails.length > 0) {
+              const notifySubject = `[HRMS] User Leave Request Update: ${after.added_by_user}`;
+              const notifyHtml = `
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #eee;'>
+                  <p>Dear Admin Team,</p>
+                  <p>A user leave request has been updated:</p>
+                  <ul>
+                    <li><strong>User:</strong> ${after.added_by_user}</li>
+                    <li><strong>Dates:</strong> ${dates}</li>
+                    <li><strong>Type:</strong> ${after.leave_type}</li>
+                    ${body?.HRapproval ? `<li><strong>HR:</strong> ${String(body.HRapproval)}${body?.HRrejectReason ? ` — ${String(body.HRrejectReason)}` : ''}</li>` : ''}
+                    ${body?.Managerapproval ? `<li><strong>Manager:</strong> ${String(body.Managerapproval)}${body?.ManagerRejecjetReason ? ` — ${String(body.ManagerRejecjetReason)}` : ''}</li>` : ''}
+                  </ul>
+                </div>
+              `;
+              await sendMail({
+                to: adminEmails,
+                subject: notifySubject,
+                html: notifyHtml,
+                text: `User leave request by ${after.added_by_user} updated. ${statusParts.join(', ')}.`
+              });
+            }
+          } catch {}
         }
       }
     } catch {}
