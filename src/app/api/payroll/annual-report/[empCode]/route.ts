@@ -130,9 +130,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       if (monthYear <= currentFiscalMonth) {
         const totalDays = new Date(monthYear.getFullYear(), month.num, 0).getDate();
 
-        const attendance = await prisma.npAttendance.findMany({
+        const attendance = await prisma.npattendance.findMany({
           where: {
-            employeeId: parseInt(empCode) || 0,
+            employee_id: empCode,
             date: {
               gte: new Date(monthYear.getFullYear(), month.num - 1, 1),
               lt: new Date(monthYear.getFullYear(), month.num, 1)

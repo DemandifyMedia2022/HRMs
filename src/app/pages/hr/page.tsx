@@ -24,6 +24,7 @@ import {
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { IconCalendar, IconGift, IconChartBar, IconMessage, IconUsers, IconUserCheck, IconUserX, IconClock } from '@tabler/icons-react';
+import { LiveAttendanceCard } from '@/components/LiveAttendanceCard';
 
 export default function AdminPage() {
   const searchParams = useSearchParams();
@@ -359,6 +360,10 @@ export default function AdminPage() {
           </Card>
         </div>
 
+        {user?.emp_code && (
+          <LiveAttendanceCard employeeId={String(user.emp_code)} showClockTimes={true} />
+        )}
+
         <div className="grid gap-4 lg:grid-cols-4">
           <Card className="lg:col-span-2">
             <CardHeader>
@@ -368,23 +373,29 @@ export default function AdminPage() {
               <CardDescription>{leaveTrends?.year || year}</CardDescription>
             </CardHeader>
             <CardContent className="px-2 pt-2">
-              <ChartContainer config={{}} className="aspect-auto h-[280px] w-full">
-                <BarChart data={trendData}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
-                  <YAxis allowDecimals={false} width={30} tickLine={false} axisLine={false} tickMargin={8} />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                  {trendTypes.map((t, i) => (
-                    <Bar
-                      key={t}
-                      dataKey={t}
-                      stackId="a"
-                      fill={trendColors[i % trendColors.length]}
-                      radius={[6, 6, 0, 0]}
-                    />
-                  ))}
-                </BarChart>
-              </ChartContainer>
+              {trendTypes.length === 0 ? (
+                <div className="flex items-center justify-center h-[280px] text-muted-foreground text-sm">
+                  No leave data available for {leaveTrends?.year || year}
+                </div>
+              ) : (
+                <ChartContainer config={{}} className="aspect-auto h-[280px] w-full">
+                  <BarChart data={trendData}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
+                    <YAxis allowDecimals={false} width={30} tickLine={false} axisLine={false} tickMargin={8} />
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                    {trendTypes.map((t, i) => (
+                      <Bar
+                        key={t}
+                        dataKey={t}
+                        stackId="a"
+                        fill={trendColors[i % trendColors.length]}
+                        radius={[6, 6, 0, 0]}
+                      />
+                    ))}
+                  </BarChart>
+                </ChartContainer>
+              )}
             </CardContent>
           </Card>
           <Card className="relative overflow-hidden">
