@@ -128,9 +128,9 @@ export async function GET(request: NextRequest) {
 
         // Fetch attendance from npattendance table (Prisma model has employeeId as Int)
         const empIdStr = String(user.emp_code || '').trim();
-        const attendance = await prisma.npAttendance.findMany({
+        const attendance = await prisma.npattendance.findMany({
           where: {
-            employeeId: empIdStr || undefined,
+            employee_id: empIdStr || undefined,
             date: {
               gte: new Date(year, month - 1, 1),
               lt: new Date(year, month, 1)

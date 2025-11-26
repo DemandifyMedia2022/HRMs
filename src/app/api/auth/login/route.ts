@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       department: deptLower as any
     });
     const refreshToken = generateRefreshToken({ id: idNum });
-    const isProd = process.env.NODE_ENV === 'production';
+    const isProd = false; // process.env.NODE_ENV === 'production';
     const csrfToken = crypto.randomUUID().replace(/-/g, '');
     const tokenEncrypted = encryptToken(token);
     // Return ONLY token and success message - no user details yet

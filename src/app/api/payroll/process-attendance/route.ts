@@ -29,9 +29,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const selectedMonth = searchParams.get('month') || new Date().toISOString().slice(0, 7);
+    const downloadCsv = searchParams.get('download') === 'csv';
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = 10;
-    const offset = (page - 1) * limit;
+    const limit = downloadCsv ? 10000 : 10; // Get all records for CSV download
+    const offset = downloadCsv ? 0 : (page - 1) * limit;
 
     const [year, month] = selectedMonth.split('-').map(Number);
 
@@ -78,9 +79,9 @@ export async function GET(request: NextRequest) {
         const empCode = user.emp_code || '';
 
         // Fetch attendance
-        const attendance = await prisma.npAttendance.findMany({
+        const attendance = await prisma.npattendance.findMany({
           where: {
-            employeeId: parseInt(empCode) || 0,
+            employee_id: empCode,
             date: {
               gte: new Date(year, month - 1, 1),
               lt: new Date(year, month, 1)
@@ -264,6 +265,40 @@ export async function GET(request: NextRequest) {
         };
       })
     );
+
+    // If CSV download is requested, return CSV format
+    if (downloadCsv) {
+      const csvHeaders = ['#', 'Name', 'Emp Code', 'Company', 'Designation', 'Paid Days', 'Net Salary', 'Arrears'];
+      const csvRows = processedUsers.map((user, index) => [
+        index + 1,
+        user.Full_name || '',
+        user.emp_code || '',
+        user.company_name || '',
+        user.job_role || '',
+        user.pay_days,
+        user.net_pay,
+        user.arrear_days
+      ]);
+
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvRows.map(row => row.map(cell => {
+          // Escape cells containing commas or quotes
+          const cellStr = String(cell);
+          if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+            return `"${cellStr.replace(/"/g, '""')}"`;
+          }
+          return cellStr;
+        }).join(','))
+      ].join('\n');
+
+      return new NextResponse(csvContent, {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="process_attendance_${selectedMonth}.csv"`
+        }
+      });
+    }
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SidebarConfig } from '@/components/sidebar-config';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -33,6 +33,23 @@ export default function NewLeavePage() {
   const [addedByUser, setAddedByUser] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('/api/users/me');
+        if (res.ok) {
+          const userData = await res.json();
+          // Use Full_name if available, otherwise fall back to name
+          setAddedByUser(userData.Full_name || userData.name || '');
+        }
+      } catch (err) {
+        console.error('Failed to fetch current user:', err);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IconDeviceFloppy } from '@tabler/icons-react';
+import { useToast } from '@/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 interface Employee {
   id: string;
@@ -33,6 +35,7 @@ interface Employee {
 export default function EmployeeSalaryStructurePage() {
   const params = useParams();
   const employeeId = params.id as string;
+  const { toast } = useToast();
 
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
@@ -249,13 +252,24 @@ export default function EmployeeSalaryStructurePage() {
       const data = await response.json();
 
       if (data.success) {
-        alert('Salary structure updated successfully!');
+        toast({
+          title: 'Success',
+          description: 'Salary structure updated successfully!',
+        });
       } else {
-        alert('Failed to update: ' + data.error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: data.error || 'Failed to update salary structure',
+        });
       }
     } catch (error) {
       console.error('Error updating salary:', error);
-      alert('Failed to update salary structure');
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to update salary structure',
+      });
     } finally {
       setSaving(false);
     }
@@ -794,6 +808,7 @@ export default function EmployeeSalaryStructurePage() {
           </div>
         </div>
       </div>
+      <Toaster />
     </>
   );
 }
