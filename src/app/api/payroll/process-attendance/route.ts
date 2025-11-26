@@ -78,9 +78,9 @@ export async function GET(request: NextRequest) {
         const empCode = user.emp_code || '';
 
         // Fetch attendance
-        const attendance = await prisma.npAttendance.findMany({
+        const attendance = await prisma.npattendance.findMany({
           where: {
-            employeeId: parseInt(empCode) || 0,
+            employee_id: empCode,
             date: {
               gte: new Date(year, month - 1, 1),
               lt: new Date(year, month, 1)
