@@ -31,72 +31,94 @@ export const ExperienceLetter: React.FC<ExperienceLetterProps> = ({ data }) => {
   const joiningDate = formatDate(data.joiningDate)
   const relievingDate = formatDate(data.relievingDate)
   const issueDate = formatDate(data.issueDate)
- 
+
   let pronounSubject = "he"
   let pronounPossessive = "his"
   if (data.salutation === "Mrs" || data.salutation === "Miss") {
     pronounSubject = "she"
     pronounPossessive = "her"
   }
- 
+
   return (
     <div style={{ position: 'relative', lineHeight: 1.8, color: '#000', fontSize: '14px' }}>
+      {/* Logo */}
+     <div style={{display:'flex'}}>
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
         <img src="/Demandify1.png" alt="Demandify Logo" style={{ width: '120px', height: 'auto' }} />
       </div>
-     
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        opacity: 0.08,
-        zIndex: 0,
-        pointerEvents: 'none'
-      }}>
+
+      {/* Watermark */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          opacity: 0.08,
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      >
         <img src="/demandify.png" alt="Watermark" style={{ width: '400px', height: 'auto' }} />
       </div>
-     
+ </div>
+      {/* Content */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <p style={{ marginTop: '80px' }}><strong>Date:</strong> {issueDate}</p>
+        {/* Top details block */}
+        <p style={{ marginTop: '50px', marginBottom: '4px' }}><strong>Date:</strong> {issueDate}</p>
+        <p style={{ margin: '0 0 4px 0' }}><strong>Name:</strong> {data.salutation} {capitalizedName}</p>
+        <p style={{ margin: '0 0 4px 0' }}><strong>Designation:</strong> {capitalizedDesignation}</p>
+        <p style={{ margin: '0 0 4px 0' }}><strong>Department:</strong> {capitalizedDepartment}</p>
+
         <br />
-       
-        <h2 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600 }}>
-          To Whom It May Concern
-        </h2>
+
+        {/* Main heading */}
+        <h2 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600 }}>TO WHOM IT MAY CONCERN</h2>
         <br />
-       
+
+        {/* Subject line */}
+        <p><strong>Subject: Work experience certificate</strong></p>
+        <br />
+
+        {/* Body paragraphs */}
         <p>
-          This is to certify that <b>{data.salutation}. {capitalizedName}</b> was employed with
-          Demandify Media Private Limited as a <b>{capitalizedDesignation}</b> in the{' '}
-          <b>{capitalizedDepartment}</b> department.
+          This is to certify that <b>{capitalizedName}</b> has worked as a <b>{capitalizedDesignation}</b> with
+          Demandify Media Private Limited from <b>{joiningDate}</b> to <b>{relievingDate}</b>.
         </p>
         <br />
-       
+
         <p>
-          {pronounSubject.charAt(0).toUpperCase() + pronounSubject.slice(1)} joined our organization
-          on <b>{joiningDate}</b> and worked with us till <b>{relievingDate}</b>.
+          During {pronounPossessive} tenure, <b>{capitalizedName}</b> services were found to be exceptional.
+          {" "}{pronounSubject.charAt(0).toUpperCase() + pronounSubject.slice(1)} has shown strong technical skills,
+          problem-solving abilities, and has been dedicated towards {pronounPossessive} work throughout.
         </p>
         <br />
-       
+
         <p>
-          During {pronounPossessive} tenure with us, {pronounSubject} has shown dedication,
-          professionalism, and commitment to {pronounPossessive} work. {pronounSubject.charAt(0).toUpperCase() + pronounSubject.slice(1)}{' '}
-          has been a valuable asset to our team.
+          <b>{capitalizedName}</b> will be an asset to any company.
         </p>
         <br />
-       
+
         <p>
-         Demandify Media wishes {pronounSubject} the best in {pronounPossessive} future endeavors.
+          Demandify Media wishes <b>{capitalizedName}</b> the best in {pronounPossessive} future endeavors.
         </p>
-        <br /><br /><br />
-       
+        <br />
+
+        {/* Closing & signature */}
         <p>
-          <strong>With Best Wishes,</strong><br />
-          Sincerely yours,<br /><br /><br />
-          <strong>Co-Founder</strong><br />
-          <strong>Sunny Ashpal</strong><br />
-          Demandify Media Private Limited<br /><br />
+          <strong>With Best wishes,</strong>
+          <br />
+          Sincerely yours,
+        </p>
+        <br /><br />
+
+        <p>
+          <strong>Co-Founder</strong>
+          <br />
+          <strong>Sunny Ashpal</strong>
+          <br />
+          Demandify Media Private Limited
+          <br />
           Date: {issueDate}
         </p>
       </div>

@@ -37,6 +37,7 @@ export const PromotionLetter: React.FC<PromotionLetterProps> = ({ data }) => {
   return (
     <div style={{ position: 'relative', lineHeight: 1.8, color: '#000', fontSize: '14px' }}>
       {/* Logo */}
+      <div style={{display:'flex',justifyContent: 'space-between', alignItems: 'center' }}> 
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
         <img src="/Demandify1.png" alt="Demandify Logo" style={{ width: '120px', height: 'auto' }} />
       </div>
@@ -55,16 +56,16 @@ export const PromotionLetter: React.FC<PromotionLetterProps> = ({ data }) => {
       >
         <img src="/demandify.png" alt="Watermark" style={{ width: '400px', height: 'auto' }} />
       </div>
-
+</div>
       {/* Content */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <h3 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '80px' }}>Promotion Letter</h3>
+        <h3 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '50px' }}>Promotion Letter</h3>
         <br />
 
         <p>
           Dear{' '}
           <b>
-            {data.salutation}. {capitalizedName}
+            {data.salutation}{capitalizedName}
           </b>
           ,
         </p>
@@ -100,7 +101,7 @@ export const PromotionLetter: React.FC<PromotionLetterProps> = ({ data }) => {
           <br />
           <b>{capitalizedManager}</b>
           <br />
-          Manager
+          Head Of Opeartion
           <br />
           <b>{capitalizedCompany}</b>
         </p>

@@ -9,6 +9,7 @@ interface InterviewCallLetterProps {
     interviewTime: string;
     interviewLocation: string;
     contactPerson: string;
+    managerName: string;
     companyName: string;
   };
 }
@@ -33,10 +34,13 @@ export const InterviewCallLetter: React.FC<InterviewCallLetterProps> = ({ data }
   const capitalizedName = capitalizeWords(data.candidateName);
   const capitalizedPosition = capitalizeWords(data.position);
   const capitalizedContact = capitalizeWords(data.contactPerson);
+  const capitalizedManager = capitalizeWords(data.managerName);
   const formattedTime = formatTimeTo12Hour(data.interviewTime);
 
   return (
     <div style={{ position: 'relative', lineHeight: 1.8, color: '#000' }}>
+     
+     <div style={{display:'flex'}}>
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
         <img src="/Demandify1.png" alt="Demandify Logo" style={{ width: '120px', height: 'auto' }} />
       </div>
@@ -54,9 +58,14 @@ export const InterviewCallLetter: React.FC<InterviewCallLetterProps> = ({ data }
       >
         <img src="/demandify.png" alt="Watermark" style={{ width: '400px', height: 'auto' }} />
       </div>
-
+    </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <p style={{ marginTop: '80px' }}>
+        <h3 style={{ textAlign: 'center', fontSize: '16px', marginTop: '50px', fontWeight: 600 }}>
+          Confirmation of Interview Schedule – Demandify Media Pvt. Ltd
+        </h3>
+        <br />
+
+        <p style={{ marginTop: '10px' }}>
           <strong>Date:</strong> {data.interviewDate}
         </p>
         <br />
@@ -73,7 +82,7 @@ export const InterviewCallLetter: React.FC<InterviewCallLetterProps> = ({ data }
         <p>
           Dear {data.salutation} {capitalizedName},
         </p>
-        <br />
+        
 
         <p>
           We are pleased to inform you that you have been shortlisted for an interview for the position of{' '}
@@ -101,7 +110,7 @@ export const InterviewCallLetter: React.FC<InterviewCallLetterProps> = ({ data }
         <p>
           Best regards,
           <br />
-          Viresh Kumbhar
+          {capitalizedManager}
           <br />
           HR Manager
           <br />

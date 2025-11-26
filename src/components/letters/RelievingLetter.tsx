@@ -42,6 +42,8 @@ export const RelievingLetter: React.FC<RelievingLetterProps> = ({ data }) => {
 
   return (
     <div style={{ position: 'relative', lineHeight: 1.8, color: '#000', fontSize: '14px' }}>
+      
+     <div style={{display:'flex'}}> 
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
         <img src="/Demandify1.png" alt="Demandify Logo" style={{ width: '120px', height: 'auto' }} />
       </div>
@@ -59,13 +61,13 @@ export const RelievingLetter: React.FC<RelievingLetterProps> = ({ data }) => {
       >
         <img src="/demandify.png" alt="Watermark" style={{ width: '400px', height: 'auto' }} />
       </div>
-
+    </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <p style={{ marginTop: '80px' }}>
+        <p style={{ marginTop: '50px' }}>
           <strong>Date:</strong> {issueDate}
         </p>
         <p>
-          <strong>Name:</strong> {data.salutation}. {capitalizedName}
+          <strong>Name:</strong> {data.salutation} {capitalizedName}
         </p>
         <p>
           <strong>Designation:</strong> {capitalizedDesignation}

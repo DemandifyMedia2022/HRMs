@@ -12,8 +12,8 @@ interface ResignationLetterProps {
 }
 
 export const ResignationLetter: React.FC<ResignationLetterProps> = ({ data }) => {
-  const capitalizeWords = (str: string) => {
-    return str
+  const capitalizeWords = (str: string = '') => {
+    return String(str)
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
@@ -33,6 +33,7 @@ export const ResignationLetter: React.FC<ResignationLetterProps> = ({ data }) =>
 
   return (
     <div style={{ position: 'relative', lineHeight: 1.8, color: '#000', fontSize: '14px' }}>
+      <div style={{display:'flex',justifyContent: 'space-between', alignItems: 'center' }}> 
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
         <img src="/Demandify1.png" alt="Demandify Logo" style={{ width: '120px', height: 'auto' }} />
       </div>
@@ -51,8 +52,9 @@ export const ResignationLetter: React.FC<ResignationLetterProps> = ({ data }) =>
         <img src="/demandify.png" alt="Watermark" style={{ width: '400px', height: 'auto' }} />
       </div>
 
+</div>
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <h3 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '80px' }}>
+        <h3 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '50px' }}>
           Resignation Acceptance Letter
         </h3>
         <br />
@@ -60,7 +62,7 @@ export const ResignationLetter: React.FC<ResignationLetterProps> = ({ data }) =>
         <p>
           Dear{' '}
           <b>
-            {data.salutation}. {capitalizedName}
+            {data.salutation} {capitalizedName}
           </b>
           ,
         </p>
@@ -100,11 +102,11 @@ export const ResignationLetter: React.FC<ResignationLetterProps> = ({ data }) =>
 
         <p>
           Sincerely,
+             <br />
+          <b>{capitalizedManager}</b>    
           <br />
-          <b>{capitalizedManager}</b>
-          <br />
-          Manager
-          <br />
+          Head Of Opeartion          
+         <br/>
           <b>{capitalizedCompany}</b>
         </p>
       </div>
