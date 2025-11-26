@@ -23,14 +23,14 @@ interface UseLiveAttendanceOptions {
     employeeId: string;
     date?: string;
     enabled?: boolean;
-    pollInterval?: number; // milliseconds, default 30000 (30 seconds)
+    pollInterval?: number; // milliseconds, default 10000 (10 seconds)
 }
 
 export function useLiveAttendance({
     employeeId,
     date,
     enabled = true,
-    pollInterval = 30000 // Reduced from 1000ms to 30000ms (30 seconds)
+    pollInterval = 10000 // 10 seconds for more responsive updates
 }: UseLiveAttendanceOptions) {
     const [data, setData] = useState<LiveAttendanceData | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -53,8 +53,10 @@ export function useLiveAttendance({
             const params = new URLSearchParams({ employee_id: employeeId });
             if (date) params.append('date', date);
 
+            // Add cache: 'no-store' to prevent caching of API responses
             const response = await fetch(`/api/attendance/live?${params.toString()}`, {
-                signal: abortControllerRef.current.signal
+                signal: abortControllerRef.current.signal,
+                cache: 'no-store'
             });
 
             if (!response.ok) {

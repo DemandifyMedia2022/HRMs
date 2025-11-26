@@ -22,6 +22,39 @@ export async function GET(request: NextRequest) {
         // Use today's date if not provided
         const targetDate = date || new Date().toISOString().split('T')[0];
 
+        // Trigger a quick ESSL sync in the background (fire-and-forget)
+        // This ensures we get the latest punch data from the device
+        const syncUrl = process.env.ESSL_SYNC_URL;
+        if (syncUrl) {
+            try {
+                const controller = new AbortController();
+                const timeout = Number(process.env.ESSL_SYNC_TIMEOUT_MS || 5000);
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+                
+                // Sync only today's data for faster response
+                const now = new Date();
+                const todayStart = new Date(now);
+                todayStart.setHours(0, 0, 0, 0);
+                
+                // Fire-and-forget sync request
+                fetch(syncUrl, { 
+                    method: 'POST',
+                    signal: controller.signal,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        fromDate: `${targetDate} 00:00:00`,
+                        toDate: 'now',
+                        lookbackDays: 0 // Only sync today
+                    })
+                }).then(() => clearTimeout(timeoutId)).catch(() => clearTimeout(timeoutId));
+            } catch {
+                // Ignore sync errors, continue with existing data
+            }
+        }
+
+        // Small delay to allow sync to complete (if it's fast)
+        await new Promise(resolve => setTimeout(resolve, 150));
+
         // Get attendance record
         const attendance = await prisma.npattendance.findFirst({
             where: {
