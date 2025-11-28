@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
             ctArr = parsed.map((t: any) => pickHHMM(t)).filter((t: string) => t !== 'N/A');
           }
         }
-      } catch {}
+      } catch { }
       if (ctArr && ctArr.length > 0) {
         inTime = ctArr[0] || inTime;
         outTime = ctArr[ctArr.length - 1] || outTime;
@@ -99,6 +99,64 @@ export async function GET(req: NextRequest) {
           clock_times: r.clockTimes ?? '[]'
         }
       };
+
+      // Recalculate hours for today to match live dashboard
+      if (dateISO === new Date().toISOString().split('T')[0] && r.clockTimes) {
+        try {
+          const clockTimes = typeof r.clockTimes === 'string' ? JSON.parse(r.clockTimes) : r.clockTimes;
+          if (Array.isArray(clockTimes) && clockTimes.length > 0) {
+            const now = Date.now();
+            const timestamps = clockTimes.map((t: string) => {
+              const [hh, mm] = t.split(':').map(Number);
+              const d = new Date(r.date);
+              d.setHours(hh, mm, 0, 0);
+              return d.getTime();
+            }).sort((a, b) => a - b);
+
+            const firstPunch = timestamps[0];
+            const lastPunch = timestamps[timestamps.length - 1];
+
+            // Check if ongoing (odd punches)
+            const isOngoing = timestamps.length % 2 !== 0;
+            const currentOutTime = isOngoing ? now : lastPunch;
+
+            let workingMs = 0;
+            for (let i = 0; i < timestamps.length - 1; i += 2) {
+              if (timestamps[i + 1]) {
+                workingMs += timestamps[i + 1] - timestamps[i];
+              }
+            }
+            if (isOngoing) {
+              workingMs += now - lastPunch;
+            }
+
+            const totalMs = currentOutTime - firstPunch;
+            const breakMs = Math.max(0, totalMs - workingMs);
+
+            const formatDuration = (ms: number) => {
+              const totalSeconds = Math.floor(ms / 1000);
+              const hours = Math.floor(totalSeconds / 3600);
+              const minutes = Math.floor((totalSeconds % 3600) / 60);
+              const seconds = totalSeconds % 60;
+              return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            };
+
+            event.extendedProps.login_hours = formatDuration(workingMs);
+            event.extendedProps.total_hours = formatDuration(totalMs);
+            event.extendedProps.break_hours = formatDuration(breakMs);
+
+            if (isOngoing) {
+              const d = new Date(now);
+              const hh = String(d.getHours()).padStart(2, '0');
+              const mm = String(d.getMinutes()).padStart(2, '0');
+              event.extendedProps.out_time = `${hh}:${mm}`;
+            }
+          }
+        } catch (e) {
+          console.error('Error recalculating today hours:', e);
+        }
+      }
+
       const key = String(r.employeeId);
       if (!byUser[key]) byUser[key] = [];
       byUser[key].push(event);
