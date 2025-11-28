@@ -126,7 +126,7 @@ Team                    VARCHAR(55)
 
 ---
 
-### 4. NpAttendance
+### 4. npattendance
 
 **Purpose**: Normalized attendance data from biometric devices
 

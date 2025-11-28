@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     const endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59));
 
     // Use raw SQL to join users (users.emp_code = npattendance.employee_id)
-    // Fields selected mirror NpAttendance plus users.Full_name
+    // Fields selected mirror npattendance plus users.Full_name
     const records: Array<any> = await prisma.$queryRaw`
       SELECT 
         a.id,

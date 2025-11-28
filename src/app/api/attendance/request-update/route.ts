@@ -225,7 +225,7 @@ export async function PATCH(req: NextRequest) {
     } catch {}
 
     if (approval === 'approved') {
-      // Apply to NpAttendance
+      // Apply to npattendance
       const date = issue.Date_Attendance_Update as unknown as Date | null;
       const desired = (finalStatus as string | undefined) || (issue.Attendance_status as string | null);
 
@@ -249,13 +249,13 @@ export async function PATCH(req: NextRequest) {
             outTime.setUTCHours(hh, mm, 0, 0);
           }
           // Try update, else create
-          const upd = await prisma.npAttendance.updateMany({
+          const upd = await prisma.npattendance.updateMany({
             where: { employeeId: emp_code, date },
             data: { status: desired, ...(inTime ? { inTime } : {}), ...(outTime ? { outTime } : {}) }
           });
           if (!upd.count || upd.count === 0) {
             try {
-              await prisma.npAttendance.create({
+              await prisma.npattendance.create({
                 data: {
                   employeeId: emp_code,
                   empName: issue.added_by_user ?? me.name,
@@ -270,7 +270,7 @@ export async function PATCH(req: NextRequest) {
                 } as any
               });
             } catch {
-              await prisma.npAttendance.updateMany({
+              await prisma.npattendance.updateMany({
                 where: { employeeId: emp_code, date },
                 data: { status: desired, ...(inTime ? { inTime } : {}), ...(outTime ? { outTime } : {}) }
               });
