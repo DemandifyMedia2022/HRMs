@@ -171,7 +171,7 @@ export default function AdminAttendancePage() {
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
-              <h1 className="text-xl font-semibold tracking-tight">Attendance</h1>
+              <h1 className="text-xl font-semibold tracking-tight">Attendancee</h1>
               <p className="text-sm text-muted-foreground">Search a user month-by-month.</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -413,6 +413,8 @@ export default function AdminAttendancePage() {
                           const holiday = c.dateStr ? holidayMap.get(c.dateStr) : undefined;
                           const isHoliday = Boolean(holiday);
                           const isLeave = Boolean(leaveType);
+                          const isFuture = c.dateStr ? c.dateStr > todayStr : false;
+                          const isNoRecord = has && !c.ev && !isHoliday && !isLeave && !isWeekend && !isFuture;
                           // priority: holiday (violet) > leave (sky) > weekend (zinc) > event color
                           const cellBorder = isHoliday
                             ? '#6d28d9'
@@ -420,12 +422,14 @@ export default function AdminAttendancePage() {
                               ? '#0ea5e9'
                               : isWeekend
                                 ? '#a1a1aa'
-                                : base.border;
+                                : isNoRecord
+                                  ? '#ef4444'
+                                  : base.border;
                           const isToday = c.dateStr === todayStr;
                           return (
                             <div
                               key={idx}
-                              className={`relative min-h-[98px] rounded-md border p-2 flex flex-col gap-1 cursor-pointer transition-colors ${has ? (isHoliday ? 'bg-violet-50/40' : isLeave ? 'bg-sky-50/40' : isWeekend ? 'bg-muted/40' : base.bg) : 'bg-muted/40'} hover:bg-accent ${isToday ? 'ring-2 ring-primary' : ''}`}
+                              className={`relative min-h-[98px] rounded-md border p-2 flex flex-col gap-1 cursor-pointer transition-colors ${has ? (isHoliday ? 'bg-violet-50/40' : isLeave ? 'bg-sky-50/40' : isWeekend ? 'bg-muted/40' : isNoRecord ? 'bg-red-50/50' : base.bg) : 'bg-muted/40'} hover:bg-accent ${isToday ? 'ring-2 ring-primary' : ''}`}
                               style={{ borderColor: cellBorder }}
                               onClick={() => {
                                 if (!has) return;
@@ -483,6 +487,8 @@ export default function AdminAttendancePage() {
                                 </div>
                               ) : isWeekend ? (
                                 <div className="mt-auto text-[11px] text-muted-foreground">Week Off</div>
+                              ) : isNoRecord ? (
+                                <div className="mt-auto text-[11px] text-red-700">Absent</div>
                               ) : null}
                             </div>
                           );

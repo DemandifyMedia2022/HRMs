@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,7 @@ type Feedback = {
   createdAt?: string | null;
 };
 
-export default function SurveyFeedbacksPage() {
+export default function AdminSurveyFeedbacksPage() {
   const [items, setItems] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
@@ -51,9 +51,7 @@ export default function SurveyFeedbacksPage() {
         if (!ignore) setLoading(false);
       }
     })();
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, []);
 
   const filtered = useMemo(() => {
@@ -87,54 +85,54 @@ export default function SurveyFeedbacksPage() {
               className="h-9 w-full sm:w-[280px]"
             />
             <Button asChild variant="outline" className="h-9">
-              <Link href="/pages/hr">Back to Dashboard</Link>
+              <Link href="/pages/admin">Back to Dashboard</Link>
             </Button>
           </div>
           <div className="px-4 pb-4">
-          {error ? (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
-          ) : loading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
-          ) : filtered.length === 0 ? (
-            <div className="rounded-md border bg-white p-6 text-center text-sm text-muted-foreground">No feedbacks found.</div>
-          ) : (
-            <div className="overflow-x-auto rounded-md border">
-              <Table className="[&_th]:whitespace-nowrap text-sm">
-                <TableHeader>
-                  <TableRow className="bg-muted/40">
-                    <TableHead className="w-[80px]">ID</TableHead>
-                    <TableHead>Overall</TableHead>
-                    <TableHead>Culture</TableHead>
-                    <TableHead>Balance</TableHead>
-                    <TableHead>Salary</TableHead>
-                    <TableHead>Growth</TableHead>
-                    <TableHead>Manager</TableHead>
-                    <TableHead>Policies</TableHead>
-                    <TableHead>Recommend</TableHead>
-                    <TableHead className="min-w-[240px]">Comments</TableHead>
-                    <TableHead>Submitted</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((it, idx) => (
-                    <TableRow key={String(it.id)} className={idx % 2 ? 'bg-muted/10' : ''}>
-                      <TableCell className="font-medium">{String(it.id)}</TableCell>
-                      <TableCell><Stars value={it.overall} /></TableCell>
-                      <TableCell><Stars value={it.culture} /></TableCell>
-                      <TableCell><Stars value={it.balance} /></TableCell>
-                      <TableCell><Stars value={it.salary} /></TableCell>
-                      <TableCell><Stars value={it.growth} /></TableCell>
-                      <TableCell><Stars value={it.manager} /></TableCell>
-                      <TableCell><Stars value={it.policies} /></TableCell>
-                      <TableCell><Stars value={it.recommend} /></TableCell>
-                      <TableCell title={it.comments || ""} className="max-w-[360px] truncate">{it.comments || "-"}</TableCell>
-                      <TableCell className="whitespace-nowrap">{it.createdAt ? new Date(it.createdAt).toLocaleString() : "-"}</TableCell>
+            {error ? (
+              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+            ) : loading ? (
+              <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
+            ) : filtered.length === 0 ? (
+              <div className="rounded-md border bg-white p-6 text-center text-sm text-muted-foreground">No feedbacks found.</div>
+            ) : (
+              <div className="overflow-x-auto rounded-md border">
+                <Table className="[&_th]:whitespace-nowrap text-sm">
+                  <TableHeader>
+                    <TableRow className="bg-muted/40">
+                      <TableHead className="w-[80px]">ID</TableHead>
+                      <TableHead>Overall</TableHead>
+                      <TableHead>Culture</TableHead>
+                      <TableHead>Balance</TableHead>
+                      <TableHead>Salary</TableHead>
+                      <TableHead>Growth</TableHead>
+                      <TableHead>Manager</TableHead>
+                      <TableHead>Policies</TableHead>
+                      <TableHead>Recommend</TableHead>
+                      <TableHead className="min-w-[240px]">Comments</TableHead>
+                      <TableHead>Submitted</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((it, idx) => (
+                      <TableRow key={String(it.id)} className={idx % 2 ? 'bg-muted/10' : ''}>
+                        <TableCell className="font-medium">{String(it.id)}</TableCell>
+                        <TableCell><Stars value={it.overall} /></TableCell>
+                        <TableCell><Stars value={it.culture} /></TableCell>
+                        <TableCell><Stars value={it.balance} /></TableCell>
+                        <TableCell><Stars value={it.salary} /></TableCell>
+                        <TableCell><Stars value={it.growth} /></TableCell>
+                        <TableCell><Stars value={it.manager} /></TableCell>
+                        <TableCell><Stars value={it.policies} /></TableCell>
+                        <TableCell><Stars value={it.recommend} /></TableCell>
+                        <TableCell title={it.comments || ""} className="max-w-[360px] truncate">{it.comments || "-"}</TableCell>
+                        <TableCell className="whitespace-nowrap">{it.createdAt ? new Date(it.createdAt).toLocaleString() : "-"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

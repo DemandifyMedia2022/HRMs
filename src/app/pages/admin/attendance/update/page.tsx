@@ -417,17 +417,21 @@ export default function AdminAttendanceBulkPage() {
                     const holiday = c.dateStr ? calendar.holidayMap.get(c.dateStr) : undefined;
                     const isHoliday = Boolean(holiday);
                     const isLeave = Boolean(leaveType);
-                    // priority: holiday (purple) > leave (blue) > weekend (gray) > event color
-                    const cellBorder = isHoliday ? '#800080' : isLeave ? '#3b82f6' : isWeekend ? '#9ca3af' : baseBorder;
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const isFuture = c.dateStr ? c.dateStr > todayStr : false;
+                    const isNoRecord = has && !c.ev && !isHoliday && !isLeave && !isWeekend && !isFuture;
+                    // priority: holiday (purple) > leave (blue) > weekend (gray) > (no record -> red) > event color
+                    const cellBorder = isHoliday ? '#800080' : isLeave ? '#3b82f6' : isWeekend ? '#9ca3af' : isNoRecord ? '#ef4444' : baseBorder;
                     return (
                       <div
                         key={idx}
-                        className={`min-h-[90px] rounded border p-2 flex flex-col gap-1 cursor-pointer ${has ? (isHoliday || isLeave ? 'bg-white' : isWeekend ? 'bg-gray-50' : 'bg-white') : 'bg-gray-50'} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+                        className={`min-h-[90px] rounded border p-2 flex flex-col gap-1 cursor-pointer ${has ? (isHoliday || isLeave ? 'bg-white' : isWeekend ? 'bg-gray-50' : isNoRecord ? 'bg-red-50/50' : 'bg-white') : 'bg-gray-50'} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
                         style={{ borderColor: cellBorder }}
                         onClick={() => has && toggleDate(c.dateStr)}
                         title={c.dateStr}
                       >
                         <div className="text-right text-xs text-gray-500">{c.day ?? ''}</div>
+
                         {isHoliday ? (
                           <div className="mt-auto text-[11px] text-purple-700">{holiday?.name}</div>
                         ) : isLeave ? (
@@ -442,6 +446,8 @@ export default function AdminAttendanceBulkPage() {
                           </div>
                         ) : isWeekend ? (
                           <div className="mt-auto text-[11px] text-gray-600">Week Off</div>
+                        ) : isNoRecord ? (
+                          <div className="mt-auto text-[11px] text-red-700">Absent</div>
                         ) : null}
                         {isSelected ? <div className="text-[10px] text-blue-600 mt-auto">Selected</div> : null}
                       </div>

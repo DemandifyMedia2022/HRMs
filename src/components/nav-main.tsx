@@ -29,7 +29,8 @@ export function NavMain({
     title: string;
     url: string;
     icon?: Icon;
-    children?: { title: string; url: string; icon?: Icon }[];
+    target?: string;
+    children?: { title: string; url: string; icon?: Icon; target?: string }[];
   }[];
 }) {
   const pathname = usePathname();
@@ -73,6 +74,8 @@ export function NavMain({
                         <DropdownMenuItem asChild key={child.title}>
                           <Link
                             href={child.url}
+                            target={child.target}
+                            rel={child.target === '_blank' ? 'noopener noreferrer' : undefined}
                             className={`flex items-center gap-2 ${
                               child.url !== '#' && pathname.startsWith(child.url) ? 'font-medium' : ''
                             }`}
@@ -86,7 +89,7 @@ export function NavMain({
                   </DropdownMenu>
                 ) : (
                   <SidebarMenuButton tooltip={item.title} asChild isActive={isActive} className={activeCls}>
-                    <Link href={item.url}>
+                    <Link href={item.url} target={item.target} rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}>
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
                     </Link>

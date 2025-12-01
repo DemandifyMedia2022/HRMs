@@ -80,6 +80,21 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         ]
       },
       {
+        title: 'Feedback',
+        url: '#',
+        icon: IconChartBar,
+        children: [
+          { title: 'Feedbacks', url: '/pages/admin/survey-feedbacks', icon: IconReport },
+          { title: 'Feedback Form', url: '/pages/admin/survey-form', icon: IconReport },
+          {
+            title: 'Ambition Box',
+            url: 'https://www.ambitionbox.com/overview/demandify-media-overview',
+            icon: IconBriefcase,
+            target: '_blank'
+          }
+        ]
+      },
+      {
         title: 'Payroll',
         url: '#',
         icon: IconSettings,
@@ -161,6 +176,20 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         children: [
           { title: 'Raise Ticket', url: '/pages/user/tickets/raise', icon: IconReport },
           { title: 'Ticket Status', url: '/pages/user/tickets/status', icon: IconFileDescription }
+        ]
+      },
+      {
+        title: 'Feedback',
+        url: '#',
+        icon: IconChartBar,
+        children: [
+          { title: 'Feedback Form', url: '/pages/user/survey-form', icon: IconReport },
+          {
+            title: 'Ambition Box',
+            url: 'https://www.ambitionbox.com/overview/demandify-media-overview',
+            icon: IconBriefcase,
+            target: '_blank'
+          }
         ]
       }
     ],
@@ -261,9 +290,20 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: '#',
         icon: IconChartBar,
         children: [
-          { title: 'Feedback', url: '/pages/hr/survey-feedbacks', icon: IconReport },
+          { title: 'Feedbacks', url: '/pages/hr/survey-feedbacks', icon: IconReport },
 
-          { title: 'Ambition Box', url: 'https://www.ambitionbox.com/overview/demandify-media-overview', icon: IconBriefcase }
+          { 
+    title: 'Feedback Form',         // <<< your new dropdown item
+    url: '/pages/hr/survey-form',   // <<< change URL as needed
+    icon: IconReport 
+  },
+          // { title: 'Ambition Box', url: 'https://www.ambitionbox.com/overview/demandify-media-overview', icon: IconBriefcase }
+           { 
+    title: 'Ambition Box', 
+    url: 'https://www.ambitionbox.com/overview/demandify-media-overview', 
+    icon: IconBriefcase,
+    target: '_blank'
+  }
         ]
       },
       {

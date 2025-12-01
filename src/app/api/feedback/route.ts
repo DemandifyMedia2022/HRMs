@@ -5,14 +5,14 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    const items = await prisma.survey_Feedback.findMany({
-      orderBy: { createdAt: 'desc' },
+    const items = await prisma.survey_feedback.findMany({
+      orderBy: { created_at: 'desc' },
     });
     const serialized = items.map((it: any) => ({
       ...it,
       id: typeof it.id === 'bigint' ? Number(it.id) : it.id,
-      createdAt: it.createdAt ? new Date(it.createdAt).toISOString() : null,
-      updatedAt: it.updatedAt ? new Date(it.updatedAt).toISOString() : null,
+      createdAt: it.created_at ? new Date(it.created_at).toISOString() : null,
+      updatedAt: it.updated_at ? new Date(it.updated_at).toISOString() : null,
     }));
     return NextResponse.json({ success: true, data: serialized });
   } catch (error) {
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     }
 
     // Create the feedback record in the database
-    const feedback = await prisma.survey_Feedback.create({
+    const feedback = await prisma.survey_feedback.create({
       data: {
         overall: Number(body.overall),
         culture: Number(body.culture),
@@ -54,8 +54,8 @@ export async function POST(request: Request) {
     const serialized = {
       ...feedback,
       id: typeof (feedback as any).id === 'bigint' ? Number((feedback as any).id) : (feedback as any).id,
-      createdAt: (feedback as any).createdAt ? new Date((feedback as any).createdAt).toISOString() : null,
-      updatedAt: (feedback as any).updatedAt ? new Date((feedback as any).updatedAt).toISOString() : null,
+      createdAt: (feedback as any).created_at ? new Date((feedback as any).created_at).toISOString() : null,
+      updatedAt: (feedback as any).updated_at ? new Date((feedback as any).updated_at).toISOString() : null,
     };
 
     return NextResponse.json({
