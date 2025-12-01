@@ -61,6 +61,7 @@ const AppointmentLetter: React.FC<AppointmentLetterProps> = ({ data }) => {
   return (
     <div style={{ position: 'relative', lineHeight: 1.6, color: '#000', fontSize: '14px' }}>
       {/* Logo */}
+      <div style={{display:'flex'}} > 
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
         <img src="/Demandify1.png" alt="Demandify Logo" style={{ width: '120px', height: 'auto' }} />
       </div>
@@ -68,7 +69,7 @@ const AppointmentLetter: React.FC<AppointmentLetterProps> = ({ data }) => {
       <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', opacity: 0.08, zIndex: 0, pointerEvents: 'none' }}>
         <img src="/demandify.png" alt="Watermark" style={{ width: '400px', height: 'auto' }} />
       </div>
-
+</div>
       {/* Content */}
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Header info */}
@@ -76,10 +77,13 @@ const AppointmentLetter: React.FC<AppointmentLetterProps> = ({ data }) => {
           <b>Demandify Media Pvt Ltd/25-26 /APTL/{data.number || '____'}</b>
         </p>
         <p><b>{issueDate}</b></p>
+        <br/>
         <p><b>To,</b><br />
           <b>{data.salutation} {capitalizedName}</b>
         </p>
+        <br/>
         <div style={{ textAlign: 'center' }}><b>Subject: Appointment Letter - {capitalizedDesignation}</b></div>
+        <br/>
         <p><b>Dear {data.salutation} {capitalizedName}</b>,</p>
 
         <p>Your joining date will be <b>{joiningDate}</b>. After completing three months in the organization, your PF and ESIC will start from <b>{pfActivationDate}</b> on, the following terms & conditions:</p>

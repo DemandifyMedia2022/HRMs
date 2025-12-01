@@ -45,6 +45,7 @@ export const JoiningLetter: React.FC<JoiningLetterProps> = ({ data }) => {
  
   return (
     <div style={{ position: 'relative', lineHeight: 1.8, color: '#000', fontSize: '14px' }}>
+     <div style={{display:'flex'}}> 
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
         <img src="/Demandify1.png" alt="Demandify Logo" style={{ width: '120px', height: 'auto' }} />
       </div>
@@ -60,9 +61,9 @@ export const JoiningLetter: React.FC<JoiningLetterProps> = ({ data }) => {
       }}>
         <img src="/demandify.png" alt="Watermark" style={{ width: '400px', height: 'auto' }} />
       </div>
-     
+    </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <h2 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '80px' }}>
+        <h2 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '50px' }}>
           Joining Letter
         </h2>
         <br />
@@ -74,15 +75,15 @@ export const JoiningLetter: React.FC<JoiningLetterProps> = ({ data }) => {
         {/* To block */}
         <div>
           <p><strong>To:</strong></p>
-          <p><b>{data.salutation}. {capitalizedName}</b></p>
+          <p><b>{data.salutation} {capitalizedName}</b></p>
           <p>{capitalizedDesignation}</p>
           <p>{capitalizedDepartment}</p>
         </div>
         <br />
  
         {/* Greeting */}
-        <p>Dear <b>{capitalizedName}</b>,</p>
-        <br />
+        <p style={{marginBottom:'5px'}}>Dear <b>{capitalizedName}</b>,</p>
+     
  
         {/* Main body matching template */}
         <div>

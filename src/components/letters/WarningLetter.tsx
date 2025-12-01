@@ -33,6 +33,7 @@ export const WarningLetter: React.FC<WarningLetterProps> = ({ data }) => {
 
   return (
     <div style={{ position: 'relative', lineHeight: 1.8, color: '#000', fontSize: '14px' }}>
+    <div style={{display:'flex'}}>
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
         <img src="/Demandify1.png" alt="Demandify Logo" style={{ width: '120px', height: 'auto' }} />
       </div>
@@ -50,19 +51,19 @@ export const WarningLetter: React.FC<WarningLetterProps> = ({ data }) => {
       >
         <img src="/demandify.png" alt="Watermark" style={{ width: '400px', height: 'auto' }} />
       </div>
-
+    </div> 
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <h3 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '80px' }}>Warning Letter</h3>
+        <h3 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '50px' }}>Warning Letter</h3>
         <br />
 
         <p>
           Dear{' '}
           <b>
-            {data.salutation}. {capitalizedName}
+            {data.salutation} {capitalizedName}
           </b>
           ,
         </p>
-        <br />
+    
 
         <p>
           This letter serves as a formal warning regarding your actions related to <b>{data.issueDescription}</b>. This
@@ -92,7 +93,7 @@ export const WarningLetter: React.FC<WarningLetterProps> = ({ data }) => {
           <br />
           <b>{capitalizedManager}</b>
           <br />
-          Manager
+          Head Of Opeartion
           <br />
           <b>{capitalizedCompany}</b>
         </p>

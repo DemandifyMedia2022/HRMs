@@ -34,7 +34,8 @@ export const LeaveApprovalLetter: React.FC<LeaveApprovalLetterProps> = ({ data }
   const endDate = formatDate(data.endDate);
 
   return (
-    <div style={{ position: 'relative', lineHeight: 1.8, color: '#000', fontSize: '14px' }}>
+    <div style={{ position: 'relative', lineHeight: 1.8, color: '#000', fontSize: '14px'}}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
         <img src="/Demandify1.png" alt="Demandify Logo" style={{ width: '120px', height: 'auto' }} />
       </div>
@@ -42,9 +43,9 @@ export const LeaveApprovalLetter: React.FC<LeaveApprovalLetterProps> = ({ data }
       <div
         style={{
           position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
+          top: '18%',
+          left: '75%',
+          transform: 'translateX(-50%)',
           opacity: 0.08,
           zIndex: 0,
           pointerEvents: 'none'
@@ -52,17 +53,12 @@ export const LeaveApprovalLetter: React.FC<LeaveApprovalLetterProps> = ({ data }
       >
         <img src="/demandify.png" alt="Watermark" style={{ width: '400px', height: 'auto' }} />
       </div>
-
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <h3 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '80px' }}>
-          Leave Approval Letter
-        </h3>
-        <br />
-
+</div>
+      <div style={{ position: 'relative', zIndex: 1, marginTop: '50px' }}>
         <p>
           Dear{' '}
           <b>
-            {data.salutation}. {capitalizedName}
+            {data.salutation} {capitalizedName}
           </b>
           ,
         </p>
@@ -110,7 +106,7 @@ export const LeaveApprovalLetter: React.FC<LeaveApprovalLetterProps> = ({ data }
           <br />
           <b>{capitalizedApprover}</b>
           <br />
-          Manager
+          Head Of Opeartion
           <br />
           <b>{capitalizedCompany}</b>
         </p>

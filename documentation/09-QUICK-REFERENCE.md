@@ -119,6 +119,17 @@ SMTP_HOST="smtp.gmail.com"
 SMTP_PORT="587"
 SMTP_USER="your-email@gmail.com"
 SMTP_PASS="your-password"
+
+# ESSL Integration
+ESSL_SERVER_URL="http://192.168.0.3/webapiservice.asmx"
+ESSL_SERIAL_NUMBER="BJ2C211860737"
+ESSL_USERNAME="essl1"
+ESSL_PASSWORD="Essl@123"
+ESSL_SYNC_URL="http://localhost:3000/api/essl/sync"
+ESSL_SYNC_TIMEOUT_MS="6000"
+ESSL_LOOKBACK_DAYS="0"
+ESSL_OVERWRITE_SHIFT="0"
+ESSL_MAX_SHIFT_HOURS="16"
 ```
 
 ---
@@ -140,6 +151,7 @@ GET    /api/employees           # List employees
 GET    /api/employees/:id       # Get employee
 POST   /api/employees           # Create employee
 PUT    /api/employees/:id       # Update employee
+PUT    /api/employees/update-salary # Update salary structure
 DELETE /api/employees/:id       # Delete employee
 ```
 
@@ -148,6 +160,9 @@ DELETE /api/employees/:id       # Delete employee
 GET    /api/attendance          # List attendance
 POST   /api/attendance/clock-in # Clock in
 POST   /api/attendance/clock-out # Clock out
+GET    /api/attendance/live     # Live attendance
+POST   /api/essl/sync           # Sync from ESSL
+POST   /api/essl/debug          # Debug ESSL connection
 ```
 
 ### Leaves
@@ -166,7 +181,7 @@ PUT    /api/leaves/:id/reject   # Reject leave
 - `users` - Employee master data
 - `attendance` - Daily attendance records
 - `leavedata` - Leave applications
-- `NpAttendance` - Biometric attendance data
+- `npattendance` - Biometric attendance data
 
 ### Financial Tables
 - `tax` - Tax calculations
@@ -488,6 +503,37 @@ PM2 Web:       http://localhost:9615 (if enabled)
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: November 13, 2025  
+---
+
+## Recent Updates (November 2025)
+
+### ESSL Integration
+- Fixed SOAP endpoint URL configuration
+- Enhanced response parser for multiple formats
+- Added debug endpoint for troubleshooting
+- Improved error handling and logging
+
+### Live Attendance
+- Real-time attendance tracking (10-second updates)
+- Client-side timer for second-by-second display
+- Auto-sync with ESSL before fetching data
+- Break time alerts and notifications
+- Visual indicators for ongoing shifts
+
+### Payroll Improvements
+- CSV export for process attendance
+- CSV export for bank challan (51 columns)
+- Fixed salary structure update endpoint
+- Proper data type handling for ESIC fields
+
+### UI/UX Enhancements
+- Replaced browser alerts with shadcn toast
+- Added empty states for charts
+- Improved loading indicators
+- Better error messages
+
+---
+
+**Document Version**: 1.1  
+**Last Updated**: November 26, 2025  
 **Author**: Development Team

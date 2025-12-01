@@ -44,10 +44,9 @@ export async function POST(req: Request) {
     for (const ds of selectedDates) {
       if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(ds)) continue;
       const date = toUtcMidnight(ds);
-      const zeroTime = new Date(Date.UTC(1970, 0, 1, 0, 0, 0));
-
-      const upd = await prisma.npAttendance.updateMany({
-        where: { employeeId: String(empCode), date },
+      // Try updating first; if no row updated, create
+      const upd = await prisma.npattendance.updateMany({
+        where: { employee_id: String(empCode), date },
         data: { status }
       });
       if (upd.count && upd.count > 0) {
@@ -55,24 +54,25 @@ export async function POST(req: Request) {
         continue;
       }
       try {
-        await prisma.npAttendance.create({
+        await prisma.npattendance.create({
           data: {
-            employeeId: String(empCode),
-            empName: empName,
+            employee_id: String(empCode),
+            emp_name: empName,
             date,
-            inTime: zeroTime,
-            outTime: zeroTime,
-            clockTimes: '[]',
-            totalHours: zeroTime,
-            loginHours: zeroTime,
-            breakHours: zeroTime,
+            in_time: date,
+            out_time: date,
+            clock_times: '[]',
+            total_hours: date,
+            login_hours: date,
+            break_hours: date,
             status
           }
         });
         inserted++;
       } catch {
-        const upd2 = await prisma.npAttendance.updateMany({
-          where: { employeeId: String(empCode), date },
+        // Likely unique constraint due to a concurrent insert; fallback to update
+        const upd2 = await prisma.npattendance.updateMany({
+          where: { employee_id: String(empCode), date },
           data: { status }
         });
         if (upd2.count > 0) updated += upd2.count;

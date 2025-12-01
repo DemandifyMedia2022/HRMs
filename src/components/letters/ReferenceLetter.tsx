@@ -28,6 +28,7 @@ export const ReferenceLetter: React.FC<ReferenceLetterProps> = ({ data }) => {
 
   return (
     <div style={{ position: 'relative', lineHeight: 1.8, color: '#000', fontSize: '14px' }}>
+    <div style={{display:'flex'}}>
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
         <img src="/Demandify1.png" alt="Demandify Logo" style={{ width: '120px', height: 'auto' }} />
       </div>
@@ -45,9 +46,9 @@ export const ReferenceLetter: React.FC<ReferenceLetterProps> = ({ data }) => {
       >
         <img src="/demandify.png" alt="Watermark" style={{ width: '400px', height: 'auto' }} />
       </div>
-
+    </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <h3 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '80px' }}>Reference Letter</h3>
+        <h3 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '50px' }}>Reference Letter</h3>
         <br />
 
         <p>
@@ -58,7 +59,7 @@ export const ReferenceLetter: React.FC<ReferenceLetterProps> = ({ data }) => {
         <p>
           I am writing to provide a reference for{' '}
           <b>
-            {data.salutation}. {capitalizedName}
+            {data.salutation} {capitalizedName}
           </b>
           , who has worked with us at <b>{capitalizedCompany}</b> as a <b>{capitalizedPosition}</b> for{' '}
           <b>{data.employmentPeriod}</b>. During this time, <b>{capitalizedName}</b> has consistently demonstrated

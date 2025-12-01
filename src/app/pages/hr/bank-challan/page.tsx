@@ -124,8 +124,6 @@ export default function BankChallanPage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      alert('Download started! Check your downloads folder.');
     } catch (error) {
       console.error('Download error:', error);
       alert('Failed to download. Please try again.');

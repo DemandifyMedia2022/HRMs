@@ -62,6 +62,7 @@ const OfferLetter: React.FC<OfferLetterProps> = ({ data }) => {
   return (
     <div style={{ position: 'relative', lineHeight: 1.6, color: '#000', fontSize: '13px' }}>
       {/* Logo */}
+     <div style={{display:'flex'}}>  
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
         <img src="/Demandify1.png" alt="Demandify Logo" style={{ width: '120px', height: 'auto' }} />
       </div>
@@ -78,10 +79,10 @@ const OfferLetter: React.FC<OfferLetterProps> = ({ data }) => {
       }}>
         <img src="/demandify.png" alt="Watermark" style={{ width: '400px', height: 'auto' }} />
       </div>
-      
+      </div> 
       {/* Content */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <h2 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '80px' }}>
+        <h2 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '50px' }}>
           Offer Letter
         </h2>
 

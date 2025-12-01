@@ -83,10 +83,25 @@ export async function POST(request: NextRequest) {
 
     const strDataList = extractStrDataList(response.data);
     if (!strDataList) {
+      console.error('Failed to extract strDataList. Response preview:', response.data.substring(0, 1000));
       return NextResponse.json(
-        { error: 'Failed to extract data from SOAP response' },
+        { 
+          error: 'Failed to extract data from SOAP response',
+          hint: 'Check server logs for response preview',
+          responsePreview: response.data.substring(0, 500)
+        },
         { status: 500 }
       );
+    }
+
+    // Handle empty data list (no attendance records in the time range)
+    if (strDataList.trim() === '' || strDataList.trim().length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'No attendance records found in the specified time range',
+        inserted: 0,
+        updated: 0,
+      });
     }
 
     const attendanceData = parseAttendanceData(strDataList);
@@ -311,10 +326,29 @@ export async function POST(request: NextRequest) {
 // Helper function to extract strDataList from SOAP response
 function extractStrDataList(xmlResponse: string): string | null {
   try {
-    // Simple regex to extract strDataList content
-    const match = xmlResponse.match(/<strDataList>([\s\S]*?)<\/strDataList>/);
-    return match ? match[1].trim() : null;
+    // Try multiple patterns to extract strDataList content
+    // Pattern 1: Standard tag
+    let match = xmlResponse.match(/<strDataList>([\s\S]*?)<\/strDataList>/i);
+    if (match && match[1].trim()) return match[1].trim();
+    
+    // Pattern 2: With namespace prefix
+    match = xmlResponse.match(/<[^:]*:?strDataList[^>]*>([\s\S]*?)<\/[^:]*:?strDataList>/i);
+    if (match && match[1].trim()) return match[1].trim();
+    
+    // Pattern 3: GetTransactionsLogResult tag (alternative response format)
+    match = xmlResponse.match(/<GetTransactionsLogResult[^>]*>([\s\S]*?)<\/GetTransactionsLogResult>/i);
+    if (match && match[1].trim()) return match[1].trim();
+    
+    // Pattern 4: Check for CDATA section
+    match = xmlResponse.match(/<!\[CDATA\[([\s\S]*?)\]\]>/);
+    if (match && match[1].trim()) return match[1].trim();
+    
+    // Log the response for debugging if no match found
+    console.log('SOAP Response (first 500 chars):', xmlResponse.substring(0, 500));
+    
+    return null;
   } catch (error) {
+    console.error('Error extracting strDataList:', error);
     return null;
   }
 }

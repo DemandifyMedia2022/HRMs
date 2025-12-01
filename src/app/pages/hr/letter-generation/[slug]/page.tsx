@@ -98,6 +98,7 @@ const letterRegistry: Record<string, { title: string; Component: any; defaultDat
       { name: "resignationDate", label: "Resignation Date", type: "date" },
       { name: "lastWorkingDay", label: "Last Working Day", type: "date" },
       { name: "reason", label: "Reason" },
+      { name: "managerName", label: "Manager Name" },
       { name: "companyName", label: "Company Name" },
     ],
   },
@@ -298,7 +299,7 @@ const letterRegistry: Record<string, { title: string; Component: any; defaultDat
     ],
   },
   "interview-call-letter": {
-    title: "Interview Call Letter",
+    title: "Confirmation of Interview Schedule – Demandify Media Pvt. Ltd",
     Component: InterviewCallLetter,
     defaultData: {
       salutation: "Mr",
@@ -308,6 +309,7 @@ const letterRegistry: Record<string, { title: string; Component: any; defaultDat
       interviewTime: "10:00",
       interviewLocation: "Demandify Pvt Ltd, 2nd Floor, Tech Park, Pune",
       contactPerson: "HR Panel",
+      managerName: "Reporting Manager",
       companyName: "Demandify Pvt Ltd",
     },
     fields: [
@@ -318,6 +320,7 @@ const letterRegistry: Record<string, { title: string; Component: any; defaultDat
       { name: "interviewTime", label: "Interview Time (HH:mm)" },
       { name: "interviewLocation", label: "Interview Location" },
       { name: "contactPerson", label: "Contact Person" },
+      { name: "managerName", label: "Manager Name" },
       { name: "companyName", label: "Company Name" },
     ],
   },
@@ -429,138 +432,96 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
 
   const handleChange = (name: string, value: string) => {
     setFormData((prev) => {
-      const next = { ...prev, [name]: value }
-      const merged = { ...(cfg?.defaultData ?? {}), ...next }
-      setPreviewData(merged)
-      if (!showPreview) setShowPreview(true)
-      return next
-    })
-  }
+      const next = { ...prev, [name]: value };
+      // Use only user-entered values for preview
+      setPreviewData(next);
+      if (!showPreview) setShowPreview(true);
+      return next;
+    });
+  };
 
-  // Preload defaults and show preview automatically to avoid 0.00 displays
+  // Reset form when letter type changes; user must enter values explicitly.
+  // For letters that include companyName, prefill it with the static COMPANY_NAME
+  // so it always appears in preview and downloads.
   useEffect(() => {
-    if (!cfg) return
-    const defaults = cfg.defaultData ?? {}
-    setFormData(defaults)
-    setPreviewData(defaults)
-    setShowPreview(true)
-  }, [cfg])
+    if (!cfg) return;
+
+    const base: Record<string, any> = {};
+    if (cfg.fields.some((f) => f.name === 'companyName')) {
+      base.companyName = COMPANY_NAME;
+    }
+
+    setFormData(base);
+    setPreviewData(base);
+    setShowPreview(false);
+  }, [cfg]);
 
   // pdfmake-based download for all letter types
   const handleDownloadPdfMake = async () => {
     try {
-      if (!showPreview || !cfg) return
-
-      const today = new Date()
-      const yyyy = today.getFullYear()
-      const mm = String(today.getMonth() + 1).padStart(2, '0')
-      const dd = String(today.getDate()).padStart(2, '0')
-      const dateStr = `${yyyy}-${mm}-${dd}`
-      const safe = (s: string) => String(s || '').replace(/[^a-z0-9_-]+/gi, '')
-      const getName = () => previewData.employeeName || previewData.candidateName || 'Recipient'
-      const titlePart = safe((cfg.title || slug).replace(/\s+/g, ''))
-      const namePart = safe(getName().replace(/\s+/g, ''))
-      const filename = `${titlePart}_${namePart}_${dateStr}.pdf`
+      if (!showPreview || !cfg) return;
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const safe = (s: string) => String(s || '').replace(/[^a-z0-9_-]+/gi, '');
+      const getName = () => previewData.employeeName || previewData.candidateName || 'Recipient';
+      const titlePart = safe((cfg.title || slug).replace(/\s+/g, ''));
+      const namePart = safe(getName().replace(/\s+/g, ''));
+      const filename = `${titlePart}_${namePart}_${dateStr}.pdf`;
 
       // Use generic component-based generator for all letters (ensures parity with preview)
-      const { downloadGenericLetterPdfMake } = await import('@/lib/pdfmake-utils')
-      await downloadGenericLetterPdfMake(slug, previewData, filename, cfg.title)
+      const { downloadGenericLetterPdfMake } = await import('@/lib/pdfmake-utils');
+      await downloadGenericLetterPdfMake(slug, previewData, filename, cfg.title);
 
-      setToast({ message: `Downloaded ${filename}`, type: 'success' })
-      setTimeout(() => setToast(null), 2500)
+      setToast({ message: `Downloaded ${filename}`, type: 'success' });
+      setTimeout(() => setToast(null), 2500);
     } catch (err) {
-      console.error(err)
-      setToast({ message: 'Failed to generate pdfmake PDF', type: 'error' })
-      setTimeout(() => setToast(null), 3000)
+      console.error(err);
+      setToast({ message: 'Failed to generate pdfmake PDF', type: 'error' });
+      setTimeout(() => setToast(null), 3000);
     }
-  }
+  };
 
   // pdfmake-based preview for all letter types
   const handlePreviewPdfMake = async () => {
     try {
-      if (!showPreview || !cfg) return
+      if (!showPreview || !cfg) return;
 
       // Use generic component-based preview for all letters
-      const { previewGenericLetterPdfMake } = await import('@/lib/pdfmake-utils')
-      await previewGenericLetterPdfMake(slug, previewData, cfg.title)
+      const { previewGenericLetterPdfMake } = await import('@/lib/pdfmake-utils');
+      await previewGenericLetterPdfMake(slug, previewData, cfg.title);
 
-      setToast({ message: 'PDF preview opened in new tab', type: 'success' })
-      setTimeout(() => setToast(null), 2500)
+      setToast({ message: 'PDF preview opened in new tab', type: 'success' });
+      setTimeout(() => setToast(null), 2500);
     } catch (err) {
-      console.error(err)
-      setToast({ message: 'Failed to preview pdfmake PDF', type: 'error' })
-      setTimeout(() => setToast(null), 3000)
+      console.error(err);
+      setToast({ message: 'Failed to preview pdfmake PDF', type: 'error' });
+      setTimeout(() => setToast(null), 3000);
     }
-  }
-
-  // Debug PDFMake setup
-  const handleDebugPdfMake = async () => {
-    try {
-      const { debugPdfMakeState } = await import('@/lib/pdfmake-utils')
-      await debugPdfMakeState()
-      setToast({ message: 'Debug info logged to console', type: 'success' })
-      setTimeout(() => setToast(null), 2500)
-    } catch (err) {
-      console.error('Debug failed:', err)
-      setToast({ message: 'Debug failed - check console', type: 'error' })
-      setTimeout(() => setToast(null), 3000)
-    }
-  }
-
-  // Simple, guaranteed React-PDF download using buildPdf output
-  const handleDownloadSimple = async () => {
-    try {
-      if (!cfg) return
-      const today = new Date()
-      const yyyy = today.getFullYear()
-      const mm = String(today.getMonth() + 1).padStart(2, '0')
-      const dd = String(today.getDate()).padStart(2, '0')
-      const dateStr = `${yyyy}-${mm}-${dd}`
-      const getName = () => previewData.employeeName || previewData.candidateName || 'Recipient'
-      const safe = (s: string) => String(s).replace(/[^a-z0-9_-]+/gi, '')
-      const titlePart = safe((cfg.title || slug).replace(/\s+/g, ''))
-      const namePart = safe(getName().replace(/\s+/g, ''))
-      const filename = `${titlePart}_${namePart}_${dateStr}.pdf`
-
-      const instance = pdf(buildPdfForSlug(slug, cfg.title, previewData))
-      const blob = await instance.toBlob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
-      setToast({ message: `Downloaded ${filename}`, type: 'success' })
-      setTimeout(() => setToast(null), 2500)
-    } catch (err) {
-      console.error(err)
-      setToast({ message: 'Failed to generate Simple PDF', type: 'error' })
-      setTimeout(() => setToast(null), 3000)
-    }
-  }
+  };
 
   const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Merge defaults with user input so components never see undefined
-    const merged = { ...(cfg?.defaultData ?? {}), ...formData }
+    e.preventDefault();
+    // Use only user-entered values for the letter
+    const merged: Record<string, any> = { ...formData };
     // Force static company name when present in this letter
     if (cfg?.fields?.some((f) => f.name === 'companyName')) {
-      merged.companyName = COMPANY_NAME
+      merged.companyName = COMPANY_NAME;
     }
     const sanitizeStrings = (obj: Record<string, any>) => {
-      const out: Record<string, any> = {}
+      const out: Record<string, any> = {};
       for (const [k, v] of Object.entries(obj)) {
-        out[k] = v === undefined || v === null ? "" : v
+        out[k] = v === undefined || v === null ? "" : v;
       }
-      return out
-    }
-    setPreviewData(sanitizeStrings(merged))
-    setShowPreview(true)
-  }
+      return out;
+    };
+    setPreviewData(sanitizeStrings(merged));
+    setShowPreview(true);
+  };
 
-  const Component = cfg?.Component
+  const Component = cfg?.Component;
 
   // ---------- PDF Generation (two modes) ----------
   const styles = StyleSheet.create({
@@ -570,18 +531,18 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
     section: { marginBottom: 8 },
     label: { fontWeight: 700 },
     watermarkWrap: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
-    watermark: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.08, width: 300 },
+    watermark: { position: "absolute", top: "-10%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.08, width: 300 },
     paragraph: { fontSize: 12, lineHeight: 1.6, color: '#111', marginBottom: 6 },
     sectionTitle: { fontSize: 12, fontWeight: 700, marginTop: 10, marginBottom: 4 },
     bold: { fontWeight: 700 },
     spacerSm: { height: 6 },
     spacerMd: { height: 10 },
-  })
+  });
 
   const getPublicUrl = (path: string) => {
-    if (typeof window === "undefined") return path
-    return `${window.location.origin}${path}`
-  }
+    if (typeof window === "undefined") return path;
+    return `${window.location.origin}${path}`;
+  };
 
   const buildPdf = (title: string, data: Record<string, any>) => (
     <PdfDocument>
@@ -606,12 +567,12 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
         ))}
       </Page>
     </PdfDocument>
-  )
+  );
 
   // Rich React-PDF templates per slug where available
   const buildPdfForSlug = (slug: string, title: string, data: Record<string, any>) => {
     if (slug === 'performance-letter') {
-      const nice = (s: any) => String(s ?? '')
+      const nice = (s: any) => String(s ?? '');
       return (
         <PdfDocument>
           <Page size="A4" style={styles.page}>
@@ -647,29 +608,29 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
             <Text style={styles.paragraph}>Company: <Text style={styles.bold}>{nice(data.companyName)}</Text></Text>
           </Page>
         </PdfDocument>
-      )
+      );
     }
     // Default generic fallback
-    return buildPdf(title, data)
-  }
+    return buildPdf(title, data);
+  };
 
   // DOM-to-PDF using html2pdf.js with isolated container (payslip approach)
-  const previewRef = useRef<HTMLDivElement | null>(null)
+  const previewRef = useRef<HTMLDivElement | null>(null);
   const handleDownload = async () => {
     try {
-      if (!showPreview || !previewRef.current || !cfg) return
-      const monthSafeName = (s: string) => String(s || '').replace(/[^a-z0-9_-]+/gi, '')
-      const getName = () => previewData.employeeName || previewData.candidateName || 'Recipient'
-      const today = new Date()
-      const yyyy = today.getFullYear()
-      const mm = String(today.getMonth() + 1).padStart(2, '0')
-      const dd = String(today.getDate()).padStart(2, '0')
-      const dateStr = `${yyyy}-${mm}-${dd}`
-      const titlePart = monthSafeName((cfg.title || slug).replace(/\s+/g, ''))
-      const namePart = monthSafeName(getName().replace(/\s+/g, ''))
-      const filename = `${titlePart}_${namePart}_${dateStr}.pdf`
+      if (!showPreview || !previewRef.current || !cfg) return;
+      const monthSafeName = (s: string) => String(s || '').replace(/[^a-z0-9_-]+/gi, '');
+      const getName = () => previewData.employeeName || previewData.candidateName || 'Recipient';
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const titlePart = monthSafeName((cfg.title || slug).replace(/\s+/g, ''));
+      const namePart = monthSafeName(getName().replace(/\s+/g, ''));
+      const filename = `${titlePart}_${namePart}_${dateStr}.pdf`;
 
-      const container = document.createElement('div')
+      const container = document.createElement('div');
       container.style.cssText = `
         position: fixed !important;
         left: -9999px !important;
@@ -678,10 +639,10 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
         background: #ffffff !important;
         z-index: -1 !important;
         isolation: isolate !important;
-      `
-      container.className = ''
+      `;
+      container.className = '';
 
-      const element = document.createElement('div')
+      const element = document.createElement('div');
       element.style.cssText = `
         all: initial;
         display: block;
@@ -692,15 +653,15 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
         color: #000000;
         line-height: 1.5;
         box-sizing: border-box;
-      `
-      element.className = ''
+      `;
+      element.className = '';
 
       // clone preview HTML into isolated element
-      const source = previewRef.current
-      element.innerHTML = source.innerHTML
+      const source = previewRef.current;
+      element.innerHTML = source.innerHTML;
 
-      container.appendChild(element)
-      document.body.appendChild(container)
+      container.appendChild(element);
+      document.body.appendChild(container);
 
       const opt = {
         margin: 10,
@@ -719,41 +680,41 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
           foreignObjectRendering: false,
           ignoreElements: (element: any) => element.tagName === 'STYLE' || element.tagName === 'LINK',
           onclone: (clonedDoc: Document) => {
-            const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]')
-            links.forEach(link => link.remove())
-            const styles = clonedDoc.querySelectorAll('style')
+            const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
+            links.forEach(link => link.remove());
+            const styles = clonedDoc.querySelectorAll('style');
             styles.forEach(style => {
               if (style.textContent && (style.textContent.includes('lab(') || style.textContent.includes('lch(') || style.textContent.includes('oklch('))) {
-                style.remove()
+                style.remove();
               }
-            })
-          }
+            });
+          },
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
-      }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const },
+      };
 
       setTimeout(() => {
         // Dynamically import html2pdf.js on client to avoid SSR issues
         import('html2pdf.js').then((mod) => {
-          const html2pdf: any = (mod as any)?.default ?? mod
-          return html2pdf().set(opt).from(element).save()
+          const html2pdf: any = (mod as any)?.default ?? mod;
+          return html2pdf().set(opt).from(element).save();
         }).then(() => {
-          if (container.parentNode) document.body.removeChild(container)
-          setToast({ message: `Downloaded ${filename}`, type: 'success' })
-          setTimeout(() => setToast(null), 2500)
+          if (container.parentNode) document.body.removeChild(container);
+          setToast({ message: `Downloaded ${filename}`, type: 'success' });
+          setTimeout(() => setToast(null), 2500);
         }).catch((error: any) => {
-          console.error('PDF generation error', error)
-          if (container.parentNode) document.body.removeChild(container)
-          setToast({ message: 'Failed to generate PDF', type: 'error' })
-          setTimeout(() => setToast(null), 3000)
-        })
-      }, 120)
+          console.error('PDF generation error', error);
+          if (container.parentNode) document.body.removeChild(container);
+          setToast({ message: 'Failed to generate PDF', type: 'error' });
+          setTimeout(() => setToast(null), 3000);
+        });
+      }, 120);
     } catch (err) {
-      console.error(err)
-      setToast({ message: 'Failed to generate PDF', type: 'error' })
-      setTimeout(() => setToast(null), 3000)
+      console.error(err);
+      setToast({ message: 'Failed to generate PDF', type: 'error' });
+      setTimeout(() => setToast(null), 3000);
     }
-  }
+  };
 
   if (!cfg) {
     return (
@@ -766,7 +727,7 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
           <p className="text-slate-600">No configuration found for slug: {slug}</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -815,7 +776,7 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
                       <Label htmlFor={`f-${f.name}`}>{f.label}</Label>
                       {f.name === 'salutation' ? (
                         <Select
-                          value={String(formData[f.name] ?? (cfg?.defaultData?.[f.name] ?? 'Mr.'))}
+                          value={String(formData[f.name] ?? '')}
                           onValueChange={(v) => handleChange(f.name, v)}
                         >
                           <SelectTrigger id={`f-${f.name}`} className="w-full">
@@ -829,7 +790,7 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
                         </Select>
                       ) : f.name === 'manager' ? (
                         <Select
-                          value={String(formData[f.name] ?? (cfg?.defaultData?.[f.name] ?? ''))}
+                          value={String(formData[f.name] ?? '')}
                           onValueChange={(v) => handleChange(f.name, v)}
                         >
                           <SelectTrigger id={`f-${f.name}`} className="w-full">
@@ -848,7 +809,7 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
                         <Input
                           id={`f-${f.name}`}
                           type={f.type ?? 'text'}
-                          value={String(formData[f.name] ?? (cfg?.defaultData?.[f.name] ?? ''))}
+                          value={String(formData[f.name] ?? '')}
                           placeholder={
                             cfg?.defaultData && f.name in cfg.defaultData
                               ? String(cfg.defaultData[f.name] ?? '')

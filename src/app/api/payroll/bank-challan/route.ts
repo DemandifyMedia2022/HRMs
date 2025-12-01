@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
         if (!user.emp_code) return { ...user };
 
         // Fetch attendance from npattendance table
-        const attendance = await prisma.npAttendance.findMany({
+        const attendance = await prisma.npattendance.findMany({
           where: {
             employeeId: parseInt(user.emp_code) || 0,
             date: {

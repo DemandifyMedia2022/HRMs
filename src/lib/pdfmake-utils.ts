@@ -222,6 +222,12 @@ export interface LetterConfig {
     const COMPANY_PHONE = '+91 7219776180';
     const BRAND_COLOR = '#6D28D9'; // updated demandify purple tint
 
+    // Use a slightly smaller header font for long-titled letters so they fit on one line
+    const headerFontSize =
+      letterType === 'interview-call-letter'
+        ? 14
+        : 18;
+
     // Register only images that exist to avoid pdfmake "Unknown image format" errors
   const images: Record<string, string> = {};
   if (logo) images.logo = logo;
@@ -248,11 +254,11 @@ export interface LetterConfig {
         },
       ] : [],
       content: [
-        { 
-          text: config.title, 
-          style: 'header', 
-          margin: [0, 10, 0, 6] 
-        },
+        // For some letters, skip the big generic title so only the body content controls headings
+        ...(letterType === 'experience-letter' || letterType === 'relieving-letter'
+          ? []
+          : [{ text: config.title, style: 'header', margin: [0, 10, 0, 6] }]
+        ),
         ...config.contentBuilder(data)
       ],
       footer: () => (
@@ -269,7 +275,7 @@ export interface LetterConfig {
       ),
       styles: {
         header: { 
-          fontSize: 18, 
+          fontSize: headerFontSize, 
           bold: true, 
           alignment: 'center',
           color: '#2c3e50'
@@ -610,7 +616,7 @@ export interface LetterConfig {
     return { pdfMake, docDefinition };
   }
   
-  // 🧾 Generate and Download
+  // 📋 Generate and Download
   export async function downloadJoiningLetterPdfMake(data: JoiningLetterData, filename: string) {
     const { pdfMake, docDefinition } = await buildJoiningLetterDocDefinition(data);
     pdfMake.createPdf(docDefinition).download(filename);
@@ -774,22 +780,56 @@ function htmlToPdfContent(htmlString: string): any[] {
       // Skip empty lines
       if (!line) continue;
       
-      // Date and To information
-      if (line.startsWith('Date:') || line.startsWith('To,')) {
+      // Date and compact header information (top block)
+      if (
+        line.startsWith('Date:') ||
+        line.startsWith('Name:') ||
+        line.startsWith('Designation:') ||
+        line.startsWith('Department:') ||
+        line.startsWith('To,')
+      ) {
         content.push({
           text: line,
           style: 'paragraph',
-          margin: [0, 0, 0, 8]
+          margin: [0, 0, 0, 4]
+        });
+        continue;
+      }
+
+      // Special heading: TO WHOM IT MAY CONCERN
+      if (line.toUpperCase() === 'TO WHOM IT MAY CONCERN') {
+        content.push({
+          text: line,
+          style: 'sectionHeader',
+          bold: true,
+          alignment: 'center',
+          margin: [0, 12, 10, 6]
+        });
+        continue;
+      }
+
+      // Special heading for Relieving Letter body: render as prominent centered title in PDF
+      if (line === 'Relieving Letter') {
+        content.push({
+          text: line,
+          style: 'header',
+          bold: true,
+          alignment: 'center',
+          margin: [0, 15, 0, 10]
         });
         continue;
       }
       
-      // Greeting
+      // Greeting - keep "Dear " normal and make the name part bold
       if (line.startsWith('Dear ')) {
+        const namePart = line.slice('Dear '.length);
         content.push({
-          text: line,
+          text: [
+            { text: 'Dear ', bold: false },
+            { text: namePart, bold: true },
+          ],
           style: 'greeting',
-          margin: [0, 15, 0, 12]
+          margin: [0, 15, 0, 12],
         });
         continue;
       }
@@ -825,6 +865,29 @@ function htmlToPdfContent(htmlString: string): any[] {
         continue;
       }
       
+      // Skip internal headings for specific letters to avoid double heading in PDFs
+      const interviewHeading = 'Confirmation of Interview Schedule – Demandify Media Pvt. Ltd';
+      const offerHeading = 'Offer Letter';
+      const joiningHeading = 'Joining Letter';
+      const referenceHeading = 'Reference Letter';
+      if (
+        line === 'Performance Review Letter' ||
+        line === 'Promotion Letter' ||
+        line === 'Salary Increment Letter' ||
+        line === 'Resignation Acceptance Letter' ||
+        line === 'Separation Letter' ||
+        line === 'Transfer Letter' ||
+        line === 'Warning Letter' ||
+        line === interviewHeading ||
+        line === `${interviewHeading}.` ||
+        line.startsWith(interviewHeading) ||
+        line === offerHeading ||
+        line === joiningHeading ||
+        line === referenceHeading
+      ) {
+        continue;
+      }
+      
       // Closing and signatures
       if (line.includes('Sincerely') || line.includes('For, Demandify') || 
           line.includes('Chief Executive Officer') || line.includes('Sunny Ashpal')) {
@@ -836,12 +899,40 @@ function htmlToPdfContent(htmlString: string): any[] {
         continue;
       }
       
-      // Company name
-      if (line.includes('Demandify Media Private Limited')) {
+      // Company name - keep style but render bold
+      if (line.includes('Demandify Media Pvt. Ltd.') || line.includes('Demandify Media Private Limited')) {
         content.push({
           text: line,
           style: 'company',
+          bold: true,
           margin: [0, 0, 0, 15]
+        });
+        continue;
+      }
+      
+      // Specific bold label/value pairs for leave details
+      if (/^(Leave Type:|Start Date:|End Date:|Duration:|Approved By:)/.test(line)) {
+        const colonIndex = line.indexOf(':');
+        const label = line.slice(0, colonIndex + 1);
+        const value = line.slice(colonIndex + 1).trimStart();
+        content.push({
+          text: [
+            { text: label + ' ', bold: true },
+            { text: value, bold: false },
+          ],
+          style: 'paragraph',
+          margin: [0, 0, 0, 4],
+        });
+        continue;
+      }
+
+      // Standalone Reporting Manager line - render fully bold
+      if (line === 'Reporting Manager' || line.includes('Reporting Manager,')) {
+        content.push({
+          text: line,
+          style: 'closing',
+          bold: true,
+          margin: [0, 0, 0, 5],
         });
         continue;
       }

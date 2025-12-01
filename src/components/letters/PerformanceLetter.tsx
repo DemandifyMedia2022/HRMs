@@ -27,6 +27,7 @@ export const PerformanceLetter: React.FC<PerformanceLetterProps> = ({ data }) =>
 
   return (
     <div style={{ position: 'relative', lineHeight: 1.8, color: '#000', fontSize: '14px' }}>
+    <div style={{display:'flex' }}>
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
         <img src="/Demandify1.png" alt="Demandify Logo" style={{ width: '120px', height: 'auto' }} />
       </div>
@@ -44,9 +45,9 @@ export const PerformanceLetter: React.FC<PerformanceLetterProps> = ({ data }) =>
       >
         <img src="/demandify.png" alt="Watermark" style={{ width: '400px', height: 'auto' }} />
       </div>
-
+</div>
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <h3 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '80px' }}>
+        <h3 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 600, marginTop: '50px' }}>
           Performance Review Letter
         </h3>
         <br />
@@ -54,7 +55,7 @@ export const PerformanceLetter: React.FC<PerformanceLetterProps> = ({ data }) =>
         <p>
           Dear{' '}
           <b>
-            {data.salutation}. {capitalizedName}
+            {data.salutation} {capitalizedName}
           </b>
           ,
         </p>
@@ -102,7 +103,7 @@ export const PerformanceLetter: React.FC<PerformanceLetterProps> = ({ data }) =>
           <br />
           <b>{capitalizedManager}</b>
           <br />
-          Manager
+          Head Of Opeartion
           <br />
           <b>{capitalizedCompany}</b>
         </p>

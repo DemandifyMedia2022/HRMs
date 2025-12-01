@@ -21,15 +21,15 @@ function buildSecurityHeaders(nonce: string) {
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
     // Remove 'unsafe-inline'; allow only nonce-based inline scripts/styles
     // Add strict-dynamic to allow trusted scripts to load other scripts
-    'Content-Security-Policy':
-      [
-        "default-src 'self'",
-        `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
-        `style-src 'self' 'nonce-${nonce}'`,
-        "img-src 'self' data: https:",
-        "font-src 'self'",
-        "connect-src 'self' https: http:",
-      ].join('; ')
+    // 'Content-Security-Policy':
+    //   [
+    //     "default-src 'self'",
+    //     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    //     `style-src 'self' 'nonce-${nonce}'`,
+    //     "img-src 'self' data: https:",
+    //     "font-src 'self'",
+    //     "connect-src 'self' https: http:",
+    //   ].join('; ')
   } as Record<string, string>;
 }
 
@@ -66,15 +66,15 @@ export function middleware(request: NextRequest) {
     'unknown';
 
   // Enforce HTTPS in production
-  if (process.env.NODE_ENV === 'production') {
-    const forwarded = request.headers.get('x-forwarded-proto');
-    const currentProto = forwarded || request.nextUrl.protocol.replace(':', '');
-    if (currentProto !== 'https') {
-      const url = request.nextUrl.clone();
-      url.protocol = 'https';
-      return NextResponse.redirect(url, 308);
-    }
-  }
+  // if (process.env.NODE_ENV === 'production') {
+  //   const forwarded = request.headers.get('x-forwarded-proto');
+  //   const currentProto = forwarded || request.nextUrl.protocol.replace(':', '');
+  //   if (currentProto !== 'https') {
+  //     const url = request.nextUrl.clone();
+  //     url.protocol = 'https';
+  //     return NextResponse.redirect(url, 308);
+  //   }
+  // }
 
   // Input validation and security checks
   if (!isValidPath(pathname)) {

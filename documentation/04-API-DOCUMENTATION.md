@@ -13,7 +13,9 @@
 10. [Admin Operations](#admin-operations)
 11. [VoIP/Call Management](#voipcall-management)
 12. [Campaign Management](#campaign-management)
-13. [Error Handling](#error-handling)
+13. [ESSL Integration](#essl-integration)
+14. [Live Attendance](#live-attendance)
+15. [Error Handling](#error-handling)
 
 ---
 
@@ -1202,3 +1204,342 @@ X-RateLimit-Reset: 1699900000
 - **Version**: 1.0
 - **Last Updated**: November 13, 2025
 - **Author**: Development Team
+
+
+---
+
+## ESSL Integration
+
+### Overview
+The HRMS integrates with ESSL biometric devices to automatically sync attendance data. The system supports both SOAP-based and JSON-based attendance data sources.
+
+### 1. Sync Attendance from ESSL
+
+**Endpoint**: `POST /api/essl/sync`
+
+**Description**: Synchronize attendance data from ESSL biometric device
+
+**Request Body** (Optional):
+```json
+{
+  "fromDate": "2025-11-26 00:00:00",
+  "toDate": "now",
+  "lookbackDays": 0,
+  "overwriteShift": false,
+  "url": "http://source-url/attendance.json"
+}
+```
+
+**Parameters**:
+- `fromDate`: Start date for sync (defaults to last attendance date)
+- `toDate`: End date for sync (defaults to current time, use "now" for current)
+- `lookbackDays`: Number of days to look back from fromDate
+- `overwriteShift`: Whether to overwrite existing shift assignments
+- `url`: Optional JSON URL for JSON-mode sync
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "message": "Attendance data synchronized successfully",
+  "inserted": 15,
+  "updated": 8
+}
+```
+
+**Configuration** (Environment Variables):
+```env
+ESSL_SERVER_URL=http://192.168.0.3/webapiservice.asmx
+ESSL_SERIAL_NUMBER=BJ2C211860737
+ESSL_USERNAME=essl1
+ESSL_PASSWORD=Essl@123
+ESSL_SYNC_URL=http://localhost:3000/api/essl/sync
+ESSL_SYNC_TIMEOUT_MS=6000
+ESSL_LOOKBACK_DAYS=0
+ESSL_OVERWRITE_SHIFT=0
+ESSL_MAX_SHIFT_HOURS=16
+```
+
+**Features**:
+- Automatic SOAP request to ESSL device
+- Parses multiple response formats (standard, namespaced, CDATA)
+- Calculates working hours, break time, and total hours
+- Determines attendance status (Present, Half-day, Absent, Late, Early)
+- Handles shift time validation
+- Supports both SOAP and JSON data sources
+
+---
+
+### 2. Debug ESSL Connection
+
+**Endpoint**: `POST /api/essl/debug`
+
+**Description**: Test ESSL connection and view raw SOAP response
+
+**Request Body** (Optional):
+```json
+{
+  "fromDate": "2025-11-26 00:00:00",
+  "toDate": "2025-11-26 23:59:59"
+}
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "serverUrl": "http://192.168.0.3/webapiservice.asmx",
+  "dateRange": {
+    "from": "2025-11-26 00:00:00",
+    "to": "2025-11-26 23:59:59"
+  },
+  "responseStatus": 200,
+  "responseData": "<?xml version=\"1.0\"...",
+  "responsePreview": "First 1000 characters..."
+}
+```
+
+---
+
+### 3. Trigger ESSL Sync
+
+**Endpoint**: `POST /api/essl/trigger`
+
+**Description**: Trigger attendance sync (used internally for fire-and-forget syncs)
+
+**Query Parameters**:
+- `emp_code`: Optional employee code to sync specific employee
+
+**Success Response** (200):
+```json
+{
+  "ok": true,
+  "target": "http://localhost:3000/api/essl/sync"
+}
+```
+
+---
+
+## Live Attendance
+
+### Overview
+Live attendance provides real-time attendance tracking with automatic updates every 10 seconds. The system calculates working hours, break time, and status in real-time.
+
+### 1. Get Live Attendance
+
+**Endpoint**: `GET /api/attendance/live`
+
+**Description**: Get real-time attendance data for an employee
+
+**Query Parameters**:
+- `employee_id` (required): Employee ID
+- `date` (optional): Date in YYYY-MM-DD format (defaults to today)
+
+**Example Request**:
+```
+GET /api/attendance/live?employee_id=123&date=2025-11-26
+```
+
+**Success Response** (200):
+```json
+{
+  "hasRecord": true,
+  "isOngoing": true,
+  "employeeId": "123",
+  "employeeName": "John Doe",
+  "date": "2025-11-26",
+  "inTime": "2025-11-26T09:59:00.000Z",
+  "outTime": "2025-11-26T11:30:00.000Z",
+  "clockTimes": ["09:59", "10:01", "10:04", "11:30"],
+  "totalHours": "01:31:00",
+  "loginHours": "00:50:48",
+  "breakHours": "00:03:00",
+  "status": "",
+  "shiftTime": "9:00 AM - 6:00 PM",
+  "lastUpdated": "2025-11-26T11:30:15.000Z"
+}
+```
+
+**Response Fields**:
+- `hasRecord`: Whether attendance record exists
+- `isOngoing`: Whether shift is currently active
+- `clockTimes`: Array of punch in/out times (HH:mm format)
+- `totalHours`: Total time from first punch to last/current
+- `loginHours`: Actual working time (excluding breaks)
+- `breakHours`: Total break time
+- `status`: Attendance status (empty if ongoing)
+
+**No Record Response** (200):
+```json
+{
+  "hasRecord": false,
+  "isOngoing": false
+}
+```
+
+**Features**:
+- Automatic ESSL sync trigger before fetching data
+- Real-time calculation of working hours
+- Break time detection (odd number of punches)
+- Shift validation with 15-minute grace period
+- Status determination (Present, Half-day, Absent, Late, Early)
+- Ongoing shift detection
+
+---
+
+### 2. Live Attendance Component
+
+**Frontend Component**: `LiveAttendanceCard`
+
+**Usage**:
+```tsx
+import { LiveAttendanceCard } from '@/components/LiveAttendanceCard';
+
+<LiveAttendanceCard 
+  employeeId="123" 
+  showClockTimes={true}
+/>
+```
+
+**Props**:
+- `employeeId` (required): Employee ID to track
+- `date` (optional): Specific date to view
+- `showClockTimes` (optional): Show punch in/out times (default: true)
+
+**Features**:
+- Auto-refresh every 10 seconds
+- Client-side timer updates every second
+- Visual indicators for ongoing shifts
+- Color-coded status badges
+- Break time alerts (>45 minutes)
+- Responsive design
+
+---
+
+## Payroll Management Updates
+
+### 1. Download Process Attendance CSV
+
+**Endpoint**: `GET /api/payroll/process-attendance?download=csv`
+
+**Description**: Download process attendance report as CSV
+
+**Query Parameters**:
+- `month`: Month in YYYY-MM format (required)
+- `search`: Search by name or employee code (optional)
+- `download`: Set to "csv" for CSV download
+
+**Example Request**:
+```
+GET /api/payroll/process-attendance?month=2025-11&download=csv
+```
+
+**Response**: CSV file download
+```csv
+#,Name,Emp Code,Company,Designation,Paid Days,Net Salary,Arrears
+1,John Doe,123,Demandify Media,Developer,22,50000,0
+```
+
+---
+
+### 2. Download Bank Challan CSV
+
+**Endpoint**: `GET /api/bank-challan/download`
+
+**Description**: Download bank challan report as CSV
+
+**Query Parameters**:
+- `month`: Month in YYYY-MM format (required)
+- `search`: Search by name or employee code (optional)
+
+**Example Request**:
+```
+GET /api/bank-challan/download?month=2025-11
+```
+
+**Response**: CSV file with 51 columns including:
+- Employee details (name, code, designation, etc.)
+- Bank details (account, IFSC, branch)
+- Salary components (basic, HRA, allowances)
+- Deductions (PF, ESI, tax, professional tax)
+- Net pay calculation
+
+---
+
+### 3. Update Employee Salary Structure
+
+**Endpoint**: `PUT /api/employees/update-salary`
+
+**Description**: Update employee salary structure and components
+
+**Request Body**:
+```json
+{
+  "id": 179,
+  "CTC": "523200",
+  "gross_salary": "41800",
+  "netSalary": "40000",
+  "Basic_Monthly_Remuneration": "21800",
+  "HRA_Monthly_Remuneration": "10900",
+  "OTHER_ALLOWANCE_Monthly_Remuneration": "9100",
+  "PF_Monthly_Contribution": "1800",
+  "Employee_Esic_Monthly": 0,
+  "Employer_Esic_Monthly": 0,
+  "salary_pay_mode": "Bank Transfer",
+  "PF_Number": "PF123456",
+  "UAN": "123456789012",
+  "Salary_Revision_Month": "2025-11",
+  "ESIC_Applicable": "No"
+}
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "message": "Salary structure updated successfully",
+  "employee": {
+    "id": "179",
+    "emp_code": "405",
+    "Full_name": "John Doe"
+  }
+}
+```
+
+**Features**:
+- Updates all salary components
+- Handles string and numeric fields correctly
+- Validates employee existence
+- Updates timestamp automatically
+- Supports partial updates
+
+---
+
+## Recent Improvements
+
+### Attendance Sync Enhancements
+1. **Improved SOAP Parser**: Handles multiple response formats including namespaced tags and CDATA sections
+2. **Fixed Endpoint URL**: Corrected ESSL server URL configuration (removed query parameters)
+3. **Better Error Messages**: Detailed error responses with response previews
+4. **Empty Response Handling**: Gracefully handles no-data scenarios
+5. **Faster Sync**: Optimized to sync only today's data for live attendance
+
+### Live Attendance Features
+1. **Real-time Updates**: Polls every 10 seconds with client-side second-by-second updates
+2. **Auto-sync Integration**: Triggers ESSL sync before fetching data
+3. **Visual Indicators**: Animated pulse for ongoing shifts
+4. **Break Alerts**: Notifications when break exceeds 45 minutes
+5. **Status Calculation**: Automatic Present/Half-day/Absent determination
+
+### CSV Export Improvements
+1. **Proper Formatting**: Correct CSV headers and escaping
+2. **Complete Data**: All 51 columns for bank challan
+3. **No Pagination**: Exports all records (up to 10,000)
+4. **Correct Content-Type**: Proper headers for file download
+
+### UI/UX Enhancements
+1. **Toast Notifications**: Replaced browser alerts with shadcn toast
+2. **Empty States**: Clear messages when no data available
+3. **Loading States**: Better loading indicators
+4. **Error Handling**: User-friendly error messages
+
