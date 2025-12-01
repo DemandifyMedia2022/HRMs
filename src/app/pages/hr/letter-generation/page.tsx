@@ -1,7 +1,7 @@
 "use client"
 
 import { SidebarConfig } from "@/components/sidebar-config"
-import { IconFileText, IconArrowRight, IconSearch, IconChevronDown, IconChevronRight } from "@tabler/icons-react"
+import { IconFileText, IconArrowRight, IconSearch, IconChevronDown, IconChevronRight, IconSparkles } from "@tabler/icons-react"
 import Link from "next/link"
 import { useEffect, useMemo, useState, Suspense } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useRouter, useSearchParams } from "next/navigation"
 
@@ -78,7 +78,7 @@ function LetterGenerationPageInner() {
   }, [query, group, router])
 
   useEffect(() => {
-    try { localStorage.setItem('hr_letters_collapsed', JSON.stringify(collapsed)) } catch {}
+    try { localStorage.setItem('hr_letters_collapsed', JSON.stringify(collapsed)) } catch { }
   }, [collapsed])
 
   const filtered = useMemo(() => {
@@ -101,21 +101,7 @@ function LetterGenerationPageInner() {
   return (
     <>
       <SidebarConfig role="hr" />
-      <div className="flex flex-1 flex-col gap-4 p-6 bg-slate-50 dark:bg-slate-950 min-h-screen">
-        <div className="flex items-center justify-between">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/pages/hr">HR</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Letter Generation</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-
+      <div className="flex flex-1 flex-col gap-4 p-6 min-h-screen">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
             <div>
@@ -133,19 +119,24 @@ function LetterGenerationPageInner() {
                 <IconSearch className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
                 <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search letters" className="pl-8" />
               </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant={group==='all'?'default':'outline'} onClick={()=>setGroup('all')}>All</Button>
-                <Button size="sm" variant={group==='initial'?'default':'outline'} onClick={()=>setGroup('initial')}>Initial</Button>
-                <Button size="sm" variant={group==='active'?'default':'outline'} onClick={()=>setGroup('active')}>Active</Button>
-                <Button size="sm" variant={group==='end'?'default':'outline'} onClick={()=>setGroup('end')}>End</Button>
-                <Button size="sm" variant={group==='post'?'default':'outline'} onClick={()=>setGroup('post')}>Post</Button>
-              </div>
-              <div className="ml-auto flex gap-2">
-                <Button asChild variant="secondary">
-                  <Link href="/pages/hr/letter-generation/appointment-letter">Quick: Appointment</Link>
-                </Button>
+              <Select value={group} onValueChange={(value) => setGroup(value as typeof group)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by stage" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Letters</SelectItem>
+                  <SelectItem value="initial">Initial Stage</SelectItem>
+                  <SelectItem value="active">Active Employment</SelectItem>
+                  <SelectItem value="end">End of Employment</SelectItem>
+                  <SelectItem value="post">Post-Employment</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="ml-auto">
                 <Button asChild>
-                  <Link href="/pages/hr/letter-generation/offer-letter">Quick: Offer</Link>
+                  <Link href="/pages/hr/letter-generation/ai-generator">
+                    <IconSparkles className="mr-2 h-4 w-4" />
+                    Generate with AI
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -162,10 +153,10 @@ function LetterGenerationPageInner() {
                   <button
                     type="button"
                     aria-label={collapsed[category.name] ? 'Expand' : 'Collapse'}
-                    onClick={() => setCollapsed(prev => ({...prev, [category.name]: !prev[category.name]}))}
+                    onClick={() => setCollapsed(prev => ({ ...prev, [category.name]: !prev[category.name] }))}
                     className="h-6 w-6 grid place-items-center rounded border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
                   >
-                    {collapsed[category.name] ? <IconChevronRight className="h-4 w-4"/> : <IconChevronDown className="h-4 w-4"/>}
+                    {collapsed[category.name] ? <IconChevronRight className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
                   </button>
                   <CardTitle className="text-sm">{category.name}</CardTitle>
                 </div>
@@ -173,46 +164,46 @@ function LetterGenerationPageInner() {
               </CardHeader>
               <CardContent className="p-0">
                 {!collapsed[category.name] && (
-                <ul className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {category.letters.length === 0 && (
-                    <li className="px-4 py-6 text-sm text-slate-500">No matches</li>
-                  )}
-                  {category.letters.map((letter, letterIndex) => (
-                    <li key={letterIndex}>
-                      <TooltipProvider>
-                        <Tooltip delayDuration={200}>
-                          <TooltipTrigger asChild>
-                            <Link
-                              href={letter.disabled ? "#" : letter.url}
-                              aria-disabled={letter.disabled ? true : undefined}
-                              className={`flex items-center justify-between px-4 py-3 transition-colors group outline-none focus-visible:ring-2 focus-visible:ring-slate-300 dark:focus-visible:ring-slate-700 rounded ${letter.disabled ? "opacity-60 cursor-not-allowed" : "hover:bg-slate-50 dark:hover:bg-slate-900"}`}
-                              tabIndex={0}
-                              onKeyDown={(e)=>{ if((e.key==='Enter'|| e.key===' ') && !letter.disabled){ (e.currentTarget as HTMLAnchorElement).click(); e.preventDefault(); }}}
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="h-8 w-8 rounded-md bg-slate-100 dark:bg-slate-800 grid place-items-center text-slate-500">
-                                  <IconFileText className="h-4 w-4" />
+                  <ul className="divide-y divide-slate-200 dark:divide-slate-800">
+                    {category.letters.length === 0 && (
+                      <li className="px-4 py-6 text-sm text-slate-500">No matches</li>
+                    )}
+                    {category.letters.map((letter, letterIndex) => (
+                      <li key={letterIndex}>
+                        <TooltipProvider>
+                          <Tooltip delayDuration={200}>
+                            <TooltipTrigger asChild>
+                              <Link
+                                href={letter.disabled ? "#" : letter.url}
+                                aria-disabled={letter.disabled ? true : undefined}
+                                className={`flex items-center justify-between px-4 py-3 transition-colors group outline-none focus-visible:ring-2 focus-visible:ring-slate-300 dark:focus-visible:ring-slate-700 rounded ${letter.disabled ? "opacity-60 cursor-not-allowed" : "hover:bg-slate-50 dark:hover:bg-slate-900"}`}
+                                tabIndex={0}
+                                onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !letter.disabled) { (e.currentTarget as HTMLAnchorElement).click(); e.preventDefault(); } }}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="h-8 w-8 rounded-md bg-slate-100 dark:bg-slate-800 grid place-items-center text-slate-500">
+                                    <IconFileText className="h-4 w-4" />
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{letter.name}</span>
+                                    {letter.disabled && (
+                                      <span className="text-[11px] text-slate-500">Coming soon</span>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="flex flex-col">
-                                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{letter.name}</span>
-                                  {letter.disabled && (
-                                    <span className="text-[11px] text-slate-500">Coming soon</span>
-                                  )}
+                                <div className="h-7 w-7 rounded-md border border-slate-200 dark:border-slate-800 grid place-items-center text-slate-300 group-hover:text-slate-600 dark:group-hover:text-slate-400">
+                                  <IconArrowRight className="h-4 w-4" />
                                 </div>
-                              </div>
-                              <div className="h-7 w-7 rounded-md border border-slate-200 dark:border-slate-800 grid place-items-center text-slate-300 group-hover:text-slate-600 dark:group-hover:text-slate-400">
-                                <IconArrowRight className="h-4 w-4" />
-                              </div>
-                            </Link>
-                          </TooltipTrigger>
-                          {letter.disabled && (
-                            <TooltipContent side="top" className="text-xs">This template is not available yet</TooltipContent>
-                          )}
-                        </Tooltip>
-                      </TooltipProvider>
-                    </li>
-                  ))}
-                </ul>
+                              </Link>
+                            </TooltipTrigger>
+                            {letter.disabled && (
+                              <TooltipContent side="top" className="text-xs">This template is not available yet</TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </CardContent>
             </Card>
