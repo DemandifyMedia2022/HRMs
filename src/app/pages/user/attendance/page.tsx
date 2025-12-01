@@ -326,14 +326,20 @@ export default function Page() {
                   {calendar.cells.map((c, idx) => {
                     const has = Boolean(c.day);
                     const status = c.ev?.extendedProps?.status || c.ev?.title || '';
+                    const sLc = status.toLowerCase();
+                    const isPresent = status === 'Present' || sLc.startsWith('present');
+                    const isAbsent = status === 'Absent' || sLc.startsWith('absent');
+                    const isHalf = sLc.includes('half');
+                    const isPresentVariant = isPresent && (sLc.includes('late') || sLc.includes('early'));
                     const base =
-                      status === 'Present'
+                      isPresent
                         ? { border: '#10b981', bg: 'bg-emerald-50/50', text: 'text-emerald-700' }
-                        : status === 'Absent'
+                        : isAbsent
                           ? { border: '#ef4444', bg: 'bg-red-50/50', text: 'text-red-700' }
-                          : status?.toLowerCase().includes('half')
+                          : isHalf
                             ? { border: '#f59e0b', bg: 'bg-amber-50/50', text: 'text-amber-700' }
                             : { border: '#d1d5db', bg: 'bg-white', text: 'text-gray-600' };
+                    const textClass = isPresentVariant ? 'text-yellow-600' : base.text;
                     const isWeekend = c.dateStr
                       ? (() => {
                         const d = new Date(c.dateStr + 'T00:00:00');
@@ -345,6 +351,8 @@ export default function Page() {
                     const holiday = c.dateStr ? calendar.holidayMap.get(c.dateStr) : undefined;
                     const isHoliday = Boolean(holiday);
                     const isLeave = Boolean(leaveType);
+                    const isFuture = c.dateStr ? c.dateStr > todayStr : false;
+                    const isNoRecord = has && !c.ev && !isHoliday && !isLeave && !isWeekend && !isFuture;
                     // priority: holiday (violet) > leave (sky) > weekend (zinc) > event color
                     const cellBorder = isHoliday
                       ? '#6d28d9'
@@ -352,12 +360,14 @@ export default function Page() {
                         ? '#0ea5e9'
                         : isWeekend
                           ? '#a1a1aa'
-                          : base.border;
+                          : isNoRecord
+                            ? '#ef4444'
+                            : base.border;
                     const isToday = c.dateStr === todayStr;
                     return (
                       <div
                         key={idx}
-                        className={`relative min-h-[98px] rounded border p-2 flex flex-col gap-1 cursor-pointer transition-colors ${has ? (isHoliday ? 'bg-violet-50/40' : isLeave ? 'bg-sky-50/40' : isWeekend ? 'bg-gray-100' : base.bg) : 'bg-gray-100'} ${isToday ? 'ring-2 ring-primary' : ''}`}
+                        className={`relative min-h-[98px] rounded border p-2 flex flex-col gap-1 cursor-pointer transition-colors ${has ? (isHoliday ? 'bg-violet-50/40' : isLeave ? 'bg-sky-50/40' : isWeekend ? 'bg-gray-100' : isNoRecord ? 'bg-red-50/50' : base.bg) : 'bg-gray-100'} ${isToday ? 'ring-2 ring-primary' : ''}`}
                         style={{ borderColor: cellBorder }}
                         title={c.dateStr}
                         onClick={() => {
@@ -394,7 +404,7 @@ export default function Page() {
                           <div className="space-y-1">
                             <div className="text-[11px]">
                               <span className="inline-block rounded px-1 border" style={{ borderColor: cellBorder }}>
-                                <span className={`font-medium ${base.text}`}>{status}</span>
+                                <span className={`font-medium ${textClass}`}>{status}</span>
                               </span>
                             </div>
                             <div className="text-[11px] text-gray-600">
@@ -406,6 +416,8 @@ export default function Page() {
                           </div>
                         ) : isWeekend ? (
                           <div className="mt-auto text-[11px] text-gray-600">Week Off</div>
+                        ) : isNoRecord ? (
+                          <div className="mt-auto text-[11px] text-red-700">Absent</div>
                         ) : null}
                       </div>
                     );
