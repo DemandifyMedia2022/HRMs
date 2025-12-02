@@ -38,22 +38,47 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Authorization: non-admin/hr can only access their own uploads subfolder
+    // Authorization: non-admin/hr can only access their own uploads subfolder or task attachments
     if (auth.role !== 'admin' && auth.role !== 'hr') {
-      // Resolve the current user to derive the same slug used when saving uploads
-      let userSlug = 'user';
-      try {
-        const user = await prisma.users.findUnique({ where: { id: BigInt(auth.id) } as any });
-        const name = (user as any)?.name || (user as any)?.Full_name || '';
-        userSlug = String(name)
-          .toLowerCase()
-          .trim()
-          .replace(/\s+/g, '_')
-          .replace(/[^a-z0-9_-]/g, '_') || 'user';
-      } catch { }
-      const userDir = path.resolve(baseDir, path.join('uploads', userSlug));
-      if (!abs.startsWith(userDir)) {
-        return NextResponse.json({ error: 'Forbidden - File access denied' }, { status: 403 });
+      const tasksDir = path.resolve(baseDir, 'tasks');
+      const isTaskAttachment = abs.startsWith(tasksDir);
+      
+      if (isTaskAttachment) {
+        // For task attachments, verify user has access to the task's department
+        // Extract task number from path: uploads/tasks/[task_number]/[filename]
+        const relativePath = path.relative(tasksDir, abs);
+        const taskNumber = relativePath.split(path.sep)[0];
+        
+        if (taskNumber) {
+          try {
+            const task = await prisma.tasks.findFirst({
+              where: { task_number: taskNumber },
+              select: { department: true }
+            });
+            
+            if (!task || task.department !== auth.department) {
+              return NextResponse.json({ error: 'Forbidden - File access denied' }, { status: 403 });
+            }
+          } catch {
+            return NextResponse.json({ error: 'Forbidden - File access denied' }, { status: 403 });
+          }
+        }
+      } else {
+        // For user uploads, check user-specific folder
+        let userSlug = 'user';
+        try {
+          const user = await prisma.users.findUnique({ where: { id: BigInt(auth.id) } as any });
+          const name = (user as any)?.name || (user as any)?.Full_name || '';
+          userSlug = String(name)
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, '_')
+            .replace(/[^a-z0-9_-]/g, '_') || 'user';
+        } catch { }
+        const userDir = path.resolve(baseDir, path.join('uploads', userSlug));
+        if (!abs.startsWith(userDir)) {
+          return NextResponse.json({ error: 'Forbidden - File access denied' }, { status: 403 });
+        }
       }
     }
 

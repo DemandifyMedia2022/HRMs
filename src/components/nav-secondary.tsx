@@ -33,7 +33,9 @@ export function NavSecondary({
                 asChild
                 isActive={item.url !== '#' && pathname === item.url}
                 className={
-                  item.url !== '#' && pathname === item.url ? 'bg-primary text-primary-foreground hover:bg-primary' : ''
+                  item.url !== '#' && pathname === item.url
+                    ? 'rounded-md bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary data-[active=true]:!bg-sidebar-primary data-[active=true]:!text-sidebar-primary-foreground'
+                    : 'rounded-md'
                 }
               >
                 <a href={item.url}>

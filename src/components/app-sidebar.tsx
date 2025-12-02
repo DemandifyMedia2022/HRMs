@@ -31,7 +31,10 @@ import {
   IconList,
   IconClock,
   IconBriefcase,
-  IconMessage
+  IconMessage,
+  IconChecklist,
+  IconProgressCheck,
+  IconClipboardList
 } from '@tabler/icons-react';
 
 import { NavDocuments } from '@/components/nav-documents';
@@ -195,6 +198,16 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
     ],
     navSecondary: [],
     documents: [
+      {
+        name: 'Task Manager',
+        url: '#',
+        icon: IconChecklist,
+        children: [
+          { name: 'Task Progress', url: '/pages/user/task-tracking/task-progress', icon: IconProgressCheck },
+          { name: 'My Tasks', url: '/pages/user/task-tracking/my-tasks', icon: IconClipboardList },
+          { name: 'Team Tasks', url: '/pages/user/task-tracking/team-tasks', icon: IconUsers }
+        ]
+      },
       {
         name: 'Operation',
         url: '#',
