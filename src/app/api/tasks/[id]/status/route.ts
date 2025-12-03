@@ -126,17 +126,29 @@ export async function PATCH(
     });
 
     // Send notifications to watchers
+    // Use watcher users.emp_code as employee_id so it matches how the header fetches notifications
     const watchers = await prisma.task_watchers.findMany({
-      where: { task_id: taskId }
+      where: { task_id: taskId },
+      include: {
+        users: {
+          select: {
+            id: true,
+            emp_code: true
+          }
+        }
+      }
     });
 
     for (const watcher of watchers) {
-      if (Number(watcher.user_id) !== auth.id) {
+      const watcherUserId = watcher.users ? Number(watcher.users.id) : Number(watcher.user_id);
+      const watcherEmpCode = watcher.users?.emp_code ? String(watcher.users.emp_code) : null;
+
+      if (watcherEmpCode && watcherUserId !== auth.id) {
         await fetch(`${req.nextUrl.origin}/api/notifications`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            employee_id: String(Number(watcher.user_id)),
+            employee_id: watcherEmpCode,
             type: 'task_status_change',
             title: 'Task Status Updated',
             message: `Task "${task.title}" status changed from ${oldStatus} to ${status}`,

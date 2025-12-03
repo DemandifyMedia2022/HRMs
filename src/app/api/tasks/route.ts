@@ -226,10 +226,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate assignee exists
+    // Validate assignee exists and fetch their emp_code for notifications
+    let assigneeEmpCode: string | null = null;
     if (assigned_to_id) {
       const assignee = await (prisma as any).users.findUnique({
-        where: { id: BigInt(assigned_to_id) }
+        where: { id: BigInt(assigned_to_id) },
+        select: {
+          id: true,
+          emp_code: true
+        }
       });
       if (!assignee) {
         return NextResponse.json(
@@ -237,6 +242,8 @@ export async function POST(req: NextRequest) {
           { status: 404 }
         );
       }
+
+      assigneeEmpCode = assignee.emp_code ? String(assignee.emp_code) : null;
     }
 
     // Generate task number
@@ -310,12 +317,13 @@ export async function POST(req: NextRequest) {
     });
 
     // Send notification to assignee if different from creator
-    if (assigned_to_id && assigned_to_id !== auth.id) {
+    // Use emp_code as employee_id so it matches how the header fetches notifications
+    if (assigned_to_id && assigned_to_id !== auth.id && assigneeEmpCode) {
       await fetch(`${req.nextUrl.origin}/api/notifications`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          employee_id: String(assigned_to_id),
+          employee_id: assigneeEmpCode,
           type: 'task_assignment',
           title: 'New Task Assigned',
           message: `You have been assigned to task: ${title}`,

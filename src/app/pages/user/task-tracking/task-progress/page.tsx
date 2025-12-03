@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Calendar, GripVertical, MessageCircle, Paperclip, Plus, Loader2, AlertCircle } from 'lucide-react';
+import { Calendar, GripVertical, MessageCircle, Paperclip, Plus, Loader2, AlertCircle, Minus } from 'lucide-react';
 import { TaskCreateForm } from '@/components/tasks/TaskCreateForm';
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal';
 import { toast } from 'sonner';
@@ -31,6 +31,7 @@ interface Task {
   status: string;
   priority: 'low' | 'medium' | 'high' | 'critical';
   due_date?: string;
+  completed_date?: string | null;
   assigned_to?: {
     id: number;
     Full_name: string;
@@ -75,6 +76,9 @@ export default function KanbanBoard() {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [pinnedTaskIds, setPinnedTaskIds] = useState<number[]>([]);
+  const [manageBoardOpen, setManageBoardOpen] = useState(false);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [manageLoading, setManageLoading] = useState(false);
 
   useEffect(() => {
     try {
@@ -98,6 +102,15 @@ export default function KanbanBoard() {
     fetchTasks();
   }, [pinnedTaskIds]);
 
+  // Periodically refresh tasks so done tasks are auto-removed after 15 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchTasks();
+    }, 60000); // every 60 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   const fetchTasks = async (explicitPinnedIds?: number[]) => {
     const currentPinnedIds = explicitPinnedIds ?? pinnedTaskIds;
     setLoading(true);
@@ -107,8 +120,23 @@ export default function KanbanBoard() {
         const data = await response.json();
         const allTasks = (data.data || []) as Task[];
 
+        const now = Date.now();
+        const fifteenMinutesMs = 15 * 60 * 1000;
+
         const tasks = currentPinnedIds.length > 0
-          ? allTasks.filter((task: Task) => currentPinnedIds.includes(task.id))
+          ? allTasks.filter((task: Task) => {
+              if (!currentPinnedIds.includes(task.id)) return false;
+
+              if (task.status !== 'done') return true;
+
+              if (!task.completed_date) return true;
+
+              const completedAt = new Date(task.completed_date).getTime();
+              const ageMs = now - completedAt;
+
+              // Keep on board only if completed less than 15 minutes ago
+              return ageMs < fifteenMinutesMs;
+            })
           : [];
         
         // Group tasks by status
@@ -127,6 +155,43 @@ export default function KanbanBoard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadAllTasksForManage = async () => {
+    setManageLoading(true);
+    try {
+      const response = await fetch('/api/tasks?my_tasks=true&limit=200');
+      if (response.ok) {
+        const data = await response.json();
+        setAllTasks((data.data || []) as Task[]);
+      }
+    } catch (error) {
+      console.error('Failed to load tasks for board management:', error);
+      toast.error('Failed to load tasks for board');
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
+  const handleOpenManageBoard = async () => {
+    setManageBoardOpen(true);
+    await loadAllTasksForManage();
+  };
+
+  const togglePinnedFromManage = (taskId: number) => {
+    setPinnedTaskIds(prev => {
+      const exists = prev.includes(taskId);
+      const next = exists ? prev.filter(id => id !== taskId) : [...prev, taskId];
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('kanbanPinnedTaskIds', JSON.stringify(next));
+        }
+      } catch (e) {
+        console.error('Failed to persist pinned tasks from board manager', e);
+      }
+      toast.success(exists ? 'Removed from board' : 'Added to board');
+      return next;
+    });
   };
 
   const handleDragStart = (e: React.DragEvent, task: Task, columnId: string) => {
@@ -196,10 +261,18 @@ export default function KanbanBoard() {
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Task Board</h1>
-          <Button onClick={() => setCreateFormOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Task
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={handleOpenManageBoard}
+            >
+              Manage Board Tasks
+            </Button>
+            <Button onClick={() => setCreateFormOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Task
+            </Button>
+          </div>
         </div>
 
         {loading ? (
@@ -344,6 +417,61 @@ export default function KanbanBoard() {
           onOpenChange={setDetailModalOpen}
           onUpdate={fetchTasks}
         />
+
+        <AlertDialog open={manageBoardOpen} onOpenChange={setManageBoardOpen}>
+          <AlertDialogContent className="max-w-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Manage Board Tasks</AlertDialogTitle>
+              <AlertDialogDescription>
+                Select which of your tasks should appear on this board. Changes are saved per user and device.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <div className="mt-4 max-h-[400px] overflow-y-auto space-y-2">
+              {manageLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                </div>
+              ) : allTasks.length === 0 ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>No tasks found.</span>
+                </div>
+              ) : (
+                allTasks.map(task => {
+                  const isPinned = pinnedTaskIds.includes(task.id);
+                  return (
+                    <div
+                      key={task.id}
+                      className="flex items-center justify-between rounded-md border px-3 py-2 bg-background hover:bg-muted/70 transition-colors"
+                    >
+                      <div className="min-w-0 mr-3">
+                        <div className="text-xs text-muted-foreground font-mono">{task.task_number}</div>
+                        <div className="text-sm font-medium truncate">{task.title}</div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant={isPinned ? 'outline' : 'default'}
+                        size="icon"
+                        onClick={() => togglePinnedFromManage(task.id)}
+                      >
+                        {isPinned ? (
+                          <Minus className="w-4 h-4" />
+                        ) : (
+                          <Plus className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel>Close</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </>
   );

@@ -59,6 +59,7 @@ export function TaskCreateForm({ open, onOpenChange, onSuccess }: TaskCreateForm
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<string>('medium');
   const [dueDate, setDueDate] = useState<Date | undefined>();
+  const [dueTime, setDueTime] = useState<string>('');
   const [assigneeId, setAssigneeId] = useState<string>('unassigned');
   const [selectedLabels, setSelectedLabels] = useState<number[]>([]);
   const [selectedWatchers, setSelectedWatchers] = useState<number[]>([]);
@@ -125,6 +126,16 @@ export function TaskCreateForm({ open, onOpenChange, onSuccess }: TaskCreateForm
     setLoading(true);
 
     try {
+      let dueDateTimeIso: string | undefined;
+      if (dueDate) {
+        const dt = new Date(dueDate);
+        if (dueTime) {
+          const [h, m] = dueTime.split(':');
+          dt.setHours(Number(h) || 0, Number(m) || 0, 0, 0);
+        }
+        dueDateTimeIso = dt.toISOString();
+      }
+
       const response = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -132,7 +143,7 @@ export function TaskCreateForm({ open, onOpenChange, onSuccess }: TaskCreateForm
           title: title.trim(),
           description: description.trim() || undefined,
           priority,
-          due_date: dueDate?.toISOString(),
+          due_date: dueDateTimeIso,
           assigned_to_id: assigneeId && assigneeId !== 'unassigned' ? parseInt(assigneeId) : undefined,
           label_ids: selectedLabels,
           watcher_ids: selectedWatchers,
@@ -162,6 +173,7 @@ export function TaskCreateForm({ open, onOpenChange, onSuccess }: TaskCreateForm
     setDescription('');
     setPriority('medium');
     setDueDate(undefined);
+    setDueTime('');
     setAssigneeId('unassigned');
     setSelectedLabels([]);
     setSelectedWatchers([]);
@@ -251,9 +263,9 @@ export function TaskCreateForm({ open, onOpenChange, onSuccess }: TaskCreateForm
               </Select>
             </div>
 
-            {/* Due Date */}
+            {/* Due Date and Time */}
             <div className="space-y-2">
-              <Label>Due Date</Label>
+              <Label>Due Date & Time</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -273,6 +285,11 @@ export function TaskCreateForm({ open, onOpenChange, onSuccess }: TaskCreateForm
                   />
                 </PopoverContent>
               </Popover>
+              <Input
+                type="time"
+                value={dueTime}
+                onChange={(e) => setDueTime(e.target.value)}
+              />
             </div>
           </div>
 

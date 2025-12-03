@@ -205,7 +205,6 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         children: [
           { name: 'Task Progress', url: '/pages/user/task-tracking/task-progress', icon: IconProgressCheck },
           { name: 'My Tasks', url: '/pages/user/task-tracking/my-tasks', icon: IconClipboardList },
-          { name: 'Team Tasks', url: '/pages/user/task-tracking/team-tasks', icon: IconUsers }
         ]
       },
       {
