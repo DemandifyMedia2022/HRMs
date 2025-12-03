@@ -48,10 +48,14 @@ const SiriOrb: React.FC<SiriOrbProps> = ({
   animationDuration = 20,
 }) => {
   const defaultColors = {
-    bg: "oklch(92% 0.04 264.695)",
-    c1: "oklch(75% 0.15 350)", // Pastel pink
-    c2: "oklch(80% 0.12 200)", // Pastel blue
-    c3: "oklch(78% 0.14 280)", // Pastel purple/lavender
+    // Slightly bluish base that still works on light UI but with more depth
+    bg: "oklch(90% 0.06 235)",
+    // Primary accent: deeper brand blue
+    c1: "oklch(65% 0.20 240)",
+    // Secondary accent: stronger cyan/teal highlight
+    c2: "oklch(92% 0.20 210)",
+    // Tertiary accent: richer purple for contrast
+    c3: "oklch(70% 0.19 275)",
   };
 
   const finalColors = { ...defaultColors, ...colors };
