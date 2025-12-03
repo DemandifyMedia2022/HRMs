@@ -133,18 +133,18 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: '/pages/admin/task-tracking/tasks',
         icon: IconChecklist
       },
-      {
-        name: 'Campaigns',
-        url: '#',
-        icon: IconSpeakerphone,
-        children: [
-          { name: 'Campaign list', url: '/pages/admin/campaigns', icon: IconReport },
-          { name: 'Add Campaigns', url: '/pages/admin/campaigns/add', icon: IconPlus },
-          { name: 'Call Data', url: '/pages/admin/call-data', icon: IconDatabase },
-          { name: 'Paste Call Data', url: '/pages/admin/paste-call-data', icon: IconDialpad }
-        ]
-      },
-      { name: 'Team', url: '/pages/admin/team', icon: IconUsers }
+      // {
+      //   name: 'Campaigns',
+      //   url: '#',
+      //   icon: IconSpeakerphone,
+      //   children: [
+      //     { name: 'Campaign list', url: '/pages/admin/campaigns', icon: IconReport },
+      //     { name: 'Add Campaigns', url: '/pages/admin/campaigns/add', icon: IconPlus },
+      //     { name: 'Call Data', url: '/pages/admin/call-data', icon: IconDatabase },
+      //     { name: 'Paste Call Data', url: '/pages/admin/paste-call-data', icon: IconDialpad }
+      //   ]
+      // },
+      // { name: 'Team', url: '/pages/admin/team', icon: IconUsers }
     ]
   },
   user: {
@@ -214,41 +214,41 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
           { name: 'My Tasks', url: '/pages/user/task-tracking/my-tasks', icon: IconClipboardList },
         ]
       },
-      {
-        name: 'Operation',
-        url: '#',
-        icon: IconPhone,
-        children: [
-          { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
-          { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
-          { name: 'Call History', url: '/pages/user/operations/calls', icon: IconFileWord },
-          { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
-          { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
-        ]
-      },
-      {
-        name: 'Quality',
-        url: '#',
-        icon: IconReport,
-        children: [
-          { name: 'Quality Audit', url: '/pages/user/quality', icon: IconReport },
-          { name: 'Campaign List', url: '/pages/user/quality/campaigns', icon: IconSpeakerphone },
-          { name: 'Analytics', url: '/pages/user/quality/analytics', icon: IconReport }
-        ]
-      },
-      {
-        name: 'Team Lead',
-        url: '#',
-        icon: IconUsers,
-        children: [
-          { name: 'Campaigns', url: '/pages/user/team-lead/campaigns', icon: IconSpeakerphone },
-          { name: 'Add Campaign', url: '/pages/user/team-lead/add', icon: IconPlus },
-          { name: 'Analytics', url: '/pages/user/team-lead/analytics', icon: IconReport },
-          { name: 'Team', url: '/pages/user/team-lead/team', icon: IconUsers },
-          { name: 'Paste Call Data', url: '/pages/user/team-lead/paste-call-data', icon: IconReport },
-          { name: 'Call History', url: '/pages/user/team-lead/call-data', icon: IconDatabase }
-        ]
-      }
+      // {
+      //   name: 'Operation',
+      //   url: '#',
+      //   icon: IconPhone,
+      //   children: [
+      //     { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
+      //     { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
+      //     { name: 'Call History', url: '/pages/user/operations/calls', icon: IconFileWord },
+      //     { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
+      //     { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
+      //   ]
+      // },
+      // {
+      //   name: 'Quality',
+      //   url: '#',
+      //   icon: IconReport,
+      //   children: [
+      //     { name: 'Quality Audit', url: '/pages/user/quality', icon: IconReport },
+      //     { name: 'Campaign List', url: '/pages/user/quality/campaigns', icon: IconSpeakerphone },
+      //     { name: 'Analytics', url: '/pages/user/quality/analytics', icon: IconReport }
+      //   ]
+      // },
+      // {
+      //   name: 'Team Lead',
+      //   url: '#',
+      //   icon: IconUsers,
+      //   children: [
+      //     { name: 'Campaigns', url: '/pages/user/team-lead/campaigns', icon: IconSpeakerphone },
+      //     { name: 'Add Campaign', url: '/pages/user/team-lead/add', icon: IconPlus },
+      //     { name: 'Analytics', url: '/pages/user/team-lead/analytics', icon: IconReport },
+      //     { name: 'Team', url: '/pages/user/team-lead/team', icon: IconUsers },
+      //     { name: 'Paste Call Data', url: '/pages/user/team-lead/paste-call-data', icon: IconReport },
+      //     { name: 'Call History', url: '/pages/user/team-lead/call-data', icon: IconDatabase }
+      //   ]
+      // }
       // { name: "Team", url: "/pages/user/team", icon: IconUsers },
       // { name: "Campaigns", url: "/pages/user/campaigns", icon: IconSpeakerphone },
     ]
