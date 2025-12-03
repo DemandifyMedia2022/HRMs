@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useSidebarConfig, type SidebarData, type UserRole } from '@/components/sidebar-config';
 import {
   IconChartBar,
@@ -34,7 +35,8 @@ import {
   IconMessage,
   IconChecklist,
   IconProgressCheck,
-  IconClipboardList
+  IconClipboardList,
+  IconMail
 } from '@tabler/icons-react';
 
 import { NavDocuments } from '@/components/nav-documents';
@@ -126,6 +128,11 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
     ],
     navSecondary: [],
     documents: [
+      {
+        name: 'Task Manager',
+        url: '/pages/admin/task-tracking/tasks',
+        icon: IconChecklist
+      },
       {
         name: 'Campaigns',
         url: '#',
@@ -332,7 +339,8 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
     ],
     navSecondary: [],
     documents: [
-      { name: 'Letter Generation', url: '/pages/hr/letter-generation', icon: IconFileWord },
+      { name: 'Task Manager', url: '/pages/hr/task-tracking/tasks', icon: IconChecklist },
+      { name: 'Letter Generation', url: '/pages/hr/letter-generation', icon: IconMail},
       { name: 'Events', url: '/pages/hr/events', icon: IconCalendar }
     ]
   }
@@ -373,12 +381,28 @@ function mergeData(base: SidebarData, overrides?: Partial<SidebarData>): Sidebar
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { role, dataOverrides } = useSidebarConfig();
-  const base = baseDataByRole[role as keyof typeof baseDataByRole] ?? baseDataByRole.user;
-  const data = mergeData(base, dataOverrides);
   const { user } = useAuth();
+  const pathname = usePathname();
+
+  // Prefer the authenticated user's role when available to avoid briefly
+  // rendering the wrong sidebar (e.g. user sidebar on HR/admin routes).
+  let effectiveRole: UserRole = (user?.role as UserRole) ?? role;
+
+  if (!user) {
+    if (pathname.startsWith('/pages/admin')) {
+      effectiveRole = 'admin';
+    } else if (pathname.startsWith('/pages/hr')) {
+      effectiveRole = 'hr';
+    } else {
+      effectiveRole = 'user';
+    }
+  }
+
+  const base = baseDataByRole[effectiveRole as keyof typeof baseDataByRole] ?? baseDataByRole.user;
+  const data = mergeData(base, dataOverrides);
 
   const dashboardUrl = React.useMemo(() => {
-    switch (role) {
+    switch (effectiveRole) {
       case 'admin':
         return '/pages/admin';
       case 'hr':
@@ -387,7 +411,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       default:
         return '/pages/user';
     }
-  }, [role]);
+  }, [effectiveRole]);
 
   const allowedTeamLeadEmails = React.useMemo(
     () => new Set(['asfiya.pathan@demandifymedia.com', 'tejal.kamble@demandifymedia.com']),

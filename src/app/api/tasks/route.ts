@@ -37,13 +37,14 @@ export async function GET(req: NextRequest) {
     if (assigneeId) where.assigned_to_id = BigInt(assigneeId);
     if (createdById) where.created_by_id = BigInt(createdById);
 
-    // When viewing general task lists, restrict by department for non-admins.
+    // When viewing general task lists, restrict by department for regular users.
+    // Admins and HR can see all departments by default.
     // For "my tasks" views, do NOT restrict by department so users can
     // see tasks assigned to them across departments.
     if (!myTasks) {
       if (department) {
         where.department = department;
-      } else if (auth.role !== 'admin' && auth.department) {
+      } else if (auth.role !== 'admin' && auth.role !== 'hr' && auth.department) {
         where.department = auth.department;
       }
     }

@@ -94,6 +94,7 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+  const [quickFilter, setQuickFilter] = useState<"all" | "today" | "week" | "overdue">("all");
 
   // Sorting
   const [sortField, setSortField] = useState<string>("due_date");
@@ -164,6 +165,31 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
       );
     }
 
+    // Apply quick due-date based filters for handy views
+    if (quickFilter !== "all") {
+      const now = new Date();
+      const todayYmd = now.toISOString().split("T")[0];
+      const weekEnd = new Date(now);
+      weekEnd.setDate(now.getDate() + 7);
+
+      data = data.filter(t => {
+        if (!t.due_date) return false;
+        const due = new Date(t.due_date);
+        const dueYmd = due.toISOString().split("T")[0];
+
+        if (quickFilter === "today") {
+          return dueYmd === todayYmd;
+        }
+        if (quickFilter === "week") {
+          return due >= now && due <= weekEnd;
+        }
+        if (quickFilter === "overdue") {
+          return due < now && t.status !== "done";
+        }
+        return true;
+      });
+    }
+
     data.sort((a, b) => {
       let aValue: any = (a as any)[sortField];
       let bValue: any = (b as any)[sortField];
@@ -179,7 +205,7 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
     });
 
     return data;
-  }, [tasks, searchQuery, sortField, sortOrder]);
+  }, [tasks, searchQuery, sortField, sortOrder, quickFilter]);
 
   const analytics = useMemo(() => {
     const total = tasks.length;
@@ -276,8 +302,36 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
               Due date passed, not done
+              {analytics.dueThisWeek > 0 && (
+                <div className="mt-1 text-xs text-amber-600 font-medium">
+                  {analytics.dueThisWeek} due in next 7 days
+                </div>
+              )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* Quick time-based filters */}
+        <div className="flex flex-wrap gap-2 mt-2">
+          {([
+            { key: "all", label: "All" },
+            { key: "today", label: "Due Today" },
+            { key: "week", label: "This Week" },
+            { key: "overdue", label: "Overdue" },
+          ] as const).map(item => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setQuickFilter(item.key)}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                quickFilter === item.key
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-background text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
 
         {/* Filters */}

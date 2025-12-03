@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { IconMessageCircle, IconSend, IconX, IconLoader2 } from '@tabler/icons-react';
+import SiriOrb from '@/components/smoothui/siri-orb';
 
 type ChatMessage = {
   id: number;
@@ -121,19 +122,20 @@ export function HelpBotWidget() {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2 pointer-events-none">
+      <div className="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-3 pointer-events-none">
         <div
-          className={`mb-2 w-96 max-w-[95vw] rounded-lg border bg-background shadow-xl origin-bottom-right transform transition-all duration-200 ${open ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'pointer-events-none opacity-0 translate-y-2 scale-95'
+          className={`mb-1 w-96 max-w-[95vw] rounded-2xl border border-border/70 bg-background shadow-2xl origin-bottom-right transform transition-all duration-200 ${open ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'pointer-events-none opacity-0 translate-y-2 scale-95'
             }`}
         >
-          <div className="flex items-center justify-between border-b px-3 py-2">
+          <div className="flex items-center justify-between border-b px-4 py-3 bg-background/80 rounded-t-2xl">
             <div className="flex items-center gap-2">
-              <img
-                src="/robot-assistant.png"
-                alt="Dexo"
-                className="h-6 w-6"
-              />
-              <h1 className="text-lg font-semibold text-primary">Dexo</h1>
+              <div className="h-7 w-7 rounded-full bg-background flex items-center justify-center shadow-sm">
+                <SiriOrb size="28px" />
+              </div>
+              <div className="flex flex-col leading-tight">
+                <h1 className="text-sm font-semibold text-primary">Dexo</h1>
+                <span className="text-[11px] text-muted-foreground">HRMS assistant</span>
+              </div>
             </div>
 
             <Button
@@ -147,28 +149,32 @@ export function HelpBotWidget() {
           </div>
           <div>
             <div className="flex max-h-[60vh] flex-col">
-              <ScrollArea className="h-80 px-3 py-2">
-                <div className="flex flex-col gap-2 text-sm">
+              <ScrollArea className="h-80 px-4 py-3">
+                <div className="flex flex-col gap-3 text-sm">
                   {messages.map(message => (
                     <div
                       key={message.id}
                       className={
                         message.from === 'user'
-                          ? 'ml-auto max-w-[80%] rounded-lg bg-primary px-3 py-2 text-primary-foreground'
-                          : 'mr-auto max-w-[80%] rounded-lg bg-muted px-3 py-2'
+                          ? 'ml-auto max-w-[80%] rounded-2xl bg-primary px-3 py-2 text-primary-foreground shadow-sm'
+                          : 'mr-auto max-w-[80%] rounded-2xl bg-muted px-3 py-2 shadow-sm border border-border/40'
                       }
                     >
-                      <div className="mb-1 text-[11px] opacity-80">
+                      <div className="mb-1 text-[11px] opacity-70">
                         <span>{message.from === 'user' ? 'You' : 'Dexo'}</span>
                       </div>
                       {message.text.split('\n').map((line, idx) => (
                         <p key={idx}>
                           {line.split(' ').map((word, wordIdx) => {
+                            // Remove backticks and trailing punctuation so
+                            // links like "/pages/hr" or "https://..." still
+                            // work even if followed by a full stop.
                             const trimmed = word.replace(/`/g, '');
-                            const isInternalLink = trimmed.startsWith('/pages/');
-                            const isExternalLink = /^https?:\/\//.test(trimmed);
+                            const cleaned = trimmed.replace(/[.,!?;:)\]]+$/u, '');
+                            const isInternalLink = cleaned.startsWith('/pages/');
+                            const isExternalLink = /^https?:\/\//.test(cleaned);
                             const isLink = isInternalLink || isExternalLink;
-                            const href = trimmed;
+                            const href = cleaned;
 
                             if (isLink) {
                               return (
@@ -200,13 +206,13 @@ export function HelpBotWidget() {
                   <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
-              <div className="flex flex-wrap gap-2 px-3 pb-2">
+              <div className="flex flex-wrap gap-2 px-4 pb-3">
                 {quickQuestions.map(question => (
                   <Button
                     key={question.value}
                     variant="outline"
                     size="sm"
-                    className="text-xs"
+                    className="text-xs rounded-full border-border/70 bg-background/70 hover:bg-background"
                     onClick={() => void handleSend(question.value)}
                     disabled={loading}
                   >
@@ -214,7 +220,7 @@ export function HelpBotWidget() {
                   </Button>
                 ))}
               </div>
-              <div className="flex items-center gap-2 border-t px-3 py-2">
+              <div className="flex items-center gap-2 border-t px-3 py-2 bg-background/80 rounded-b-2xl">
                 <Input
                   placeholder="Ask Dexo how to do something..."
                   value={input}
@@ -224,7 +230,7 @@ export function HelpBotWidget() {
                 />
                 <Button
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8 w-8 rounded-full"
                   onClick={() => void handleSend()}
                   disabled={loading || !input.trim()}
                 >
@@ -235,19 +241,13 @@ export function HelpBotWidget() {
           </div>
         </div>
 
-        <Button
-          size="icon"
-          className="h-24 w-24 rounded-full bg-white pointer-events-auto"
+        <button
+          type="button"
+          className="pointer-events-auto rounded-full shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
           onClick={() => setOpen(prev => !prev)}
         >
-          <video
-            src="/Chatbot.webm"
-            className="h-28 w-28 rounded-full"
-            autoPlay
-            loop
-            muted
-          />
-        </Button>
+          <SiriOrb size="72px" />
+        </button>
       </div>
     </>
   );
