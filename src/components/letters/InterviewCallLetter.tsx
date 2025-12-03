@@ -80,7 +80,7 @@ export const InterviewCallLetter: React.FC<InterviewCallLetterProps> = ({ data }
         <br />
 
         <p>
-          Dear {data.salutation} {capitalizedName},
+          Dear {capitalizedName},
         </p>
         
 
@@ -94,7 +94,7 @@ export const InterviewCallLetter: React.FC<InterviewCallLetterProps> = ({ data }
         <p>
           The interview will be held at the following address:
           <br />
-          {data.interviewLocation}
+          <b>{data.interviewLocation}</b>
         </p>
         <br />
 

@@ -13,15 +13,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useRouter, useSearchParams } from "next/navigation"
 
-const letterCategories = [
+type LetterItem = { name: string; url: string; migrated: boolean; disabled?: boolean }
+type LetterCategory = { name: string; letters: LetterItem[] }
+
+const letterCategories: LetterCategory[] = [
   {
     name: "Initial Stage Letters",
     letters: [
       { name: "Interview Call Letter", url: "/pages/hr/letter-generation/interview-call-letter", migrated: true },
       { name: "Appointment Letter", url: "/pages/hr/letter-generation/appointment-letter", migrated: true },
       { name: "Offer Letter", url: "/pages/hr/letter-generation/offer-letter", migrated: true },
-      { name: "Sales Offer Letter", url: "#", migrated: false, disabled: true },
-      { name: "Hari Offer Letter", url: "#", migrated: false, disabled: true },
+      // { name: "Sales Offer Letter", url: "#", migrated: false, disabled: true },
+      // { name: "Hari Offer Letter", url: "#", migrated: false, disabled: true },
       { name: "Joining Letter", url: "/pages/hr/letter-generation/joining-letter", migrated: true },
       { name: "Reference Letter", url: "/pages/hr/letter-generation/reference-letter", migrated: true }
     ]
