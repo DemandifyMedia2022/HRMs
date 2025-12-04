@@ -254,8 +254,10 @@ export default function EmployeeSalaryStructurePage() {
       if (data.success) {
         toast({
           title: 'Success',
-          description: 'Salary structure updated successfully!',
+          description: 'Salary structure updated successfully! Reloading page...',
         });
+        // Refresh the page after a short delay to show the success message
+        setTimeout(() => window.location.reload(), 1000);
       } else {
         toast({
           variant: 'destructive',

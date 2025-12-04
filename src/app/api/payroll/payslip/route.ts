@@ -348,8 +348,8 @@ export async function GET(request: NextRequest) {
     const availablePayslips =
       (await prisma
         .$queryRawUnsafe<any[]>(
-          `SELECT 
-        YEAR(date) as year, 
+          `SELECT
+        YEAR(date) as year,
         MONTH(date) as month
       FROM npattendance
       WHERE npattendance.employee_id = ?
