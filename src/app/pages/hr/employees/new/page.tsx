@@ -244,7 +244,7 @@ export default function AddEmployeePage() {
                 onChange={setRetirementDate}
                 triggerClassName="w-full justify-between"
               />
-              <input type="hidden" name="retirement_date" value={formatDateISO(retirementDate)} required />
+              <input type="hidden" name="retirement_date" value={formatDateISO(retirementDate)} />
             </div>
             <div>
               <Label>Employment Type <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>

@@ -223,24 +223,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
             icon: IconBriefcase,
             target: '_blank'
           },
-           { 
-    title: 'Glassdoor', 
-    url: 'https://www.glassdoor.co.in/Reviews/Demandify-Media-Pune-Reviews-EI_IE7737262.0,15_IL.16,20_IM1072.htm', 
-    icon: IconBuilding,
-    target: '_blank'
-  },
-           { 
-    title: 'LinkedIn', 
-    url: 'https://www.linkedin.com/company/demandify-media/posts/?feedView=all', 
-    icon: IconBrandLinkedin,
-    target: '_blank'
-  },
-           { 
-    title: 'Reviews', 
-    url: 'https://www.google.com/search?sca_esv=93a174fe12d6b49e&si=AMgyJEtREmoPL4P1I5IDCfuA8gybfVI2d5Uj7QMwYCZHKDZ-EwvFFJ6LJHDmKnpuo-yrXmQg6fLqNR2XgAtLyU1udHoQ8EyhsT29mVSwT7AdJEJ9cYAp3GdV_639YwuFU-gfwhf3t9oLrs7Qxvl-Dp2v7XKQFNXdig%3D%3D&q=Demandify+A+Trescon+Company+Reviews&sa=X&ved=2ahUKEwjy0LTb2Z6RAxXgbvUHHb8zAfwQ0bkNegQIJxAD&biw=1366&bih=641&dpr=1', 
-    icon: IconMessageCircle,
-    target: '_blank'
-  }
+           
         ]
       }
     ],
@@ -352,36 +335,9 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         children: [
           { title: 'Feedbacks', url: '/pages/hr/survey-feedbacks', icon: IconReport },
 
-          { 
-    title: 'Feedback Form',         // <<< your new dropdown item
-    url: '/pages/hr/survey-form',   // <<< change URL as needed
-    icon: IconReport 
-  },
+          { title: 'Feedback Form', url: '/pages/hr/survey-form',  icon: IconReport },
           // { title: 'Ambition Box', url: 'https://www.ambitionbox.com/overview/demandify-media-overview', icon: IconBriefcase }
-           { 
-    title: 'Ambition Box', 
-    url: 'https://www.ambitionbox.com/overview/demandify-media-overview', 
-    icon: IconBriefcase,
-    target: '_blank'
-  },
-           { 
-    title: 'Glassdoor', 
-    url: 'https://www.glassdoor.co.in/Reviews/Demandify-Media-Pune-Reviews-EI_IE7737262.0,15_IL.16,20_IM1072.htm', 
-    icon: IconBuilding,
-    target: '_blank'
-  },
-           { 
-    title: 'LinkedIn', 
-    url: 'https://www.linkedin.com/company/demandify-media/posts/?feedView=all', 
-    icon: IconBrandLinkedin,
-    target: '_blank'
-  },
-           { 
-    title: 'Reviews', 
-    url: 'https://www.google.com/search?sca_esv=93a174fe12d6b49e&si=AMgyJEtREmoPL4P1I5IDCfuA8gybfVI2d5Uj7QMwYCZHKDZ-EwvFFJ6LJHDmKnpuo-yrXmQg6fLqNR2XgAtLyU1udHoQ8EyhsT29mVSwT7AdJEJ9cYAp3GdV_639YwuFU-gfwhf3t9oLrs7Qxvl-Dp2v7XKQFNXdig%3D%3D&q=Demandify+A+Trescon+Company+Reviews&sa=X&ved=2ahUKEwjy0LTb2Z6RAxXgbvUHHb8zAfwQ0bkNegQIJxAD&biw=1366&bih=641&dpr=1', 
-    icon: IconMessageCircle,
-    target: '_blank'
-  }
+         
         ]
       },
       {

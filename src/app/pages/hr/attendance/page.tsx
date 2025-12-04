@@ -38,8 +38,17 @@ type UserEvents = {
 };
 
 export default function AdminAttendancePage() {
-  const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [month, setMonth] = useState<number>(new Date().getMonth());
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  
+  const setYear = (year: number) => {
+    setCurrentDate(new Date(year, month, 1));
+  };
+  
+  const setMonth = (month: number) => {
+    setCurrentDate(new Date(year, month, 1));
+  };
   const [query, setQuery] = useState<string>('');
   const [data, setData] = useState<UserEvents[]>([]);
   const [holidays, setHolidays] = useState<
@@ -107,8 +116,9 @@ export default function AdminAttendancePage() {
   };
 
   const years = useMemo(() => {
-    const y = new Date().getFullYear();
-    return [y - 1, y, y + 1];
+    const currentYear = new Date().getFullYear();
+    // Generate an array of years from 2 years before to 3 years after current year
+    return Array.from({ length: 6 }, (_, i) => currentYear - 2 + i);
   }, []);
 
   const months = useMemo(
@@ -360,13 +370,8 @@ export default function AdminAttendancePage() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setMonth(m => {
-                                if (m === 0) {
-                                  setYear(y => y - 1);
-                                  return 11;
-                                }
-                                return m - 1;
-                              });
+                              const newDate = new Date(year, month - 1, 1);
+                              setCurrentDate(newDate);
                             }}
                           >
                             Prev
@@ -375,13 +380,8 @@ export default function AdminAttendancePage() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setMonth(m => {
-                                if (m === 11) {
-                                  setYear(y => y + 1);
-                                  return 0;
-                                }
-                                return m + 1;
-                              });
+                              const newDate = new Date(year, month + 1, 1);
+                              setCurrentDate(newDate);
                             }}
                           >
                             Next
