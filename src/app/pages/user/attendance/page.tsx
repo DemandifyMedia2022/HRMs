@@ -55,8 +55,10 @@ type UserEvents = {
 };
 
 export default function Page() {
-  const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [month, setMonth] = useState<number>(new Date().getMonth());
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  
   const [data, setData] = useState<UserEvents[]>([]);
   const [holidays, setHolidays] = useState<
     { date: string; event_name: string; event_start: string | null; event_end: string | null }[]
@@ -239,13 +241,150 @@ export default function Page() {
 
   const todayStr = new Date().toISOString().split('T')[0];
 
+  // Render calendar cell function to avoid duplication
+  const renderCalendarCell = (c: any, idx: number, isMobile: boolean = false) => {
+    const has = Boolean(c.day);
+    const status = c.ev?.extendedProps?.status || c.ev?.title || '';
+    const sLc = status.toLowerCase();
+    const isPresent = status === 'Present' || sLc.startsWith('present');
+    const isAbsent = status === 'Absent' || sLc.startsWith('absent');
+    const isHalf = sLc.includes('half');
+    const isPresentVariant = isPresent && (sLc.includes('late') || sLc.includes('early'));
+    const base =
+      isPresent
+        ? { border: '#10b981', bg: 'bg-emerald-50/50', text: 'text-emerald-700' }
+        : isAbsent
+          ? { border: '#ef4444', bg: 'bg-red-50/50', text: 'text-red-700' }
+          : isHalf
+            ? { border: '#f59e0b', bg: 'bg-amber-50/50', text: 'text-amber-700' }
+            : { border: '#d1d5db', bg: 'bg-white', text: 'text-gray-600' };
+    const textClass = isPresentVariant ? 'text-yellow-600' : base.text;
+    const isWeekend = c.dateStr
+      ? (() => {
+        const d = new Date(c.dateStr + 'T00:00:00');
+        const w = d.getDay();
+        return w === 0 || w === 6;
+      })()
+      : false;
+    const leaveType = c.dateStr ? calendar.leaveMap.get(c.dateStr) : undefined;
+    const holiday = c.dateStr ? calendar.holidayMap.get(c.dateStr) : undefined;
+    const isHoliday = Boolean(holiday);
+    const isLeave = Boolean(leaveType);
+    const isFuture = c.dateStr ? c.dateStr > todayStr : false;
+    const isNoRecord = has && !c.ev && !isHoliday && !isLeave && !isWeekend && !isFuture;
+    const cellBorder = isHoliday
+      ? '#6d28d9'
+      : isLeave
+        ? '#0ea5e9'
+        : isWeekend
+          ? '#a1a1aa'
+          : isNoRecord
+            ? '#ef4444'
+            : base.border;
+    const isToday = c.dateStr === todayStr;
+
+    const handleClick = () => {
+      if (!has) return;
+      setSelected({
+        date: c.dateStr,
+        isWeekend,
+        event: c.ev,
+        leaveType,
+        holidayName: holiday?.name,
+        holidayStart: holiday?.start ?? null,
+        holidayEnd: holiday?.end ?? null
+      });
+      setOpen(true);
+    };
+
+    if (isMobile) {
+      // Mobile: Compact view with status indicators
+      const getStatusChar = () => {
+        if (isHoliday) return 'H';
+        if (isLeave) return 'L';
+        if (isWeekend) return 'W';
+        if (isPresent) return 'P';
+        if (isAbsent) return 'A';
+        if (isHalf) return 'H';
+        if (isNoRecord) return 'A';
+        return '';
+      };
+
+      return (
+        <div
+          key={idx}
+          className={`relative min-h-[50px] min-w-[45px] rounded border p-1 flex flex-col items-center justify-center cursor-pointer transition-colors ${has ? (isHoliday ? 'bg-violet-50/40' : isLeave ? 'bg-sky-50/40' : isWeekend ? 'bg-gray-100' : isNoRecord ? 'bg-red-50/50' : base.bg) : 'bg-gray-100'} ${isToday ? 'ring-1 ring-primary' : ''}`}
+          style={{ borderColor: cellBorder, borderWidth: '1.5px' }}
+          onClick={handleClick}
+        >
+          <div className="text-[11px] font-medium text-gray-700">{c.day ?? ''}</div>
+          {has && (
+            <div className={`text-[9px] font-bold mt-0.5 ${textClass}`}>
+              {getStatusChar()}
+            </div>
+          )}
+          {isToday && (
+            <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary"></div>
+          )}
+        </div>
+      );
+    }
+
+    // Desktop: Full detailed view
+    return (
+      <div
+        key={idx}
+        className={`relative min-h-[98px] rounded border p-2 flex flex-col gap-1 cursor-pointer transition-colors ${has ? (isHoliday ? 'bg-violet-50/40' : isLeave ? 'bg-sky-50/40' : isWeekend ? 'bg-gray-100' : isNoRecord ? 'bg-red-50/50' : base.bg) : 'bg-gray-100'} ${isToday ? 'ring-2 ring-primary' : ''}`}
+        style={{ borderColor: cellBorder }}
+        title={c.dateStr}
+        onClick={handleClick}
+      >
+        <div className="flex items-center justify-between">
+          <div className="text-[11px] text-gray-500">{c.day ?? ''}</div>
+          {isToday ? (
+            <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-1.5 py-0.5 text-[10px] font-medium">
+              Today
+            </span>
+          ) : null}
+        </div>
+        {isHoliday ? (
+          <div className="mt-auto text-[11px] text-purple-700">{holiday?.name}</div>
+        ) : isLeave ? (
+          isWeekend ? (
+            <div className="mt-auto text-[11px] text-gray-600">Week Off</div>
+          ) : (
+            <div className="mt-auto text-[11px] text-sky-600">{leaveType}</div>
+          )
+        ) : c.ev ? (
+          <div className="space-y-1">
+            <div className="text-[11px]">
+              <span className="inline-block rounded px-1 border" style={{ borderColor: cellBorder }}>
+                <span className={`font-medium ${textClass}`}>{status}</span>
+              </span>
+            </div>
+            <div className="text-[11px] text-gray-600">
+              {formatTime(c.ev.extendedProps.in_time)} - {formatTime(c.ev.extendedProps.out_time)}
+            </div>
+            <div className="text-[11px] text-gray-600">
+              Work {formatDuration(c.ev.extendedProps.login_hours)}
+            </div>
+          </div>
+        ) : isWeekend ? (
+          <div className="mt-auto text-[11px] text-gray-600">Week Off</div>
+        ) : isNoRecord ? (
+          <div className="mt-auto text-[11px] text-red-700">Absent</div>
+        ) : null}
+      </div>
+    );
+  };
+
   return (
     <>
       <SidebarConfig role="user" />
       <div className="p-4 space-y-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <h1 className="text-xl font-semibold">User · Attendance</h1>
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 text-xs flex-wrap">
             <Badge variant="outline" className="border-green-500 text-green-600">
               Present
             </Badge>
@@ -275,13 +414,8 @@ export default function Page() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setMonth(m => {
-                      if (m === 0) {
-                        setYear(y => y - 1);
-                        return 11;
-                      }
-                      return m - 1;
-                    });
+                    const newDate = new Date(year, month - 1, 1);
+                    setCurrentDate(newDate);
                   }}
                 >
                   Prev
@@ -292,13 +426,8 @@ export default function Page() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setMonth(m => {
-                      if (m === 11) {
-                        setYear(y => y + 1);
-                        return 0;
-                      }
-                      return m + 1;
-                    });
+                    const newDate = new Date(year, month + 1, 1);
+                    setCurrentDate(newDate);
                   }}
                 >
                   Next
@@ -317,112 +446,67 @@ export default function Page() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-7 gap-2 text-xs">
-                  {calendar.headers.map(h => (
-                    <div key={h} className="text-center font-medium text-gray-600">
-                      {h}
-                    </div>
-                  ))}
-                  {calendar.cells.map((c, idx) => {
-                    const has = Boolean(c.day);
-                    const status = c.ev?.extendedProps?.status || c.ev?.title || '';
-                    const sLc = status.toLowerCase();
-                    const isPresent = status === 'Present' || sLc.startsWith('present');
-                    const isAbsent = status === 'Absent' || sLc.startsWith('absent');
-                    const isHalf = sLc.includes('half');
-                    const isPresentVariant = isPresent && (sLc.includes('late') || sLc.includes('early'));
-                    const base =
-                      isPresent
-                        ? { border: '#10b981', bg: 'bg-emerald-50/50', text: 'text-emerald-700' }
-                        : isAbsent
-                          ? { border: '#ef4444', bg: 'bg-red-50/50', text: 'text-red-700' }
-                          : isHalf
-                            ? { border: '#f59e0b', bg: 'bg-amber-50/50', text: 'text-amber-700' }
-                            : { border: '#d1d5db', bg: 'bg-white', text: 'text-gray-600' };
-                    const textClass = isPresentVariant ? 'text-yellow-600' : base.text;
-                    const isWeekend = c.dateStr
-                      ? (() => {
-                        const d = new Date(c.dateStr + 'T00:00:00');
-                        const w = d.getDay();
-                        return w === 0 || w === 6;
-                      })()
-                      : false;
-                    const leaveType = c.dateStr ? calendar.leaveMap.get(c.dateStr) : undefined;
-                    const holiday = c.dateStr ? calendar.holidayMap.get(c.dateStr) : undefined;
-                    const isHoliday = Boolean(holiday);
-                    const isLeave = Boolean(leaveType);
-                    const isFuture = c.dateStr ? c.dateStr > todayStr : false;
-                    const isNoRecord = has && !c.ev && !isHoliday && !isLeave && !isWeekend && !isFuture;
-                    // priority: holiday (violet) > leave (sky) > weekend (zinc) > event color
-                    const cellBorder = isHoliday
-                      ? '#6d28d9'
-                      : isLeave
-                        ? '#0ea5e9'
-                        : isWeekend
-                          ? '#a1a1aa'
-                          : isNoRecord
-                            ? '#ef4444'
-                            : base.border;
-                    const isToday = c.dateStr === todayStr;
-                    return (
-                      <div
-                        key={idx}
-                        className={`relative min-h-[98px] rounded border p-2 flex flex-col gap-1 cursor-pointer transition-colors ${has ? (isHoliday ? 'bg-violet-50/40' : isLeave ? 'bg-sky-50/40' : isWeekend ? 'bg-gray-100' : isNoRecord ? 'bg-red-50/50' : base.bg) : 'bg-gray-100'} ${isToday ? 'ring-2 ring-primary' : ''}`}
-                        style={{ borderColor: cellBorder }}
-                        title={c.dateStr}
-                        onClick={() => {
-                          if (!has) return;
-                          setSelected({
-                            date: c.dateStr,
-                            isWeekend,
-                            event: c.ev,
-                            leaveType,
-                            holidayName: holiday?.name,
-                            holidayStart: holiday?.start ?? null,
-                            holidayEnd: holiday?.end ?? null
-                          });
-                          setOpen(true);
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="text-[11px] text-gray-500">{c.day ?? ''}</div>
-                          {isToday ? (
-                            <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-1.5 py-0.5 text-[10px] font-medium">
-                              Today
-                            </span>
-                          ) : null}
-                        </div>
-                        {isHoliday ? (
-                          <div className="mt-auto text-[11px] text-purple-700">{holiday?.name}</div>
-                        ) : isLeave ? (
-                          isWeekend ? (
-                            <div className="mt-auto text-[11px] text-gray-600">Week Off</div>
-                          ) : (
-                            <div className="mt-auto text-[11px] text-sky-600">{leaveType}</div>
-                          )
-                        ) : c.ev ? (
-                          <div className="space-y-1">
-                            <div className="text-[11px]">
-                              <span className="inline-block rounded px-1 border" style={{ borderColor: cellBorder }}>
-                                <span className={`font-medium ${textClass}`}>{status}</span>
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-gray-600">
-                              {formatTime(c.ev.extendedProps.in_time)} - {formatTime(c.ev.extendedProps.out_time)}
-                            </div>
-                            <div className="text-[11px] text-gray-600">
-                              Work {formatDuration(c.ev.extendedProps.login_hours)}
-                            </div>
-                          </div>
-                        ) : isWeekend ? (
-                          <div className="mt-auto text-[11px] text-gray-600">Week Off</div>
-                        ) : isNoRecord ? (
-                          <div className="mt-auto text-[11px] text-red-700">Absent</div>
-                        ) : null}
+                {/* Desktop Calendar View - Hidden on mobile */}
+                <div className="hidden md:block">
+                  <div className="grid grid-cols-7 gap-2 text-xs">
+                    {calendar.headers.map(h => (
+                      <div key={h} className="text-center font-medium text-gray-600">
+                        {h}
                       </div>
-                    );
-                  })}
+                    ))}
+                    {calendar.cells.map((c, idx) => renderCalendarCell(c, idx, false))}
+                  </div>
                 </div>
+
+                {/* Mobile Calendar View - Visible only on mobile */}
+                <div className="md:hidden">
+                  <div className="overflow-x-auto -mx-4 px-4">
+                    <div className="inline-block min-w-full">
+                      <div className="grid grid-cols-7 gap-1 text-[10px] mb-2">
+                        {calendar.headers.map(h => (
+                          <div key={h} className="text-center font-medium text-gray-600 min-w-[45px]">
+                            {h.slice(0, 3)}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-7 gap-1 text-[10px]">
+                        {calendar.cells.map((c, idx) => renderCalendarCell(c, idx, true))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Mobile Legend */}
+                  <div className="mt-4 p-3 bg-gray-50 rounded-lg text-[10px] space-y-1">
+                    <div className="font-medium text-gray-700 mb-2">Legend:</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-emerald-700">P</span>
+                        <span className="text-gray-600">Present</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-red-700">A</span>
+                        <span className="text-gray-600">Absent</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-amber-700">H</span>
+                        <span className="text-gray-600">Half-day</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-purple-700">H</span>
+                        <span className="text-gray-600">Holiday</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-sky-600">L</span>
+                        <span className="text-gray-600">Leave</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-gray-600">W</span>
+                        <span className="text-gray-600">Week Off</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="text-xs text-gray-600 mt-2">
                   Showing: {selectedUser.employeeName} ({selectedUser.employeeId})
                 </div>

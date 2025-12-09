@@ -5,7 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSidebarConfig, type SidebarData, type UserRole } from '@/components/sidebar-config';
+
 import {
+  IconBrandLinkedin,
+  IconBuilding,
+  IconMessageCircle,
   IconChartBar,
   IconDashboard,
   IconDatabase,
@@ -38,6 +42,7 @@ import {
   IconClipboardList,
   IconMail
 } from '@tabler/icons-react';
+
 
 import { NavDocuments } from '@/components/nav-documents';
 import { NavMain } from '@/components/nav-main';
@@ -96,7 +101,25 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
             url: 'https://www.ambitionbox.com/overview/demandify-media-overview',
             icon: IconBriefcase,
             target: '_blank'
-          }
+          },
+            { 
+    title: 'Glassdoor', 
+    url: 'https://www.glassdoor.co.in/Reviews/Demandify-Media-Pune-Reviews-EI_IE7737262.0,15_IL.16,20_IM1072.htm', 
+    icon: IconBuilding,
+    target: '_blank'
+  },
+           { 
+    title: 'LinkedIn', 
+    url: 'https://www.linkedin.com/company/demandify-media/posts/?feedView=all', 
+    icon: IconBrandLinkedin,
+    target: '_blank'
+  },
+           { 
+    title: 'Reviews', 
+    url: 'https://www.google.com/search?sca_esv=93a174fe12d6b49e&si=AMgyJEtREmoPL4P1I5IDCfuA8gybfVI2d5Uj7QMwYCZHKDZ-EwvFFJ6LJHDmKnpuo-yrXmQg6fLqNR2XgAtLyU1udHoQ8EyhsT29mVSwT7AdJEJ9cYAp3GdV_639YwuFU-gfwhf3t9oLrs7Qxvl-Dp2v7XKQFNXdig%3D%3D&q=Demandify+A+Trescon+Company+Reviews&sa=X&ved=2ahUKEwjy0LTb2Z6RAxXgbvUHHb8zAfwQ0bkNegQIJxAD&biw=1366&bih=641&dpr=1', 
+    icon: IconMessageCircle,
+    target: '_blank'
+  }
         ]
       },
       {
@@ -133,18 +156,18 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: '/pages/admin/task-tracking/tasks',
         icon: IconChecklist
       },
-      {
-        name: 'Campaigns',
-        url: '#',
-        icon: IconSpeakerphone,
-        children: [
-          { name: 'Campaign list', url: '/pages/admin/campaigns', icon: IconReport },
-          { name: 'Add Campaigns', url: '/pages/admin/campaigns/add', icon: IconPlus },
-          { name: 'Call Data', url: '/pages/admin/call-data', icon: IconDatabase },
-          { name: 'Paste Call Data', url: '/pages/admin/paste-call-data', icon: IconDialpad }
-        ]
-      },
-      { name: 'Team', url: '/pages/admin/team', icon: IconUsers }
+      // {
+      //   name: 'Campaigns',
+      //   url: '#',
+      //   icon: IconSpeakerphone,
+      //   children: [
+      //     { name: 'Campaign list', url: '/pages/admin/campaigns', icon: IconReport },
+      //     { name: 'Add Campaigns', url: '/pages/admin/campaigns/add', icon: IconPlus },
+      //     { name: 'Call Data', url: '/pages/admin/call-data', icon: IconDatabase },
+      //     { name: 'Paste Call Data', url: '/pages/admin/paste-call-data', icon: IconDialpad }
+      //   ]
+      // },
+      // { name: 'Team', url: '/pages/admin/team', icon: IconUsers }
     ]
   },
   user: {
@@ -199,7 +222,8 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
             url: 'https://www.ambitionbox.com/overview/demandify-media-overview',
             icon: IconBriefcase,
             target: '_blank'
-          }
+          },
+           
         ]
       }
     ],
@@ -214,41 +238,41 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
           { name: 'My Tasks', url: '/pages/user/task-tracking/my-tasks', icon: IconClipboardList },
         ]
       },
-      {
-        name: 'Operation',
-        url: '#',
-        icon: IconPhone,
-        children: [
-          { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
-          { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
-          { name: 'Call History', url: '/pages/user/operations/calls', icon: IconFileWord },
-          { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
-          { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
-        ]
-      },
-      {
-        name: 'Quality',
-        url: '#',
-        icon: IconReport,
-        children: [
-          { name: 'Quality Audit', url: '/pages/user/quality', icon: IconReport },
-          { name: 'Campaign List', url: '/pages/user/quality/campaigns', icon: IconSpeakerphone },
-          { name: 'Analytics', url: '/pages/user/quality/analytics', icon: IconReport }
-        ]
-      },
-      {
-        name: 'Team Lead',
-        url: '#',
-        icon: IconUsers,
-        children: [
-          { name: 'Campaigns', url: '/pages/user/team-lead/campaigns', icon: IconSpeakerphone },
-          { name: 'Add Campaign', url: '/pages/user/team-lead/add', icon: IconPlus },
-          { name: 'Analytics', url: '/pages/user/team-lead/analytics', icon: IconReport },
-          { name: 'Team', url: '/pages/user/team-lead/team', icon: IconUsers },
-          { name: 'Paste Call Data', url: '/pages/user/team-lead/paste-call-data', icon: IconReport },
-          { name: 'Call History', url: '/pages/user/team-lead/call-data', icon: IconDatabase }
-        ]
-      }
+      // {
+      //   name: 'Operation',
+      //   url: '#',
+      //   icon: IconPhone,
+      //   children: [
+      //     { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
+      //     { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
+      //     { name: 'Call History', url: '/pages/user/operations/calls', icon: IconFileWord },
+      //     { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
+      //     { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
+      //   ]
+      // },
+      // {
+      //   name: 'Quality',
+      //   url: '#',
+      //   icon: IconReport,
+      //   children: [
+      //     { name: 'Quality Audit', url: '/pages/user/quality', icon: IconReport },
+      //     { name: 'Campaign List', url: '/pages/user/quality/campaigns', icon: IconSpeakerphone },
+      //     { name: 'Analytics', url: '/pages/user/quality/analytics', icon: IconReport }
+      //   ]
+      // },
+      // {
+      //   name: 'Team Lead',
+      //   url: '#',
+      //   icon: IconUsers,
+      //   children: [
+      //     { name: 'Campaigns', url: '/pages/user/team-lead/campaigns', icon: IconSpeakerphone },
+      //     { name: 'Add Campaign', url: '/pages/user/team-lead/add', icon: IconPlus },
+      //     { name: 'Analytics', url: '/pages/user/team-lead/analytics', icon: IconReport },
+      //     { name: 'Team', url: '/pages/user/team-lead/team', icon: IconUsers },
+      //     { name: 'Paste Call Data', url: '/pages/user/team-lead/paste-call-data', icon: IconReport },
+      //     { name: 'Call History', url: '/pages/user/team-lead/call-data', icon: IconDatabase }
+      //   ]
+      // }
       // { name: "Team", url: "/pages/user/team", icon: IconUsers },
       // { name: "Campaigns", url: "/pages/user/campaigns", icon: IconSpeakerphone },
     ]
@@ -311,18 +335,9 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         children: [
           { title: 'Feedbacks', url: '/pages/hr/survey-feedbacks', icon: IconReport },
 
-          { 
-    title: 'Feedback Form',         // <<< your new dropdown item
-    url: '/pages/hr/survey-form',   // <<< change URL as needed
-    icon: IconReport 
-  },
+          { title: 'Feedback Form', url: '/pages/hr/survey-form',  icon: IconReport },
           // { title: 'Ambition Box', url: 'https://www.ambitionbox.com/overview/demandify-media-overview', icon: IconBriefcase }
-           { 
-    title: 'Ambition Box', 
-    url: 'https://www.ambitionbox.com/overview/demandify-media-overview', 
-    icon: IconBriefcase,
-    target: '_blank'
-  }
+         
         ]
       },
       {

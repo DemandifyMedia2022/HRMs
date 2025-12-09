@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
         // Fetch attendance from npattendance table
         const attendance = await prisma.npattendance.findMany({
           where: {
-            employeeId: parseInt(user.emp_code) || 0,
+            employee_id: user.emp_code,
             date: {
               gte: new Date(year, month - 1, 1),
               lt: new Date(year, month, 1)
@@ -137,19 +137,7 @@ export async function GET(request: NextRequest) {
           }
         });
 
-        // Count different types of days
-        let presentDays = attendance.filter(a => a.status === 'Present').length;
-
-        // Add paid statuses
-        const paidStatusDays = attendance.filter(a =>
-          ['work From Home', 'Paid Leave', 'Sick Leave(FullDay)', 'Week Off'].includes(a.status || '')
-        ).length;
-
-        const halfDays =
-          attendance.filter(a => a.status === 'Half-day' && !holidayDates.includes(a.date.toISOString().split('T')[0]))
-            .length * 0.5;
-
-        // Get all dates in the month
+        // Get all dates in month
         const allDates: string[] = [];
         for (let day = 1; day <= totalDays; day++) {
           allDates.push(new Date(year, month - 1, day).toISOString().split('T')[0]);
@@ -158,16 +146,41 @@ export async function GET(request: NextRequest) {
         const existingDates = attendance.map(a => a.date.toISOString().split('T')[0]);
         const missingDates = allDates.filter(d => !existingDates.includes(d));
 
-        // Count absent days
-        let absentDays = attendance.filter(a => a.status === 'Absent').length;
-        absentDays += missingDates.length;
+        // Count paid days from attendance records
+        let paidDays = 0;
 
-        // Subtract holidays from absent days and add to present days
-        const holidayCount = missingDates.filter(d => holidayDates.includes(d)).length;
-        absentDays -= holidayCount;
-        presentDays += holidayCount;
+        // Process each attendance record
+        for (const att of attendance) {
+          const status = (att.status || '').trim();
+          const dateStr = att.date.toISOString().split('T')[0];
+          const isHoliday = holidayDates.includes(dateStr);
 
-        // Fetch approved leaves
+          // Half day (not on holiday) - count as 0.5
+          if (status === 'Half-day' && !isHoliday) {
+            paidDays += 0.5;
+          }
+          // All statuses including Absent are counted as paid (1 day) unless it's unpaid leave
+          // This is because salary deduction happens only for unpaid leave, not for absent marking
+          else if (status) {
+            paidDays += 1;
+          }
+        }
+
+        // Missing dates that are holidays should be counted as paid
+        const missingHolidays = missingDates.filter(d => holidayDates.includes(d)).length;
+        paidDays += missingHolidays;
+
+        // Count weekends in missing dates as paid (Week Off)
+        for (const dateStr of missingDates) {
+          const date = new Date(dateStr);
+          const dayOfWeek = date.getDay();
+          // If it's a weekend (Saturday=6 or Sunday=0) and not already counted as holiday
+          if ((dayOfWeek === 0 || dayOfWeek === 6) && !holidayDates.includes(dateStr)) {
+            paidDays += 1;
+          }
+        }
+
+        // Fetch approved leaves to add any missing paid leave days
         const leaveDays = await prisma.leavedata.findMany({
           where: {
             emp_code: user.emp_code,
@@ -193,10 +206,7 @@ export async function GET(request: NextRequest) {
           }
         });
 
-        let totalPaidLeaveDays = 0;
-        let totalSickLeaveDays = 0;
-        const paidLeaveDates: string[] = [];
-
+        // Add approved leaves that are not already in attendance
         for (const leave of leaveDays) {
           const startDate = new Date(leave.start_date);
           const endDate = new Date(leave.end_date);
@@ -207,37 +217,20 @@ export async function GET(request: NextRequest) {
 
             const dateStr = d.toISOString().split('T')[0];
 
-            if (['Paid Leave', 'work From Home'].includes(leave.leave_type)) {
-              totalPaidLeaveDays++;
-              paidLeaveDates.push(dateStr);
-            } else if (leave.leave_type === 'Sick Leave(HalfDay)') {
-              totalSickLeaveDays += 0.5;
-            } else if (leave.leave_type === 'Sick Leave(FullDay)') {
-              totalSickLeaveDays += 1;
+            // Only add if this date is not already in attendance records
+            if (!existingDates.includes(dateStr)) {
+              if (['Paid Leave', 'work From Home', 'Sick Leave(FullDay)'].includes(leave.leave_type)) {
+                paidDays += 1;
+              } else if (leave.leave_type === 'Sick Leave(HalfDay)') {
+                paidDays += 0.5;
+              }
             }
           }
         }
 
-        presentDays += totalPaidLeaveDays;
-        absentDays -= paidLeaveDates.filter(d => missingDates.includes(d)).length;
-        absentDays = Math.max(absentDays, 0);
-
-        // Handle weekends before joining date
-        let weekendsBeforeJoining = 0;
-        const joiningDate = user.joining_date ? new Date(user.joining_date) : null;
-
-        if (joiningDate) {
-          for (let day = 1; day <= totalDays; day++) {
-            const date = new Date(year, month - 1, day);
-            if (date < joiningDate && (date.getDay() === 0 || date.getDay() === 6)) {
-              weekendsBeforeJoining++;
-            }
-          }
-        }
-
-        // Calculate pay days
-        let payDays = totalDays - absentDays - halfDays + totalSickLeaveDays;
-        payDays = Math.max(0, payDays - weekendsBeforeJoining);
+        // Final pay days calculation
+        let payDays = Math.min(paidDays, totalDays); // Ensure it doesn't exceed total days in month
+        payDays = Math.max(0, payDays); // Ensure it's not negative
 
         const lopDays = totalDays - payDays;
 

@@ -171,7 +171,7 @@ export default function AdminAttendancePage() {
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
-              <h1 className="text-xl font-semibold tracking-tight">Attendancee</h1>
+              <h1 className="text-xl font-semibold tracking-tight">Attendance</h1>
               <p className="text-sm text-muted-foreground">Search a user month-by-month.</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -250,29 +250,41 @@ export default function AdminAttendancePage() {
         </div>
       ) : error ? (
         <div className="text-sm text-red-600">{error}</div>
-      ) : (
+      
+
+                 ) : (
         <div className="space-y-6">
-          {data.length === 0 ? (
-            <div className="text-sm">No data</div>
-          ) : (
-            (() => {
-              const filtered = data.filter(u => {
+          {(() => {
+            const filtered = data.filter(u => {
+
+
                 if (!query.trim()) return true;
                 const q = query.trim().toLowerCase();
                 return u.employeeName?.toLowerCase().includes(q) || String(u.employeeId).toLowerCase().includes(q);
               });
 
-              if (!query.trim()) {
+             
+
+
+                            if (!query.trim()) {
                 return (
                   <div className="text-sm text-gray-600">Type a user name or employee id to view one calendar.</div>
                 );
               }
 
-              if (filtered.length === 0) {
-                return <div className="text-sm">No user found for "{query}"</div>;
+              let u = filtered[0];
+              if (!u) {
+                u = {
+                  employeeId: String(query).trim(),
+                  employeeName: String(query).trim(),
+                  events: [],
+                  leaves: []
+                } as UserEvents;
               }
 
-              const u = filtered[0];
+
+
+
 
               const monthStart = new Date(Date.UTC(year, month, 1));
               const monthEnd = new Date(Date.UTC(year, month + 1, 0));
@@ -346,7 +358,7 @@ export default function AdminAttendancePage() {
                           {months[month]} {year}
                         </CardTitle>
                         <div className="flex items-center gap-2">
-                          <Button
+                          {/* <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
@@ -375,7 +387,31 @@ export default function AdminAttendancePage() {
                             }}
                           >
                             Next
-                          </Button>
+                          </Button> */}
+
+
+                          <Button
+  variant="outline"
+  size="sm"
+  onClick={() => {
+    const d = new Date(year, month - 1, 1);
+    setYear(d.getFullYear());
+    setMonth(d.getMonth());
+  }}
+>
+  Prev
+</Button>
+<Button
+  variant="outline"
+  size="sm"
+  onClick={() => {
+    const d = new Date(year, month + 1, 1);
+    setYear(d.getFullYear());
+    setMonth(d.getMonth());
+  }}
+>
+  Next
+</Button>
                         </div>
                       </div>
                     </CardHeader>
@@ -496,10 +532,10 @@ export default function AdminAttendancePage() {
                       </div>
                     </CardContent>
                   </Card>
-                </section>
+                
+                      </section>
               );
-            })()
-          )}
+            })()}
         </div>
       )}
 

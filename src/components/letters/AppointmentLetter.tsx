@@ -84,7 +84,7 @@ const AppointmentLetter: React.FC<AppointmentLetterProps> = ({ data }) => {
         <br/>
         <div style={{ textAlign: 'center' }}><b>Subject: Appointment Letter - {capitalizedDesignation}</b></div>
         <br/>
-        <p><b>Dear {data.salutation} {capitalizedName}</b>,</p>
+        <p><b>Dear {capitalizedName}</b>,</p>
 
         <p>Your joining date will be <b>{joiningDate}</b>. After completing three months in the organization, your PF and ESIC will start from <b>{pfActivationDate}</b> on, the following terms & conditions:</p>
 

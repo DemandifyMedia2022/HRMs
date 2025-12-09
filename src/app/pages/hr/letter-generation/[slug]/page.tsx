@@ -9,9 +9,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import html2canvas from "html2canvas"
 import jsPDF from "jspdf"
+
 import {
   PromotionLetter,
   SalaryIncrementLetter,
@@ -29,6 +31,72 @@ import {
   SeparationLetter,
   TransferLetter,
 } from "@/components/letters"
+
+// Simple shadcn-styled TimePicker that returns time in HH:mm (24h)
+function TimePicker({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [hour, setHour] = useState<string>("");
+  const [minute, setMinute] = useState<string>("00");
+
+  useEffect(() => {
+    const [h = "", m = "00"] = String(value ?? "").split(":");
+    setHour(h);
+    setMinute(m);
+  }, [value]);
+
+  useEffect(() => {
+    if (hour !== "" && minute !== "") {
+      onChange(`${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hour, minute]);
+
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+  const minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="w-full justify-start" type="button">
+          {value && value.length >= 4 ? value : "Select time"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[260px] p-3" align="start">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="tp-hour">Hour</Label>
+            <Select value={hour} onValueChange={(v) => setHour(v)}>
+              <SelectTrigger id="tp-hour">
+                <SelectValue placeholder="HH" />
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                {hours.map((h) => (
+                  <SelectItem key={h} value={h}>{h}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="tp-minute">Minute</Label>
+            <Select value={minute} onValueChange={(v) => setMinute(v)}>
+              <SelectTrigger id="tp-minute">
+                <SelectValue placeholder="mm" />
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                {minutes.map((m) => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="mt-3 flex justify-end">
+          <Button size="sm" onClick={() => setOpen(false)} type="button">Done</Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 // Map slug -> title and component
 const letterRegistry: Record<string, { title: string; Component: any; defaultData: Record<string, any>; fields: { name: string; label: string; type?: string }[] }> = {
@@ -307,7 +375,7 @@ const letterRegistry: Record<string, { title: string; Component: any; defaultDat
       position: "Software Engineer",
       interviewDate: new Date().toISOString().slice(0, 10),
       interviewTime: "10:00",
-      interviewLocation: "Demandify Pvt Ltd, 2nd Floor, Tech Park, Pune",
+      interviewLocation: "Demandify Media, 415, Nyati Empress, Viman Nagar Rd, Clover Park, Viman Nagar, Pune, Maharashtra 411014",
       contactPerson: "HR Panel",
       managerName: "Reporting Manager",
       companyName: "Demandify Pvt Ltd",
@@ -335,7 +403,7 @@ const letterRegistry: Record<string, { title: string; Component: any; defaultDat
       joiningDate: new Date().toISOString().slice(0, 10),
       joiningTime: "10:00",
       reportingManager: "Reporting Manager",
-      location: "Pune",
+      location: "Demandify Media, 415, Nyati Empress, Viman Nagar Rd, Clover Park, Viman Nagar, Pune, Maharashtra 411014",
     },
     fields: [
       { name: "salutation", label: "Salutation" },
@@ -449,6 +517,16 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
     const base: Record<string, any> = {};
     if (cfg.fields.some((f) => f.name === 'companyName')) {
       base.companyName = COMPANY_NAME;
+    }
+
+    // Prefill interview location for Interview Call Letter so it's a filled value
+    if (slug === 'interview-call-letter' && cfg.fields.some((f) => f.name === 'interviewLocation')) {
+      base.interviewLocation = String(cfg?.defaultData?.interviewLocation ?? '');
+    }
+
+    // Prefill location for Joining Letter so it's a filled value
+    if (slug === 'joining-letter' && cfg.fields.some((f) => f.name === 'location')) {
+      base.location = String(cfg?.defaultData?.location ?? '');
     }
 
     setFormData(base);
@@ -805,6 +883,11 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
                         </Select>
                       ) : f.name === 'companyName' ? (
                         <Input id={`f-${f.name}`} value={COMPANY_NAME} readOnly disabled />
+                      ) : f.name === 'interviewTime' ? (
+                        <TimePicker
+                          value={String(formData[f.name] ?? '')}
+                          onChange={(v) => handleChange(f.name, v)}
+                        />
                       ) : (
                         <Input
                           id={`f-${f.name}`}

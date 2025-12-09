@@ -38,8 +38,17 @@ type UserEvents = {
 };
 
 export default function AdminAttendancePage() {
-  const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [month, setMonth] = useState<number>(new Date().getMonth());
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  
+  const setYear = (year: number) => {
+    setCurrentDate(new Date(year, month, 1));
+  };
+  
+  const setMonth = (month: number) => {
+    setCurrentDate(new Date(year, month, 1));
+  };
   const [query, setQuery] = useState<string>('');
   const [data, setData] = useState<UserEvents[]>([]);
   const [holidays, setHolidays] = useState<
@@ -107,8 +116,9 @@ export default function AdminAttendancePage() {
   };
 
   const years = useMemo(() => {
-    const y = new Date().getFullYear();
-    return [y - 1, y, y + 1];
+    const currentYear = new Date().getFullYear();
+    // Generate an array of years from 2 years before to 3 years after current year
+    return Array.from({ length: 6 }, (_, i) => currentYear - 2 + i);
   }, []);
 
   const months = useMemo(
@@ -260,29 +270,44 @@ export default function AdminAttendancePage() {
         </div>
       ) : error ? (
         <div className="text-sm text-red-600">{error}</div>
-      ) : (
+     
+
+            ) : (
         <div className="space-y-6">
-          {data.length === 0 ? (
-            <div className="text-sm">No data</div>
-          ) : (
-            (() => {
-              const filtered = data.filter(u => {
+          {(() => {
+            const filtered = data.filter(u => {
+
+
+
+
+
                 if (!query.trim()) return true;
                 const q = query.trim().toLowerCase();
                 return u.employeeName?.toLowerCase().includes(q) || String(u.employeeId).toLowerCase().includes(q);
               });
 
-              if (!query.trim()) {
+            
+
+
+                            if (!query.trim()) {
                 return (
                   <div className="text-sm text-gray-600">Type a user name or employee id to view one calendar.</div>
                 );
               }
 
-              if (filtered.length === 0) {
-                return <div className="text-sm">No user found for "{query}"</div>;
+              let u = filtered[0];
+              if (!u) {
+                u = {
+                  employeeId: String(query).trim(),
+                  employeeName: String(query).trim(),
+                  events: [],
+                  leaves: []
+                } as UserEvents;
               }
 
-              const u = filtered[0];
+
+
+
 
               const monthStart = new Date(Date.UTC(year, month, 1));
               const monthEnd = new Date(Date.UTC(year, month + 1, 0));
@@ -360,13 +385,8 @@ export default function AdminAttendancePage() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setMonth(m => {
-                                if (m === 0) {
-                                  setYear(y => y - 1);
-                                  return 11;
-                                }
-                                return m - 1;
-                              });
+                              const newDate = new Date(year, month - 1, 1);
+                              setCurrentDate(newDate);
                             }}
                           >
                             Prev
@@ -375,13 +395,8 @@ export default function AdminAttendancePage() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setMonth(m => {
-                                if (m === 11) {
-                                  setYear(y => y + 1);
-                                  return 0;
-                                }
-                                return m + 1;
-                              });
+                              const newDate = new Date(year, month + 1, 1);
+                              setCurrentDate(newDate);
                             }}
                           >
                             Next
@@ -504,12 +519,14 @@ export default function AdminAttendancePage() {
                       </div>
                     </CardContent>
                   </Card>
+                
                 </section>
               );
-            })()
-          )}
+            })()}
         </div>
       )}
+
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
