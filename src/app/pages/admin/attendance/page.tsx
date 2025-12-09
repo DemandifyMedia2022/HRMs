@@ -171,7 +171,7 @@ export default function AdminAttendancePage() {
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
-              <h1 className="text-xl font-semibold tracking-tight">Attendancee</h1>
+              <h1 className="text-xl font-semibold tracking-tight">Attendance</h1>
               <p className="text-sm text-muted-foreground">Search a user month-by-month.</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
