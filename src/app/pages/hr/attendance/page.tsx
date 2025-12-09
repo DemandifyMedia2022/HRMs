@@ -270,29 +270,44 @@ export default function AdminAttendancePage() {
         </div>
       ) : error ? (
         <div className="text-sm text-red-600">{error}</div>
-      ) : (
+     
+
+            ) : (
         <div className="space-y-6">
-          {data.length === 0 ? (
-            <div className="text-sm">No data</div>
-          ) : (
-            (() => {
-              const filtered = data.filter(u => {
+          {(() => {
+            const filtered = data.filter(u => {
+
+
+
+
+
                 if (!query.trim()) return true;
                 const q = query.trim().toLowerCase();
                 return u.employeeName?.toLowerCase().includes(q) || String(u.employeeId).toLowerCase().includes(q);
               });
 
-              if (!query.trim()) {
+            
+
+
+                            if (!query.trim()) {
                 return (
                   <div className="text-sm text-gray-600">Type a user name or employee id to view one calendar.</div>
                 );
               }
 
-              if (filtered.length === 0) {
-                return <div className="text-sm">No user found for "{query}"</div>;
+              let u = filtered[0];
+              if (!u) {
+                u = {
+                  employeeId: String(query).trim(),
+                  employeeName: String(query).trim(),
+                  events: [],
+                  leaves: []
+                } as UserEvents;
               }
 
-              const u = filtered[0];
+
+
+
 
               const monthStart = new Date(Date.UTC(year, month, 1));
               const monthEnd = new Date(Date.UTC(year, month + 1, 0));
@@ -504,12 +519,14 @@ export default function AdminAttendancePage() {
                       </div>
                     </CardContent>
                   </Card>
+                
                 </section>
               );
-            })()
-          )}
+            })()}
         </div>
       )}
+
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
