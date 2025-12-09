@@ -8,6 +8,8 @@ function parseYMD(ymd?: string | null): Date | null {
   const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   return isNaN(d.getTime()) ? null : d;
 }
+
+
 function toYMD(d = new Date()) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
