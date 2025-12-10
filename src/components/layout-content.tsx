@@ -26,13 +26,7 @@ function PageWithSidebar({ children }: { children: React.ReactNode }) {
     if (!user) {
       return undefined;
     }
-    return {
-      user: {
-        name: user.name,
-        email: user.email,
-        avatar: '' // Empty avatar will use fallback initials
-      }
-    };
+    return {};
   }, [user]);
 
   const effectiveRole = roleFromPath ?? user?.role ?? 'user';

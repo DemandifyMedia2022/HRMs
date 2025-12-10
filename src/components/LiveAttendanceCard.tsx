@@ -35,7 +35,12 @@ export function LiveAttendanceCard({
         const [hours, minutes] = data.breakHours.split(':').map(Number);
         const totalBreakMinutes = hours * 60 + minutes;
 
-        if (totalBreakMinutes > 45 && !breakNotificationSent.current) {
+        // Check localStorage to see if we already sent an alert today
+        const todayStr = new Date().toDateString();
+        const alertKey = `break_alert_sent_${employeeId}_${todayStr}`;
+        const alreadySentToday = typeof window !== 'undefined' ? localStorage.getItem(alertKey) === 'true' : false;
+
+        if (totalBreakMinutes > 45 && !alreadySentToday && !breakNotificationSent.current) {
             // Send notification
             fetch('/api/notifications', {
                 method: 'POST',
@@ -47,12 +52,25 @@ export function LiveAttendanceCard({
                     message: `Your break time has exceeded 45 minutes (${data.breakHours}). Please resume work.`,
                     link: '/pages/user'
                 })
-            }).catch(err => console.error('Failed to send notification:', err));
-
-            breakNotificationSent.current = true;
+            })
+                .then(res => {
+                    if (res.ok) {
+                        breakNotificationSent.current = true;
+                        if (typeof window !== 'undefined') {
+                            localStorage.setItem(alertKey, 'true');
+                        }
+                    }
+                })
+                .catch(err => console.error('Failed to send notification:', err));
         }
 
-        // Reset flag when break is back under 45 minutes
+        // Reset flag/storage if break is back under 45 minutes (e.g. if logic changes or specific use case)
+        // For now, we only clear the ref, not localStorage, as we likely want one alert per day per lengthy break? 
+        // Or if they take ANOTHER long break? 
+        // If they end the break, the 'isOngoing' check handles it. 
+        // If they resume work and take another break, breakHours resets (assuming total break hours is what we track).
+        // If it's cumulative daily break, then one alert per day is correct.
+
         if (totalBreakMinutes <= 45) {
             breakNotificationSent.current = false;
         }

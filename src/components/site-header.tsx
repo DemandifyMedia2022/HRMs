@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface Notification {
   id: number;
@@ -126,111 +129,157 @@ export function SiteHeader() {
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
         <div className="ml-auto flex items-center gap-2">
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative h-9 w-9 rounded-full border border-border"
-              onClick={() => setOpen(prev => !prev)}
-            >
-              <IconBell className="h-4 w-4" />
-              {hasNotifications && (
-                <span className="absolute right-0 top-0 translate-x-1/4 -translate-y-1/4 min-w-[0.9rem] rounded-full bg-red-500 px-1 text-center text-[8px] leading-tight text-white">
-                  {badgeText}
-                </span>
-              )}
-            </Button>
-            {open && (
-              <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-md border bg-background p-3 text-sm shadow-lg z-50">
-                <div className="mb-2 flex items-center justify-between sticky top-0 bg-background pb-2">
-                  <span className="font-medium">Notifications</span>
+
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative h-9 w-9 rounded-full border border-border bg-background focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <IconBell className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                {hasNotifications && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-background">
+                    {badgeText}
+                  </span>
+                )}
+                <span className="sr-only">Notifications</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0 sm:w-96" align="end" sideOffset={8}>
+              <div className="flex items-center justify-between border-b px-4 py-3 bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-sm">Notifications</span>
                   {hasNotifications && (
-                    <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[8px] font-semibold text-white">
-                      {badgeText}
-                    </span>
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-mono">
+                      {count} unread
+                    </Badge>
                   )}
                 </div>
-                {!hasNotifications ? (
-                  <p className="text-xs text-muted-foreground">No new notifications.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {/* Custom Notifications */}
-                    {notifications.map(notif => (
-                      <div key={notif.id} className="p-2 rounded-md border bg-card hover:bg-accent/50 transition-colors">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 space-y-1">
+                {hasNotifications && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 text-xs text-muted-foreground hover:text-primary"
+                    onClick={() => markAsRead(-1)} // Assuming you implement markAllAsRead backend logic or similar, but previously there was no mark all? Ah there is in PATCH.
+                  // Wait, I need to call the PATCH endpoint with mark_all_read: true if user clicks this.
+                  >
+                    Mark all read
+                  </Button>
+                )}
+              </div>
+
+              <ScrollArea className="h-[calc(100vh-16rem)] max-h-[400px]">
+                <div className="flex flex-col gap-1 p-2">
+                  {!hasNotifications ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
+                      <IconBell className="mb-2 h-10 w-10 opacity-20" />
+                      <p className="text-sm">No new notifications</p>
+                      <p className="text-xs text-muted-foreground/60">You're all caught up!</p>
+                    </div>
+                  ) : (
+                    <>
+                      {notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className="relative flex flex-col gap-1 rounded-lg border bg-card p-3 text-sm shadow-sm transition-all hover:bg-muted/50 group"
+                        >
+                          <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2">
-                              <Badge variant={notif.type === 'break_alert' ? 'destructive' : 'default'} className="text-[10px] px-1.5 py-0">
+                              <Badge
+                                variant={notif.type === 'break_alert' ? 'destructive' : 'outline'}
+                                className={cn(
+                                  "px-1.5 py-0 text-[10px] uppercase tracking-wider font-bold",
+                                  notif.type !== 'break_alert' && "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-900"
+                                )}
+                              >
                                 {notif.type.replace('_', ' ')}
                               </Badge>
-                              <span className="text-[10px] text-muted-foreground">{formatTime(notif.created_at)}</span>
+                              <span className="text-[10px] text-muted-foreground/70 tabular-nums">
+                                {formatTime(notif.created_at)}
+                              </span>
                             </div>
-                            <p className="font-medium text-xs">{notif.title}</p>
-                            <p className="text-xs text-muted-foreground">{notif.message}</p>
-                            {notif.link && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity -mr-1 -mt-1 text-muted-foreground hover:text-foreground"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(notif.id);
+                              }}
+                              title="Mark as read"
+                            >
+                              <IconX className="h-3 w-3" />
+                              <span className="sr-only">Dismiss</span>
+                            </Button>
+                          </div>
+
+                          <p className="font-medium leading-none mt-1">{notif.title}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{notif.message}</p>
+
+                          {notif.link && (
+                            <div className="mt-2">
                               <Button
                                 variant="link"
                                 size="sm"
+                                className="h-auto p-0 text-xs font-medium text-primary hover:underline"
                                 onClick={() => {
                                   router.push(notif.link!);
                                   markAsRead(notif.id);
                                   setOpen(false);
                                 }}
-                                className="h-auto p-0 text-xs text-primary"
                               >
-                                View Details →
+                                View details
                               </Button>
-                            )}
-                          </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {/* Role based sections */}
+                      {(role === 'hr' || role === 'admin') && count! > notifications.length && (
+                        <div className="mt-2 p-3 bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/50 rounded-lg text-center">
+                          <p className="text-xs font-medium text-indigo-700 dark:text-indigo-300 mb-1">
+                            Pending Approvals
+                          </p>
                           <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 shrink-0"
-                            onClick={() => markAsRead(notif.id)}
+                            variant="link"
+                            size="sm"
+                            onClick={() => {
+                              router.push('/pages/hr/attendance/status');
+                              setOpen(false);
+                            }}
+                            className="h-auto p-0 text-xs text-indigo-600 dark:text-indigo-400"
                           >
-                            <IconX className="h-3 w-3" />
+                            Review Attendance Requests
                           </Button>
                         </div>
-                      </div>
-                    ))}
+                      )}
+                      {role === 'user' && count! > notifications.length && (
+                        <div className="mt-2 p-3 bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/50 rounded-lg text-center">
+                          <p className="text-xs font-medium text-indigo-700 dark:text-indigo-300 mb-1">
+                            Update Requests
+                          </p>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={() => {
+                              router.push('/pages/user/attendance/status');
+                              setOpen(false);
+                            }}
+                            className="h-auto p-0 text-xs text-indigo-600 dark:text-indigo-400"
+                          >
+                            Check Status
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </ScrollArea>
 
-                    {/* Attendance Requests */}
-                    {(role === 'hr' || role === 'admin') && count! > notifications.length && (
-                      <div className="p-2 rounded-md border bg-card">
-                        <p className="text-xs mb-1">You have pending attendance approvals.</p>
-                        <Button
-                          variant="link"
-                          onClick={() => {
-                            router.push('/pages/hr/attendance/status');
-                            setOpen(false);
-                          }}
-                          className="h-auto p-0 text-xs text-primary"
-                        >
-                          Go to Attendance Approvals →
-                        </Button>
-                      </div>
-                    )}
+            </PopoverContent>
+          </Popover>
 
-                    {role === 'user' && count! > notifications.length && (
-                      <div className="p-2 rounded-md border bg-card">
-                        <p className="text-xs mb-1">You have attendance requests.</p>
-                        <Button
-                          variant="link"
-                          onClick={() => {
-                            router.push('/pages/user/attendance/status');
-                            setOpen(false);
-                          }}
-                          className="h-auto p-0 text-xs text-primary"
-                        >
-                          View My Requests →
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </header>

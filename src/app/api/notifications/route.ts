@@ -58,6 +58,29 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Deduplication: Check if there's an unread notification of the same type for this user created in the last hour
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        const existingNotification = await prisma.notification.findFirst({
+            where: {
+                employee_id,
+                type,
+                is_read: false,
+                created_at: {
+                    gte: oneHourAgo
+                }
+            }
+        });
+
+        if (existingNotification) {
+            // If exists, update the timestamp or just return it without creating a new one
+            // Updating timestamp to bring it to top might be nice, but simple return is safer against spam
+            return NextResponse.json({
+                success: true,
+                notification: existingNotification,
+                message: 'Duplicate notification suppressed'
+            });
+        }
+
         const notification = await prisma.notification.create({
             data: {
                 employee_id,
