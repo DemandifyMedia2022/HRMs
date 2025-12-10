@@ -45,7 +45,13 @@ export async function PUT(request: NextRequest) {
     if (updateData.HRA_Monthly_Remuneration !== undefined) dataToUpdate.HRA_Monthly_Remuneration = String(updateData.HRA_Monthly_Remuneration);
     if (updateData.OTHER_ALLOWANCE_Monthly_Remuneration !== undefined) dataToUpdate.OTHER_ALLOWANCE_Monthly_Remuneration = String(updateData.OTHER_ALLOWANCE_Monthly_Remuneration);
     if (updateData.PF_Monthly_Contribution !== undefined) dataToUpdate.PF_Monthly_Contribution = String(updateData.PF_Monthly_Contribution);
-    
+
+    // Add these lines for annual fields:
+    if (updateData.Basic_Annual_Remuneration !== undefined) dataToUpdate.Basic_Annual_Remuneration = String(updateData.Basic_Annual_Remuneration);
+    if (updateData.HRA_Annual_Remuneration !== undefined) dataToUpdate.HRA_Annual_Remuneration = String(updateData.HRA_Annual_Remuneration);
+    if (updateData.OTHER_ALLOWANCE_Annual_Remuneration !== undefined) dataToUpdate.OTHER_ALLOWANCE_Annual_Remuneration = String(updateData.OTHER_ALLOWANCE_Annual_Remuneration);
+    if (updateData.PF_Annual_Contribution !== undefined) dataToUpdate.PF_Annual_Contribution = String(updateData.PF_Annual_Contribution);
+    if (updateData.Paygroup !== undefined) dataToUpdate.Paygroup = String(updateData.Paygroup);
     // ESIC fields (stored as integers)
     if (updateData.Employee_Esic_Monthly !== undefined) {
       const val = Number(updateData.Employee_Esic_Monthly);
@@ -56,15 +62,15 @@ export async function PUT(request: NextRequest) {
       dataToUpdate.Employer_Esic_Monthly = isNaN(val) ? 0 : val;
     }
     if (updateData.Employer_PF_Monthly_Contribution !== undefined) dataToUpdate.Employer_PF_Monthly_Contribution = String(updateData.Employer_PF_Monthly_Contribution);
-    
+
     // Payment details
     if (updateData.salary_pay_mode !== undefined) dataToUpdate.salary_pay_mode = updateData.salary_pay_mode;
     if (updateData.reimbursement_pay_mode !== undefined) dataToUpdate.reimbursement_pay_mode = updateData.reimbursement_pay_mode;
-    
+
     // PF details
     if (updateData.PF_Number !== undefined) dataToUpdate.PF_Number = updateData.PF_Number;
     if (updateData.UAN !== undefined) dataToUpdate.UAN = updateData.UAN;
-    
+
     // CTC details
     if (updateData.Salary_Revision_Month !== undefined) dataToUpdate.Salary_Revision_Month = updateData.Salary_Revision_Month;
     if (updateData.Annual_with_effect_from !== undefined) dataToUpdate.Annual_with_effect_from = updateData.Annual_with_effect_from;
