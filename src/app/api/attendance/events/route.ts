@@ -101,16 +101,19 @@ export async function GET(req: NextRequest) {
       };
 
       // Recalculate hours for today to match live dashboard
-      if (dateISO === new Date().toISOString().split('T')[0] && r.clockTimes) {
+      // Use IST to determine "today"
+      const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+
+      if (dateISO === todayIST && r.clockTimes) {
         try {
           const clockTimes = typeof r.clockTimes === 'string' ? JSON.parse(r.clockTimes) : r.clockTimes;
           if (Array.isArray(clockTimes) && clockTimes.length > 0) {
             const now = Date.now();
             const timestamps = clockTimes.map((t: string) => {
-              const [hh, mm] = t.split(':').map(Number);
-              const d = new Date(r.date);
-              d.setHours(hh, mm, 0, 0);
-              return d.getTime();
+              const [hh, mm] = t.split(':').map(str => str.padStart(2, '0'));
+              // Construct ISO string explicitly with IST offset (+05:30)
+              const isoString = `${dateISO}T${hh}:${mm}:00+05:30`;
+              return new Date(isoString).getTime();
             }).sort((a, b) => a - b);
 
             const firstPunch = timestamps[0];
@@ -134,7 +137,7 @@ export async function GET(req: NextRequest) {
             const breakMs = Math.max(0, totalMs - workingMs);
 
             const formatDuration = (ms: number) => {
-              const totalSeconds = Math.floor(ms / 1000);
+              const totalSeconds = Math.max(0, Math.floor(ms / 1000));
               const hours = Math.floor(totalSeconds / 3600);
               const minutes = Math.floor((totalSeconds % 3600) / 60);
               const seconds = totalSeconds % 60;
@@ -146,9 +149,11 @@ export async function GET(req: NextRequest) {
             event.extendedProps.break_hours = formatDuration(breakMs);
 
             if (isOngoing) {
+              // Show out time for ongoing shift in IST
               const d = new Date(now);
-              const hh = String(d.getHours()).padStart(2, '0');
-              const mm = String(d.getMinutes()).padStart(2, '0');
+              const dIST = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+              const hh = String(dIST.getHours()).padStart(2, '0');
+              const mm = String(dIST.getMinutes()).padStart(2, '0');
               event.extendedProps.out_time = `${hh}:${mm}`;
             }
           }
