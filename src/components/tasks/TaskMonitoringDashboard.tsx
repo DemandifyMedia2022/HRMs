@@ -254,7 +254,7 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
   return (
     <>
       <SidebarConfig role={role} />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-6 pb-24">
         <div className="flex justify-between items-center mb-2">
           <div>
             <h1 className="text-2xl font-bold">
@@ -267,7 +267,7 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
         </div>
 
         {/* Analytics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Tasks</CardDescription>
@@ -323,11 +323,10 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
               key={item.key}
               type="button"
               onClick={() => setQuickFilter(item.key)}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                quickFilter === item.key
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background text-muted-foreground hover:bg-muted'
-              }`}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${quickFilter === item.key
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-muted-foreground hover:bg-muted'
+                }`}
             >
               {item.label}
             </button>
@@ -340,15 +339,15 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
                 <Input
-                  placeholder="Search by title, task #, assignee, department..."
+                  placeholder="Search by title, task #..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pr-8"
+                  className="w-full"
                 />
               </div>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
                 <SelectContent>
@@ -361,7 +360,7 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
               </Select>
 
               <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="All Priorities" />
                 </SelectTrigger>
                 <SelectContent>
@@ -374,7 +373,7 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
               </Select>
 
               <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="All Assignees" />
                 </SelectTrigger>
                 <SelectContent>
@@ -388,10 +387,10 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
               </Select>
             </div>
 
-            <div className="flex flex-wrap gap-4 items-center justify-between">
-              <div className="w-full md:w-auto">
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+              <div className="w-full md:w-auto min-w-[200px]">
                 <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="All Departments" />
                   </SelectTrigger>
                   <SelectContent>
@@ -414,6 +413,7 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
                   setAssigneeFilter("all");
                   setDepartmentFilter("all");
                 }}
+                className="w-full md:w-auto"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Clear Filters
@@ -447,12 +447,12 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
           </CardContent>
         </Card>
 
-        {/* Tasks Table */}
+        {/* Tasks List */}
         <Card>
           <CardHeader>
             <CardTitle>Tasks ({filteredTasks.length})</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 md:p-6">
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="w-8 h-8 animate-spin" />
@@ -460,102 +460,160 @@ export function TaskMonitoringDashboard({ role }: TaskMonitoringDashboardProps) 
             ) : filteredTasks.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">No tasks found.</div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("task_number")}>
-                        <div className="flex items-center">
-                          Task #
-                          <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("title")}>
-                        <div className="flex items-center">
-                          Title
-                          <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Priority</TableHead>
-                      <TableHead>Assignee</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("created_at")}>
-                        <div className="flex items-center">
-                          Created At
-                          <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("due_date")}>
-                        <div className="flex items-center">
-                          Due Date
-                          <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </div>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTasks.map((task) => (
-                      <TableRow key={task.id}>
-                        <TableCell className="font-mono text-sm">{task.task_number}</TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{task.title}</div>
-                            {task.description && (
-                              <div className="text-sm text-muted-foreground line-clamp-1">
-                                {task.description}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={statusColors[task.status] || statusColors.todo}>
-                            {statusLabels[task.status] || task.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={priorityColors[task.priority] || priorityColors.medium}>
-                            {task.priority}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {task.assigned_to ? (
-                            <span className="text-sm">{task.assigned_to.Full_name}</span>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">Unassigned</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {task.department || "-"}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {task.created_at ? (
-                            <span className="text-sm text-muted-foreground">
-                              {format(new Date(task.created_at), "MMM dd, yyyy HH:mm")}
-                            </span>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {task.due_date ? (
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4" />
-                              <span className="text-sm">
-                                {format(new Date(task.due_date), "MMM dd, yyyy")}
-                              </span>
+              <>
+                {/* Desktop Table View */}
+                <div className="hidden md:block w-full overflow-hidden">
+                  <div className="overflow-x-auto w-full">
+                    <Table className="w-full min-w-[800px]">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="cursor-pointer" onClick={() => handleSort("task_number")}>
+                            <div className="flex items-center">
+                              Task #
+                              <ArrowUpDown className="ml-2 h-4 w-4" />
                             </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">No due date</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                          </TableHead>
+                          <TableHead className="cursor-pointer" onClick={() => handleSort("title")}>
+                            <div className="flex items-center">
+                              Title
+                              <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </div>
+                          </TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Priority</TableHead>
+                          <TableHead>Assignee</TableHead>
+                          <TableHead>Department</TableHead>
+                          <TableHead className="cursor-pointer" onClick={() => handleSort("created_at")}>
+                            <div className="flex items-center">
+                              Created At
+                              <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </div>
+                          </TableHead>
+                          <TableHead className="cursor-pointer" onClick={() => handleSort("due_date")}>
+                            <div className="flex items-center">
+                              Due Date
+                              <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </div>
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredTasks.map((task) => (
+                          <TableRow key={task.id}>
+                            <TableCell className="font-mono text-sm">{task.task_number}</TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{task.title}</div>
+                                {task.description && (
+                                  <div className="text-sm text-muted-foreground line-clamp-1">
+                                    {task.description}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={statusColors[task.status] || statusColors.todo}>
+                                {statusLabels[task.status] || task.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={priorityColors[task.priority] || priorityColors.medium}>
+                                {task.priority}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {task.assigned_to ? (
+                                <span className="text-sm">{task.assigned_to.Full_name}</span>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">Unassigned</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm text-muted-foreground">
+                                {task.department || "-"}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {task.created_at ? (
+                                <span className="text-sm text-muted-foreground">
+                                  {format(new Date(task.created_at), "MMM dd, yyyy")}
+                                </span>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {task.due_date ? (
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="w-4 h-4" />
+                                  <span className="text-sm">
+                                    {format(new Date(task.due_date), "MMM dd, yyyy")}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">No due date</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y">
+                  {filteredTasks.map((task) => (
+                    <div key={task.id} className="p-4 space-y-3 bg-white">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-mono text-muted-foreground">{task.task_number}</span>
+                            <Badge className={`text-[10px] px-1.5 py-0 ${priorityColors[task.priority] || priorityColors.medium}`}>
+                              {task.priority}
+                            </Badge>
+                          </div>
+                          <h3 className="font-medium text-sm">{task.title}</h3>
+                        </div>
+                        <Badge className={`${statusColors[task.status] || statusColors.todo}`}>
+                          {statusLabels[task.status] || task.status}
+                        </Badge>
+                      </div>
+
+                      {task.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {task.description}
+                        </p>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-y-2 text-xs text-muted-foreground">
+                        <div>
+                          <span className="block font-medium text-gray-700">Assignee</span>
+                          {task.assigned_to?.Full_name || 'Unassigned'}
+                        </div>
+                        <div>
+                          <span className="block font-medium text-gray-700">Department</span>
+                          {task.department || '-'}
+                        </div>
+                        <div>
+                          <span className="block font-medium text-gray-700">Created</span>
+                          {task.created_at ? format(new Date(task.created_at), "MMM dd") : '-'}
+                        </div>
+                        <div>
+                          <span className="block font-medium text-gray-700">Due</span>
+                          {task.due_date ? (
+                            <div className={`flex items-center gap-1 ${new Date(task.due_date) < new Date() && task.status !== 'done' ? 'text-red-600 font-medium' : ''
+                              }`}>
+                              <Calendar className="w-3 h-3" />
+                              {format(new Date(task.due_date), "MMM dd")}
+                            </div>
+                          ) : '-'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

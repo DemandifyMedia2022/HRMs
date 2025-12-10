@@ -89,21 +89,21 @@ function UserAvailableLeavePageInner() {
               load(candidate);
             }
           }
-        } catch (e) {}
+        } catch (e) { }
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userFromQuery]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-primary-50 to-indigo-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-primary-50 to-indigo-50 p-4 md:p-6 pb-24">
       <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold text-gray-900 flex items-center gap-3">My Available Leave</h1>
-            <p className="text-gray-600 mt-1">Track remaining balances, approvals, and leave history in one view.</p>
+            <p className="text-gray-600 mt-1 text-sm md:text-base">Track remaining balances, approvals, and leave history.</p>
           </div>
-          <Badge variant="secondary" className="text-sm px-4 py-2">
+          <Badge variant="secondary" className="text-sm px-4 py-2 w-fit">
             Employee Portal
           </Badge>
         </div>
@@ -115,10 +115,10 @@ function UserAvailableLeavePageInner() {
                 <User className="w-5 h-5 text-primary" />
                 Check Leave Balance
               </CardTitle>
-              <CardDescription>Enter a user name to view available leave or refresh your own data.</CardDescription>
+              <CardDescription>Enter a user name to view available leave.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 lg:grid-cols-[2fr,auto]">
+              <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-[2fr,auto]">
                 <div className="space-y-2">
                   <Label htmlFor="user-search" className="text-sm font-medium">
                     Employee
@@ -130,10 +130,10 @@ function UserAvailableLeavePageInner() {
                     placeholder="Search by user name"
                   />
                 </div>
-                <div className="flex flex-wrap items-end gap-2">
+                <div className="flex flex-col sm:flex-row items-end gap-2">
                   <Button
                     type="button"
-                    className="min-w-[140px]"
+                    className="w-full sm:w-auto min-w-[100px]"
                     onClick={() => load()}
                     disabled={loading || !userName.trim()}
                   >
@@ -261,29 +261,31 @@ function UserAvailableLeavePageInner() {
                 <CardDescription>Review every leave request and its approval status.</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Start</TableHead>
-                        <TableHead>End</TableHead>
-                        <TableHead>HR</TableHead>
-                        <TableHead>Mgr</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.LeaveApprovalData.map(l => (
-                        <TableRow key={l.l_id}>
-                          <TableCell className="font-medium">{l.leave_type}</TableCell>
-                          <TableCell>{new Date(l.start_date).toLocaleDateString()}</TableCell>
-                          <TableCell>{new Date(l.end_date).toLocaleDateString()}</TableCell>
-                          <TableCell>{l.HRapproval}</TableCell>
-                          <TableCell>{l.Managerapproval}</TableCell>
+                <div className="w-full overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Start</TableHead>
+                          <TableHead>End</TableHead>
+                          <TableHead>HR</TableHead>
+                          <TableHead>Mgr</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {data.LeaveApprovalData.map(l => (
+                          <TableRow key={l.l_id}>
+                            <TableCell className="font-medium">{l.leave_type}</TableCell>
+                            <TableCell>{new Date(l.start_date).toLocaleDateString()}</TableCell>
+                            <TableCell>{new Date(l.end_date).toLocaleDateString()}</TableCell>
+                            <TableCell>{l.HRapproval}</TableCell>
+                            <TableCell>{l.Managerapproval}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </Card>

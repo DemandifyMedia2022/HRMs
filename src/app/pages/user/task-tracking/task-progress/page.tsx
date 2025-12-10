@@ -125,26 +125,26 @@ export default function KanbanBoard() {
 
         const tasks = currentPinnedIds.length > 0
           ? allTasks.filter((task: Task) => {
-              if (!currentPinnedIds.includes(task.id)) return false;
+            if (!currentPinnedIds.includes(task.id)) return false;
 
-              if (task.status !== 'done') return true;
+            if (task.status !== 'done') return true;
 
-              if (!task.completed_date) return true;
+            if (!task.completed_date) return true;
 
-              const completedAt = new Date(task.completed_date).getTime();
-              const ageMs = now - completedAt;
+            const completedAt = new Date(task.completed_date).getTime();
+            const ageMs = now - completedAt;
 
-              // Keep on board only if completed less than 15 minutes ago
-              return ageMs < fifteenMinutesMs;
-            })
+            // Keep on board only if completed less than 15 minutes ago
+            return ageMs < fifteenMinutesMs;
+          })
           : [];
-        
+
         // Group tasks by status
         const groupedColumns = statusColumns.map(col => ({
           ...col,
           tasks: tasks.filter((task: Task) => task.status === col.id)
         }));
-        
+
         setColumns(groupedColumns);
       } else {
         toast.error('Failed to load tasks');
@@ -258,17 +258,18 @@ export default function KanbanBoard() {
   return (
     <>
       <SidebarConfig role="user" />
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="p-4 md:p-6 pb-24">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <h1 className="text-2xl font-bold">Task Board</h1>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto">
             <Button
               variant="outline"
               onClick={handleOpenManageBoard}
+              className="flex-1 md:flex-none"
             >
               Manage Board Tasks
             </Button>
-            <Button onClick={() => setCreateFormOpen(true)}>
+            <Button onClick={() => setCreateFormOpen(true)} className="flex-1 md:flex-none">
               <Plus className="w-4 h-4 mr-2" />
               Create Task
             </Button>
@@ -296,7 +297,7 @@ export default function KanbanBoard() {
                       {column.tasks.length}
                     </Badge>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setCreateFormOpen(true)}
                     className="p-1 rounded-full bg-white/30 dark:bg-neutral-800/30 hover:bg-white/50 dark:hover:bg-neutral-700/50 transition-colors"
                   >
