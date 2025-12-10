@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-    
+
     // Pagination
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -93,7 +93,8 @@ export async function GET(req: NextRequest) {
               id: true,
               Full_name: true,
               email: true,
-              department: true
+              department: true,
+              profile_image: true
             }
           },
           users_tasks_assigned_to_idTousers: {
@@ -101,7 +102,8 @@ export async function GET(req: NextRequest) {
               id: true,
               Full_name: true,
               email: true,
-              department: true
+              department: true,
+              profile_image: true
             }
           },
           task_label_mapping: {
@@ -131,11 +133,13 @@ export async function GET(req: NextRequest) {
       parent_task_id: task.parent_task_id ? Number(task.parent_task_id) : null,
       created_by: task.users_tasks_created_by_idTousers ? {
         ...task.users_tasks_created_by_idTousers,
-        id: Number(task.users_tasks_created_by_idTousers.id)
+        id: Number(task.users_tasks_created_by_idTousers.id),
+        profile_image: task.users_tasks_created_by_idTousers.profile_image
       } : null,
       assigned_to: task.users_tasks_assigned_to_idTousers ? {
         ...task.users_tasks_assigned_to_idTousers,
-        id: Number(task.users_tasks_assigned_to_idTousers.id)
+        id: Number(task.users_tasks_assigned_to_idTousers.id),
+        profile_image: task.users_tasks_assigned_to_idTousers.profile_image
       } : null,
       labels: task.task_label_mapping.map((l: any) => ({
         ...l.task_labels,
@@ -272,14 +276,16 @@ export async function POST(req: NextRequest) {
           select: {
             id: true,
             Full_name: true,
-            email: true
+            email: true,
+            profile_image: true
           }
         },
         users_tasks_assigned_to_idTousers: {
           select: {
             id: true,
             Full_name: true,
-            email: true
+            email: true,
+            profile_image: true
           }
         }
       }

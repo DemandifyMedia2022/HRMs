@@ -36,6 +36,7 @@ interface Task {
     id: number;
     Full_name: string;
     email: string;
+    profile_image?: string;
   };
   labels?: Array<{
     id: number;
@@ -386,6 +387,14 @@ export default function KanbanBoard() {
 
                             {task.assigned_to && (
                               <Avatar className="w-8 h-8 ring-2 ring-white/50 dark:ring-neutral-700/50">
+                                {task.assigned_to.profile_image && (
+                                  <AvatarImage
+                                    src={task.assigned_to.profile_image.startsWith('http')
+                                      ? task.assigned_to.profile_image
+                                      : `/api/files/${task.assigned_to.profile_image}`}
+                                    alt={task.assigned_to.Full_name}
+                                  />
+                                )}
                                 <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 font-medium text-xs">
                                   {(task.assigned_to.Full_name || task.assigned_to.email)
                                     .split(' ')

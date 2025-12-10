@@ -25,7 +25,8 @@ export async function GET(req: NextRequest) {
     name: (user.Full_name ?? user.name ?? '') as string,
     personal_email: (user.Personal_Email ?? '') as string,
     contact_no: (user.contact_no ?? '') as string,
-    department: (user.department ?? '') as string
+    department: (user.department ?? '') as string,
+    profile_image: (user.profile_image ?? '') as string
   };
   return NextResponse.json(data);
 }

@@ -42,20 +42,20 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
     if (auth.role !== 'admin' && auth.role !== 'hr') {
       const tasksDir = path.resolve(baseDir, 'tasks');
       const isTaskAttachment = abs.startsWith(tasksDir);
-      
+
       if (isTaskAttachment) {
         // For task attachments, verify user has access to the task's department
         // Extract task number from path: uploads/tasks/[task_number]/[filename]
         const relativePath = path.relative(tasksDir, abs);
         const taskNumber = relativePath.split(path.sep)[0];
-        
+
         if (taskNumber) {
           try {
             const task = await prisma.tasks.findFirst({
               where: { task_number: taskNumber },
               select: { department: true }
             });
-            
+
             if (!task || task.department !== auth.department) {
               return NextResponse.json({ error: 'Forbidden - File access denied' }, { status: 403 });
             }
@@ -66,17 +66,44 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
       } else {
         // For user uploads, check user-specific folder
         let userSlug = 'user';
+        let isProfileImage = false;
+
         try {
           const user = await prisma.users.findUnique({ where: { id: BigInt(auth.id) } as any });
-          const name = (user as any)?.name || (user as any)?.Full_name || '';
+          const name = (user as any)?.Full_name || (user as any)?.name || '';
           userSlug = String(name)
             .toLowerCase()
             .trim()
             .replace(/\s+/g, '_')
             .replace(/[^a-z0-9_-]/g, '_') || 'user';
+
+          // Check if this file is the user's profile image
+          // requested path e.g. "soham_pawar/profile_123.jpg"
+          // stored path e.g. "soham_pawar/profile_123.jpg"
+          // If the requested path matches EXACTLY what is in the DB for THIS user, allow it.
+          // OR, if the file is a user's current profile image, allow it regardless of folder (for other users to see)
+          // BUT, fetching "other users" profile images requires verifying that the file is indeed PROCLAIMED as a profile image in the DB.
+
+          // Let's first enable the OWNER to see it by fixing the slug.
+          // Secondly, let's enable OTHERS to see it by checking strictly against the DB.
+
+          const requestedPathStr = parts.join('/');
+
+          // Check if this specific file is ANY user's profile image
+          const owner = await (prisma.users as any).findFirst({
+            where: { profile_image: requestedPathStr }
+          });
+
+          if (owner) {
+            isProfileImage = true;
+          }
+
         } catch { }
+
         const userDir = path.resolve(baseDir, path.join('uploads', userSlug));
-        if (!abs.startsWith(userDir)) {
+
+        // Allow if it is a confirmed profile image OR if it is in the user's own directory
+        if (!isProfileImage && !abs.startsWith(userDir)) {
           return NextResponse.json({ error: 'Forbidden - File access denied' }, { status: 403 });
         }
       }

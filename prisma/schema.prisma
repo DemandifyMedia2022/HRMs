@@ -46,7 +46,7 @@ model users {
   contact_no                                String?                        @db.VarChar(55)
   job_role                                  String?                        @db.VarChar(55)
   department                                String?                        @db.VarChar(55)
-  emp_address                               String?                        @db.VarChar(255)
+  emp_address                               String?                        @db.Text
   email_verified_at                         DateTime?                      @db.Timestamp(0)
   password                                  String                         @db.VarChar(255)
   type                                      String                         @default("user") @db.VarChar(55)
@@ -56,8 +56,8 @@ model users {
   pan_card                                  String?                        @db.VarChar(255)
   marksheet                                 String?                        @db.VarChar(255)
   certifications                            String?                        @db.VarChar(255)
-  pay_slips                                 String?                        @db.VarChar(500)
-  bank_statement                            String?                        @db.VarChar(500)
+  pay_slips                                 String?                        @db.Text
+  bank_statement                            String?                        @db.Text
   bankpassbook                              String?                        @db.VarChar(255)
   relieving_letter                          String?                        @db.VarChar(255)
   created_at                                DateTime?                      @db.Timestamp(0)
@@ -138,6 +138,7 @@ model users {
   months                                    Int?
   status                                    Int?                           @db.TinyInt
   extension                                 String?                        @db.VarChar(64)
+  profile_image                             String?                        @db.VarChar(255)
   task_activity_logs                        task_activity_logs[]
   task_attachments                          task_attachments[]
   task_comments                             task_comments[]

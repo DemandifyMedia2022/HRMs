@@ -34,7 +34,7 @@ export function NavUser({
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-    } catch {}
+    } catch { }
     // Always navigate to login/home after attempting logout
     window.location.href = '/';
   };
@@ -48,8 +48,8 @@ export function NavUser({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg grayscale">
-                {user.avatar && /^(https?:\/\/|data:)/i.test(user.avatar) ? (
+              <Avatar className="h-8 w-8 rounded-lg">
+                {user.avatar && /^(https?:\/\/|data:|\/)/i.test(user.avatar) ? (
                   <AvatarImage src={user.avatar} alt={user.name} />
                 ) : null}
                 <AvatarFallback className="rounded-lg">{user.name[0]}</AvatarFallback>
@@ -70,7 +70,7 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  {user.avatar && /^(https?:\/\/|data:)/i.test(user.avatar) ? (
+                  {user.avatar && /^(https?:\/\/|data:|\/)/i.test(user.avatar) ? (
                     <AvatarImage src={user.avatar} alt={user.name} />
                   ) : null}
                   <AvatarFallback className="rounded-lg">{user.name[0]}</AvatarFallback>

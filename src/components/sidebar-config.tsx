@@ -11,7 +11,7 @@ export type NavMainItem = {
   url: string;
   icon?: Icon;
   target?: string
-  children?: { title: string; url: string; icon?: Icon; target?: string}[];
+  children?: { title: string; url: string; icon?: Icon; target?: string }[];
 };
 
 export type NavSecondaryItem = {
@@ -110,7 +110,9 @@ export function SidebarConfig({ role, data }: SidebarConfig) {
         (base as any).user = {
           name: user.name || 'User',
           email: user.email || '',
-          avatar: initials
+          avatar: user.profile_image
+            ? (user.profile_image.startsWith('http') ? user.profile_image : `/api/files/${user.profile_image}`)
+            : initials
         };
       }
       return base;

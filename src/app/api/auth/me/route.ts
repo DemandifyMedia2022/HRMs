@@ -26,7 +26,8 @@ export async function GET(req: NextRequest) {
         name: (user as any).name ?? null,
         email: (user as any).email ?? null,
         department: (user as any).department ?? null,
-        emp_code: (user as any).emp_code ?? null
+        emp_code: (user as any).emp_code ?? null,
+        profile_image: (user as any).profile_image ?? null
       })
     );
 
