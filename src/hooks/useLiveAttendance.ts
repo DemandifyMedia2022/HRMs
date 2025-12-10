@@ -136,11 +136,15 @@ export function useLiveAttendance({
         const now = clientTime.getTime();
 
         // Parse clock times to timestamps
+        // Parse clock times to timestamps (explicitly treating them as IST)
         const clockTimes = (data.clockTimes || []).map(time => {
-            const [hh, mm] = time.split(':').map(Number);
-            const d = new Date(data.date || new Date());
-            d.setHours(hh, mm, 0, 0);
-            return d.getTime();
+            const [hh, mm] = time.split(':').map(str => str.padStart(2, '0'));
+            // Construct ISO string with IST offset (+05:30)
+            // Use data.date if available, otherwise assume today in IST
+            const dateStr = data.date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+
+            const isoString = `${dateStr}T${hh}:${mm}:00+05:30`;
+            return new Date(isoString).getTime();
         }).sort((a, b) => a - b);
 
         // Calculate working time (pair-wise: in-out-in-out)

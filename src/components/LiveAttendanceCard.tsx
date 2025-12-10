@@ -147,9 +147,7 @@ export function LiveAttendanceCard({
                         </Badge>
                     )}
                 </div>
-                <CardDescription className="text-xs">
-                    {data.employeeName || ''}
-                </CardDescription>
+
             </CardHeader>
 
             <CardContent className="space-y-4">

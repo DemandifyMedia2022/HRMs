@@ -19,8 +19,11 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Use today's date if not provided
-        const targetDate = date || new Date().toISOString().split('T')[0];
+        // Use today's date if not provided (in IST)
+        const getISTDate = () => {
+            return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+        };
+        const targetDate = date || getISTDate();
 
         // Trigger a quick ESSL sync in the background (fire-and-forget)
         // This ensures we get the latest punch data from the device
@@ -30,18 +33,13 @@ export async function GET(request: NextRequest) {
                 const controller = new AbortController();
                 const timeout = Number(process.env.ESSL_SYNC_TIMEOUT_MS || 5000);
                 const timeoutId = setTimeout(() => controller.abort(), timeout);
-                
-                // Sync only today's data for faster response
-                const now = new Date();
-                const todayStart = new Date(now);
-                todayStart.setHours(0, 0, 0, 0);
-                
+
                 // Fire-and-forget sync request
-                fetch(syncUrl, { 
+                fetch(syncUrl, {
                     method: 'POST',
                     signal: controller.signal,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         fromDate: `${targetDate} 00:00:00`,
                         toDate: 'now',
                         lookbackDays: 0 // Only sync today
@@ -86,12 +84,12 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        // Convert clock times to timestamps
+        // Convert clock times to timestamps (explicitly treating them as IST)
         const timestamps = clockTimes.map(time => {
-            const [hh, mm] = time.split(':').map(Number);
-            const date = new Date(targetDate);
-            date.setHours(hh, mm, 0, 0);
-            return date.getTime();
+            const [hh, mm] = time.split(':').map(str => str.padStart(2, '0'));
+            // Construct ISO string with IST offset (+05:30)
+            const isoString = `${targetDate}T${hh}:${mm}:00+05:30`;
+            return new Date(isoString).getTime();
         }).sort((a, b) => a - b);
 
         const firstPunch = timestamps[0];
@@ -124,7 +122,7 @@ export async function GET(request: NextRequest) {
 
         // Format durations
         const formatDuration = (ms: number) => {
-            const totalSeconds = Math.floor(ms / 1000);
+            const totalSeconds = Math.max(0, Math.floor(ms / 1000));
             const hours = Math.floor(totalSeconds / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
