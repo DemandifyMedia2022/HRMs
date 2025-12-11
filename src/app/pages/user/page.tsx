@@ -379,15 +379,15 @@ export default function UserPage() {
             </CardHeader>
             <CardContent className="flex items-center justify-center">
               <ChartContainer config={chartDistCfg} className="aspect-auto h-[260px] w-full">
-                <PieChart width={320} height={240}>
+                <PieChart>
                   <Pie
                     data={statusDist.map(s => ({ name: s.name, value: s.count }))}
                     dataKey="value"
                     nameKey="name"
-                    cx={160}
-                    cy={110}
-                    innerRadius={60}
-                    outerRadius={90}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="43%"
+                    outerRadius="72%"
                     paddingAngle={3}
                   >
                     {statusDist.map((_, i) => (
@@ -535,15 +535,15 @@ export default function UserPage() {
                 </CardHeader>
                 <CardContent className="flex items-center justify-center">
                   <ChartContainer config={{}} className="aspect-auto h-[280px] w-full">
-                    <PieChart width={280} height={240}>
+                    <PieChart>
                       <Pie
                         data={(Array.isArray(dmLeadsStatus) ? dmLeadsStatus : []).map((x, i) => ({ name: x.status || 'pending', value: x.count }))}
                         dataKey="value"
                         nameKey="name"
-                        cx={140}
-                        cy={110}
-                        innerRadius={50}
-                        outerRadius={90}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius="40%"
+                        outerRadius="70%"
                         paddingAngle={3}
                       >
                         {(Array.isArray(dmLeadsStatus) ? dmLeadsStatus : []).map((_, i) => (
