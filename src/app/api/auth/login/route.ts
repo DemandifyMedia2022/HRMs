@@ -84,7 +84,8 @@ export async function POST(req: NextRequest) {
       department: deptLower as any
     });
     const refreshToken = generateRefreshToken({ id: idNum });
-    const isProd = false; // process.env.NODE_ENV === 'production';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const isSecure = baseUrl.startsWith('https://');
     const csrfToken = crypto.randomUUID().replace(/-/g, '');
     const tokenEncrypted = encryptToken(token);
     // Return ONLY token and success message - no user details yet
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
     res.cookies.set('access_token', token, {
       httpOnly: true,
       sameSite: 'strict',
-      secure: isProd,
+      secure: isSecure,
       path: '/',
       maxAge: 60 * 15 // 15 minutes
     });
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
     res.cookies.set('csrf_token', csrfToken, {
       httpOnly: true,
       sameSite: 'strict',
-      secure: isProd,
+      secure: isSecure,
       path: '/',
       maxAge: 60 * 60 // 1 hour
     });
@@ -114,7 +115,7 @@ export async function POST(req: NextRequest) {
     res.cookies.set('refresh_token', refreshToken, {
       httpOnly: true,
       sameSite: 'strict',
-      secure: isProd,
+      secure: isSecure,
       path: '/',
       maxAge: 60 * 60 * 24 * 30 // 30 days
     });

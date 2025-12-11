@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx.dockerfile
+    container_name: hrms-nginx
+    ports:
+      - "8000:8000"
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - hrms-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hrms-app
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL:-mysql://${MYSQL_USER:-hrms_user}:${MYSQL_PASSWORD:-hrms_password}@db:3306/${MYSQL_DATABASE:-hrms}}
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-http://localhost:8000}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:8000}
+      - BASE_URL=${BASE_URL:-http://localhost:8000}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PRISMA_DB_PULL=${PRISMA_DB_PULL:-true}
+    env_file:
+      - .env
+    volumes:
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+    networks:
+      - hrms-network
+
+  db:
+    # Only start db service if DATABASE_URL is not set or points to 'db' hostname
+    profiles:
+      - database
+    image: mysql:8.0
+    container_name: hrms-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-hrms}
+      - MYSQL_USER=${MYSQL_USER:-hrms_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-hrms_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - hrms-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  hrms-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+

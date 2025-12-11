@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 
 export async function POST() {
   const res = NextResponse.json({ message: 'Logged out' });
-  const isProd = process.env.NODE_ENV === 'production';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const isSecure = baseUrl.startsWith('https://');
   const cookieOptions = {
     httpOnly: true,
     sameSite: 'strict' as const,
-    secure: isProd,
+    secure: isSecure,
     path: '/',
     maxAge: 0
   };
