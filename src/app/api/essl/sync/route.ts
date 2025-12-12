@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createLogger } from '@/lib/logger';
 import axios from 'axios';
+
+const logger = createLogger('API:ESSL-Sync');
 
 interface AttendanceRecord {
   employeeID: string;
@@ -75,6 +78,7 @@ export async function POST(request: NextRequest) {
 
     // Check if response is XML
     if (!response.data.includes('<?xml')) {
+      logger.error('Non-XML response received', { responsePreview: response.data.substring(0, 500) });
       return NextResponse.json(
         { error: 'Non-XML response received', response: response.data },
         { status: 500 }
@@ -82,10 +86,10 @@ export async function POST(request: NextRequest) {
     }
 
     const strDataList = extractStrDataList(response.data);
-    if (!strDataList) {
-      console.error('Failed to extract strDataList. Response preview:', response.data.substring(0, 1000));
+    if (strDataList === null) {
+      logger.error('Failed to extract strDataList', { responsePreview: response.data.substring(0, 1000) });
       return NextResponse.json(
-        { 
+        {
           error: 'Failed to extract data from SOAP response',
           hint: 'Check server logs for response preview',
           responsePreview: response.data.substring(0, 500)
@@ -96,6 +100,7 @@ export async function POST(request: NextRequest) {
 
     // Handle empty data list (no attendance records in the time range)
     if (strDataList.trim() === '' || strDataList.trim().length === 0) {
+      logger.info('No attendance records found in the specified time range', { fromDate, toDate });
       return NextResponse.json({
         success: true,
         message: 'No attendance records found in the specified time range',
@@ -304,6 +309,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    logger.info('Attendance data synchronized successfully', { inserted: insertedCount, updated: updatedCount });
     return NextResponse.json({
       success: true,
       message: 'Attendance data synchronized successfully',
@@ -312,7 +318,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('ESSL Sync Error:', error);
+    logger.error('ESSL Sync Error', { error: error.message, stack: error.stack });
     return NextResponse.json(
       {
         error: 'Failed to sync attendance data',
@@ -330,25 +336,30 @@ function extractStrDataList(xmlResponse: string): string | null {
     // Pattern 1: Standard tag
     let match = xmlResponse.match(/<strDataList>([\s\S]*?)<\/strDataList>/i);
     if (match && match[1].trim()) return match[1].trim();
-    
+
     // Pattern 2: With namespace prefix
     match = xmlResponse.match(/<[^:]*:?strDataList[^>]*>([\s\S]*?)<\/[^:]*:?strDataList>/i);
     if (match && match[1].trim()) return match[1].trim();
-    
+
     // Pattern 3: GetTransactionsLogResult tag (alternative response format)
     match = xmlResponse.match(/<GetTransactionsLogResult[^>]*>([\s\S]*?)<\/GetTransactionsLogResult>/i);
     if (match && match[1].trim()) return match[1].trim();
-    
+
     // Pattern 4: Check for CDATA section
     match = xmlResponse.match(/<!\[CDATA\[([\s\S]*?)\]\]>/);
     if (match && match[1].trim()) return match[1].trim();
-    
+
+    // Pattern 5: Self-closing tag (empty list)
+    if (xmlResponse.match(/<strDataList\s*\/>/i) || xmlResponse.match(/<[^:]*:?strDataList\s*\/>/i)) {
+      return '';
+    }
+
     // Log the response for debugging if no match found
-    console.log('SOAP Response (first 500 chars):', xmlResponse.substring(0, 500));
-    
+    logger.debug('SOAP Response extraction failed, dumping preview', { preview: xmlResponse.substring(0, 500) });
+
     return null;
-  } catch (error) {
-    console.error('Error extracting strDataList:', error);
+  } catch (error: any) {
+    logger.error('Error extracting strDataList', { error: error.message });
     return null;
   }
 }
