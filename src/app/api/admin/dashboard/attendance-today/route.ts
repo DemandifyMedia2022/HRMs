@@ -1,52 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-function parseYMD(ymd?: string | null): Date | null {
-  if (!ymd) return null;
-  const m = String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  return isNaN(d.getTime()) ? null : d;
-}
-
-
-function toYMD(d = new Date()) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-function startOfDayLocal(d = new Date()) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-function endOfDayLocal(d = new Date()) {
-  const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
-  return x;
-}
-
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const q = url.searchParams.get('date');
-    const base = parseYMD(q) || new Date();
-    const from = startOfDayLocal(base);
-    const to = endOfDayLocal(base);
-    const ymd = toYMD(base);
 
-    const rows = await (prisma as any).npattendance
-      .findMany({
-        where: { date: { gte: from, lte: to } },
+    // Determine target date in IST
+    const getISTDate = () => {
+      return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    };
+    const dateStr = q || getISTDate();
+    const targetDate = new Date(dateStr); // UTC midnight for that date
+
+    // Trigger ESSL sync if requesting today's data (fire-and-forget)
+    if (!q || q === getISTDate()) {
+      const syncUrl = process.env.ESSL_SYNC_URL;
+      if (syncUrl) {
+        try {
+          const controller = new AbortController();
+          const timeout = Number(process.env.ESSL_SYNC_TIMEOUT_MS || 5000);
+          const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+          fetch(syncUrl, {
+            method: 'POST',
+            signal: controller.signal,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fromDate: `${dateStr} 00:00:00`,
+              toDate: 'now',
+              lookbackDays: 0
+            })
+          }).then(() => clearTimeout(timeoutId)).catch(() => clearTimeout(timeoutId));
+        } catch {
+          // Ignore sync errors
+        }
+        // Small delay to allow fast syncs to reflect
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    }
+
+    // Query npattendance (primary) or fallback to attendance
+    let rows = await (prisma as any).npattendance.findMany({
+      where: { date: targetDate },
+      select: { status: true }
+    });
+
+    if (rows.length === 0) {
+      rows = await (prisma as any).attendance.findMany({
+        where: { date: targetDate },
         select: { status: true }
-      })
-      .catch(async () => {
-        return (prisma as any).attendance.findMany({
-          where: { date: { gte: from, lte: to } },
-          select: { status: true }
-        });
       });
+    }
 
     const total = rows.length;
     let present = 0,
@@ -56,7 +61,8 @@ export async function GET(req: NextRequest) {
       if (s.includes('present')) present++;
       else if (s.includes('absent')) absent++;
     }
-    return NextResponse.json({ date: ymd, total, present, absent }, { headers: { 'Cache-Control': 'no-store' } });
+
+    return NextResponse.json({ date: dateStr, total, present, absent }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'error' }, { status: 500 });
   }

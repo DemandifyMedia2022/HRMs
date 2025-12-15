@@ -1,25 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-function startOfDay(d = new Date()) {
-  const x = new Date(d);
-  x.setUTCHours(0, 0, 0, 0);
-  return x;
-}
-function endOfDay(d = new Date()) {
-  const x = new Date(d);
-  x.setUTCHours(23, 59, 59, 999);
-  return x;
-}
-
 export async function GET(req: NextRequest) {
   try {
-    const todayStart = startOfDay();
-    const todayEnd = endOfDay();
+    // Determine today in IST
+    const istDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    const today = new Date(istDateStr); // UTC midnight for today(IST)
+
+    // Range for overlap: effectively looking for leaves that include 'today'
+    // Since prisma stores @db.Date as UTC midnight, start_date <= today AND end_date >= today matches
+
+    // However, if Prisma treats them as dates, we just need to compare dates. 
+    // lte: todayEnd, gte: todayStart logic was fine BUT the definition of 'today' was UTC based.
+
+    // Let's stick to comparing date objects (which represent midnight UTC).
+    // If leave spans 2025-12-15 to 2025-12-16, start_date is 2025-12-15 00:00:00 UTC.
+    // If today is 2025-12-15 (IST), 'today' var is 2025-12-15 00:00:00 UTC.
+    // So we want start_date <= today AND end_date >= today.
+
     const rows = await (prisma as any).leavedata.findMany({
       where: {
-        start_date: { lte: todayEnd },
-        end_date: { gte: todayStart },
+        start_date: { lte: today },
+        end_date: { gte: today },
         OR: [
           { status: { equals: 'Approved' } },
           { HRapproval: { equals: 'Approved' }, Managerapproval: { equals: 'Approved' } }
@@ -27,6 +29,7 @@ export async function GET(req: NextRequest) {
       },
       select: { leave_type: true }
     });
+
     const total = rows.length;
     const byType: Record<string, number> = {};
     for (const r of rows) {

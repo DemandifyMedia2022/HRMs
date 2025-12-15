@@ -269,76 +269,7 @@ export default function AdminPage() {
           </Card>
         </div>
 
-        {/* DM Charts */}
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <CardHeader className="flex-row items-center justify-between">
-              <div>
-                <CardTitle>
-                  <span className="flex items-center gap-2"><IconChartBar className="size-5 text-primary" /> Resource Performance</span>
-                </CardTitle>
-                <CardDescription>{dmMode === 'daily' ? 'Today' : 'This Month'}</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant={dmMode === 'daily' ? 'default' : 'outline'} onClick={() => setDmMode('daily')}>
-                  Daily
-                </Button>
-                <Button size="sm" variant={dmMode === 'monthly' ? 'default' : 'outline'} onClick={() => setDmMode('monthly')}>
-                  Monthly
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-              <ChartContainer
-                config={{ total: { label: 'Total', color: 'hsl(var(--primary))' } }}
-                className="aspect-auto h-[280px] w-full"
-              >
-                <BarChart
-                  data={
-                    ((dmMode === 'daily' ? dmResourceStats?.daily : dmResourceStats?.monthly) || []).filter(
-                      d => dmMode !== 'daily' || (typeof d.total === 'number' && d.total > 0)
-                    )
-                  }
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="resource_name" tickLine={false} axisLine={false} tickMargin={8} interval={0} angle={-20} height={60} />
-                  <YAxis allowDecimals={false} width={30} tickLine={false} axisLine={false} tickMargin={8} />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent labelKey="resource_name" />} />
-                  <Bar dataKey="total" fill="var(--primary)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <span className="flex items-center gap-2"><IconChartDonut className="size-5 text-primary" /> Leads by QA Status</span>
-              </CardTitle>
-              <CardDescription>Distribution</CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center">
-              <ChartContainer config={{}} className="aspect-auto h-[280px] w-full">
-                <PieChart width={280} height={240}>
-                  <Pie
-                    data={(Array.isArray(dmLeadsStatus) ? dmLeadsStatus : []).map((x, i) => ({ name: x.status || 'pending', value: x.count, color: ['#0ea5e9', '#22c55e', '#f97316', '#ef4444', '#a855f7', '#eab308', '#06b6d4', '#f43f5e'][i % 8] }))}
-                    dataKey="value"
-                    nameKey="name"
-                    cx={140}
-                    cy={110}
-                    innerRadius={50}
-                    outerRadius={90}
-                    paddingAngle={3}
-                  >
-                    {(Array.isArray(dmLeadsStatus) ? dmLeadsStatus : []).map((_, i) => (
-                      <Cell key={i} fill={["#0ea5e9", "#22c55e", "#f97316", "#ef4444", "#a855f7", "#eab308", "#06b6d4", "#f43f5e"][i % 8]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
+
 
         {/* Gender & Headcount */}
         <div className="grid gap-4 lg:grid-cols-3">
@@ -411,23 +342,29 @@ export default function AdminPage() {
               <CardDescription>{leaveTrends?.year || year}</CardDescription>
             </CardHeader>
             <CardContent className="px-2 pt-2">
-              <ChartContainer config={{}} className="aspect-auto h-[280px] w-full">
-                <BarChart data={trendData}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
-                  <YAxis allowDecimals={false} width={30} tickLine={false} axisLine={false} tickMargin={8} />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                  {trendTypes.map((t, i) => (
-                    <Bar
-                      key={t}
-                      dataKey={t}
-                      stackId="a"
-                      fill={trendColors[i % trendColors.length]}
-                      radius={[6, 6, 0, 0]}
-                    />
-                  ))}
-                </BarChart>
-              </ChartContainer>
+              {trendTypes.length > 0 ? (
+                <ChartContainer config={{}} className="aspect-auto h-[280px] w-full">
+                  <BarChart data={trendData}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
+                    <YAxis allowDecimals={false} width={30} tickLine={false} axisLine={false} tickMargin={8} />
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                    {trendTypes.map((t, i) => (
+                      <Bar
+                        key={t}
+                        dataKey={t}
+                        stackId="a"
+                        fill={trendColors[i % trendColors.length]}
+                        radius={[6, 6, 0, 0]}
+                      />
+                    ))}
+                  </BarChart>
+                </ChartContainer>
+              ) : (
+                <div className="flex h-[280px] w-full items-center justify-center text-muted-foreground">
+                  No leave data available for {leaveTrends?.year || year}
+                </div>
+              )}
             </CardContent>
           </Card>
 
