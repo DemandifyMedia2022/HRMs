@@ -129,7 +129,7 @@ export default function EmployeeSalaryPage() {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-[80px]">ID</TableHead>
+                            {/* <TableHead className="w-[80px]">ID</TableHead> */}
                             <TableHead>Name</TableHead>
                             <TableHead>Emp Code</TableHead>
                             <TableHead>Company</TableHead>
@@ -147,7 +147,7 @@ export default function EmployeeSalaryPage() {
                           ) : (
                             employees.map(employee => (
                               <TableRow key={employee.id}>
-                                <TableCell className="font-medium">{employee.id}</TableCell>
+                                {/* <TableCell className="font-medium">{employee.id}</TableCell> */}
                                 <TableCell>{employee.Full_name || 'N/A'}</TableCell>
                                 <TableCell>{employee.emp_code || 'N/A'}</TableCell>
                                 <TableCell>{employee.company_name || 'N/A'}</TableCell>
