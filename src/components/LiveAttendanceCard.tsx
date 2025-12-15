@@ -156,14 +156,7 @@ export function LiveAttendanceCard({
                             </>
                         )}
                     </CardTitle>
-                    {data.status && (
-                        <Badge
-                            variant={data.status.includes('Present') ? 'default' : 'secondary'}
-                            className="font-medium"
-                        >
-                            {data.status}
-                        </Badge>
-                    )}
+
                 </div>
 
             </CardHeader>

@@ -42,16 +42,29 @@ export async function POST(request: NextRequest) {
     if (!body.fromDate && lookbackDays > 0) {
       baseFrom.setDate(baseFrom.getDate() - lookbackDays);
     }
-    const fromDate = body.fromDate || formatLocalDateTime(baseFrom);
-    const toDate = (typeof body.toDate === 'string' && body.toDate.toLowerCase() === 'now')
-      ? formatLocalDateTime(now)
-      : (body.toDate || formatLocalDateTime(now));
-
     // ESSL Configuration from environment variables
     const serverUrl = process.env.ESSL_SERVER_URL!;
     const serialNumber = process.env.ESSL_SERIAL_NUMBER!;
     const username = process.env.ESSL_USERNAME!;
     const password = process.env.ESSL_PASSWORD!;
+
+    const fromDate = body.fromDate || formatLocalDateTime(baseFrom);
+
+    // Fix: ESSL device expects local time (IST). Our Docker container is UTC.
+    // If we send utc-time "formatLocalDateTime(now)" for "toDate", we miss recent punches (5.5h gap).
+    // So for "now", explicitly convert to IST string.
+    let toDate = body.toDate;
+    if (!toDate || (typeof toDate === 'string' && toDate.toLowerCase() === 'now')) {
+      toDate = formatISTDateTime(new Date());
+    }
+
+    logger.info('Starting ESSL Sync', {
+      lookbackDays,
+      baseFrom: formatLocalDateTime(baseFrom),
+      fromDate,
+      toDate,
+      note: 'toDate converted to IST to match device clock'
+    });
 
     // Build SOAP XML request
     const xmlPostString = `<?xml version="1.0" encoding="utf-8"?>
@@ -422,6 +435,29 @@ function formatLocalDateTime(d: Date): string {
   const hh = String(d.getHours()).padStart(2, '0');
   const mm = String(d.getMinutes()).padStart(2, '0');
   const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${yyyy}-${MM}-${DD} ${hh}:${mm}:${ss}`;
+}
+
+// Format current moment as "YYYY-MM-DD HH:mm:ss" in IST (Asia/Kolkata)
+// This is critical when sending "toDate=Now" to the ESSL device, which operates in IST.
+function formatISTDateTime(d: Date): string {
+  // Use toLocaleString with strict options to match desired format
+  // en-CA gives YYYY-MM-DD
+  // en-GB gives DD/MM/YYYY, usually with HH:mm:ss
+  // Best: use Intl.DateTimeFormat or manual offset calc.
+
+  // Manual offset approach (safe & dependency-free): +05:30
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istTime = new Date(d.getTime() + istOffset);
+
+  // Now extract UTC components from this shifted date
+  const yyyy = istTime.getUTCFullYear();
+  const MM = String(istTime.getUTCMonth() + 1).padStart(2, '0');
+  const DD = String(istTime.getUTCDate()).padStart(2, '0');
+  const hh = String(istTime.getUTCHours()).padStart(2, '0');
+  const mm = String(istTime.getUTCMinutes()).padStart(2, '0');
+  const ss = String(istTime.getUTCSeconds()).padStart(2, '0');
+
   return `${yyyy}-${MM}-${DD} ${hh}:${mm}:${ss}`;
 }
 
