@@ -158,7 +158,7 @@ export default function EmployeeSalaryPage() {
                                       <IconEye className="h-4 w-4 mr-1" />
                                       View
                                     </Button>
-                                    <Link href={`update-emp-salary-structure/${employee.id}`}>
+                                      <Link href={`update-emp-salary-structure/${employee.id}`}>
                                       <Button size="sm" variant="default">
                                         <IconPencil className="h-4 w-4 mr-1" />
                                         Update

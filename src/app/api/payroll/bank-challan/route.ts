@@ -231,8 +231,7 @@ export async function GET(request: NextRequest) {
         // Final pay days calculation
         let payDays = Math.min(paidDays, totalDays); // Ensure it doesn't exceed total days in month
         payDays = Math.max(0, payDays); // Ensure it's not negative
-
-        const lopDays = totalDays - payDays;
+        const lopDays = Math.max(0, totalDays - payDays); // Ensure LOP is not negative
 
         // Calculate component-wise earnings
         const basic = parseFloat(user.Basic_Monthly_Remuneration || '0');
@@ -295,8 +294,8 @@ export async function GET(request: NextRequest) {
 
         return {
           ...user,
-          pay_days: Math.round(payDays * 10) / 10,
-          lop_days: Math.round(lopDays * 10) / 10,
+          pay_days: Math.round(Math.min(payDays, totalDays) * 10) / 10,
+          lop_days: Math.round(Math.max(0, totalDays - Math.min(payDays, totalDays)) * 10) / 10,
           basic_earned: Math.round(basicEarned),
           hra_earned: Math.round(hraEarned),
           other_earned: Math.round(otherEarned),

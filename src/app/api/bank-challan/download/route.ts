@@ -109,9 +109,9 @@ export async function GET(request: NextRequest) {
     // Process each user
     const enrichedData = await Promise.all(
       users.map(async user => {
-        if (!user.emp_code) return { 
-          ...user, 
-          pay_days: 0, 
+        if (!user.emp_code) return {
+          ...user,
+          pay_days: 0,
           lop_days: 0,
           basic_earned: 0,
           hra_earned: 0,
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
           professional_tax: 0,
           income_tax: 0,
           total_deduction: 0,
-          net_pay: 0 
+          net_pay: 0
         };
 
         const empIdStr = String(user.emp_code || '').trim();
@@ -214,7 +214,8 @@ export async function GET(request: NextRequest) {
         absentDays = Math.max(absentDays, 0);
 
         let payDays = totalDays - absentDays - halfDays + totalSickLeaveDays;
-        payDays = Math.max(0, payDays);
+        payDays = Math.max(0, Math.min(payDays, totalDays)); // Ensure payDays doesn't exceed totalDays
+        const lopDays = Math.max(0, totalDays - payDays);
 
         const basic = parseFloat(user.Basic_Monthly_Remuneration || '0');
         const hra = parseFloat(user.HRA_Monthly_Remuneration || '0');
@@ -271,8 +272,8 @@ export async function GET(request: NextRequest) {
 
         return {
           ...user,
-          pay_days: Math.round(payDays * 10) / 10,
-          lop_days: Math.round((totalDays - payDays) * 10) / 10,
+          pay_days: Math.round(Math.min(payDays, totalDays) * 10) / 10,
+          lop_days: Math.round(lopDays * 10) / 10,
           basic_earned: Math.round(basicEarned),
           hra_earned: Math.round(hraEarned),
           other_earned: Math.round(otherEarned),
