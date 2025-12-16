@@ -474,10 +474,10 @@ export default function BankChallanPage() {
                         {row.OTHER_ALLOWANCE_Monthly_Remuneration || ''}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.pay_days || ''}
+                        {row.pay_days !== null && row.pay_days !== undefined ? row.pay_days : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.lop_days || ''}
+                        {row.lop_days !== null && row.lop_days !== undefined ? row.lop_days : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
                         {row.basic_earned || ''}
