@@ -460,18 +460,20 @@ export default function BankChallanPage() {
                         {row.department || ''}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">{row.email || ''}</td>
-                      <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">{row.CTC || ''}</td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.gross_salary || ''}
+                        {row.CTC !== null && row.CTC !== undefined ? row.CTC : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.Basic_Monthly_Remuneration || ''}
+                        {row.gross_salary !== null && row.gross_salary !== undefined ? row.gross_salary : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.HRA_Monthly_Remuneration || ''}
+                        {row.Basic_Monthly_Remuneration !== null && row.Basic_Monthly_Remuneration !== undefined ? row.Basic_Monthly_Remuneration : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.OTHER_ALLOWANCE_Monthly_Remuneration || ''}
+                        {row.HRA_Monthly_Remuneration !== null && row.HRA_Monthly_Remuneration !== undefined ? row.HRA_Monthly_Remuneration : 0}
+                      </td>
+                      <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
+                        {row.OTHER_ALLOWANCE_Monthly_Remuneration !== null && row.OTHER_ALLOWANCE_Monthly_Remuneration !== undefined ? row.OTHER_ALLOWANCE_Monthly_Remuneration : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
                         {row.pay_days !== null && row.pay_days !== undefined ? row.pay_days : 0}
@@ -480,39 +482,39 @@ export default function BankChallanPage() {
                         {row.lop_days !== null && row.lop_days !== undefined ? row.lop_days : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.basic_earned || ''}
+                        {row.basic_earned !== null && row.basic_earned !== undefined ? row.basic_earned : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.hra_earned || ''}
+                        {row.hra_earned !== null && row.hra_earned !== undefined ? row.hra_earned : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.other_earned || ''}
+                        {row.other_earned !== null && row.other_earned !== undefined ? row.other_earned : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.total_earning || ''}
+                        {row.total_earning !== null && row.total_earning !== undefined ? row.total_earning : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.PF_Monthly_Contribution || ''}
+                        {row.PF_Monthly_Contribution !== null && row.PF_Monthly_Contribution !== undefined ? row.PF_Monthly_Contribution : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.Employee_Esic_Monthly || ''}
+                        {row.Employee_Esic_Monthly !== null && row.Employee_Esic_Monthly !== undefined ? row.Employee_Esic_Monthly : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.income_tax || ''}
+                        {row.income_tax !== null && row.income_tax !== undefined ? row.income_tax : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.professional_tax || ''}
+                        {row.professional_tax !== null && row.professional_tax !== undefined ? row.professional_tax : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5">
-                        {row.total_deduction || ''}
+                        {row.total_deduction !== null && row.total_deduction !== undefined ? row.total_deduction : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5 font-semibold">
-                        {row.net_pay || ''}
+                        {row.net_pay !== null && row.net_pay !== undefined ? row.net_pay : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5"></td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5"></td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5 font-semibold">
-                        {row.net_pay || ''}
+                        {row.net_pay !== null && row.net_pay !== undefined ? row.net_pay : 0}
                       </td>
                       <td className="border border-slate-300 dark:border-slate-600 px-2.5 py-1.5"></td>
                     </tr>
