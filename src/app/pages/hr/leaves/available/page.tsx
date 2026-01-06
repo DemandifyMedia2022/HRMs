@@ -117,36 +117,15 @@ function HrAvailableLeavePageInner() {
             <CardContent className="space-y-4">
               <div className="grid gap-4 lg:grid-cols-[2fr,auto]">
                 <div className="space-y-2">
-                  <Label htmlFor="user-search" className="text-sm font-medium">
-                    Employee
-                  </Label>
-                  <Input
-                    id="user-search"
-                    value={userName}
-                    onChange={e => setUserName(e.target.value)}
-                    placeholder="Search by user name"
-                  />
+                  <div className="space-y-2">
+  <Label className="text-sm font-medium">Employee</Label>
+  <p className="px-3 py-2 border rounded-md bg-gray-50">
+    {userName}
+  </p>
+</div>
+
                 </div>
-                <div className="flex flex-wrap items-end gap-2">
-                  <Button
-                    type="button"
-                    className="min-w-[140px]"
-                    onClick={() => load()}
-                    disabled={loading || !userName.trim()}
-                  >
-                    <ListChecks className="w-4 h-4 mr-2" />
-                    View Leave
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => load(userName)}
-                    disabled={loading || !userName.trim()}
-                  >
-                    <RefreshCcw className="w-4 h-4 mr-2" />
-                    Refresh
-                  </Button>
-                </div>
+               
               </div>
 
               {error && (

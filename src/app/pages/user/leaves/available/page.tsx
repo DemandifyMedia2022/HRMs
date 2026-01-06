@@ -120,34 +120,15 @@ function UserAvailableLeavePageInner() {
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-[2fr,auto]">
                 <div className="space-y-2">
-                  <Label htmlFor="user-search" className="text-sm font-medium">
-                    Employee
-                  </Label>
-                  <Input
-                    id="user-search"
-                    value={userName}
-                    onChange={e => setUserName(e.target.value)}
-                    placeholder="Search by user name"
-                  />
-                </div>
-                <div className="flex flex-col sm:flex-row items-end gap-2">
-                  <Button
-                    type="button"
-                    className="w-full sm:w-auto min-w-[100px]"
-                    onClick={() => load()}
-                    disabled={loading || !userName.trim()}
-                  >
-                    View Leave
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => load(userName)}
-                    disabled={loading || !userName.trim()}
-                  >
-                    Refresh
-                  </Button>
-                </div>
+  <div className="space-y-2">
+  <Label className="text-sm font-medium">Employee</Label>
+  <p className="px-3 py-2 border rounded-md bg-gray-50">
+    {userName}
+  </p>
+</div>
+</div>
+
+                
               </div>
 
               {error && (
