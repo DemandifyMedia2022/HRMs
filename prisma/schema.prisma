@@ -162,42 +162,6 @@ model extensions {
   @@ignore
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model attendance {
-  id                     Int       @id @default(autoincrement())
-  name                   String?   @db.VarChar(255)
-  username               String?   @db.VarChar(255)
-  email                  String    @db.VarChar(255)
-  date                   DateTime  @db.Date
-  shift_time             String    @db.VarChar(55)
-  new_shift_time         String?   @db.VarChar(255)
-  login_time             String    @db.VarChar(255)
-  added_by_user          String?   @db.VarChar(255)
-  logout_time            String    @db.VarChar(255)
-  logout_reason          String    @db.VarChar(11)
-  login_hours            String    @db.VarChar(55)
-  login_status           String?   @db.VarChar(255)
-  status                 String    @db.VarChar(11)
-  morning_break_start    DateTime? @db.Time(0)
-  morning_break_end      DateTime? @db.Time(0)
-  morning_break_duration String?   @db.VarChar(255)
-  lunch_break_start      DateTime? @db.Time(0)
-  lunch_break_end        DateTime? @db.Time(0)
-  lunch_break_duration   String?   @db.VarChar(255)
-  evening_break_start    DateTime? @db.Time(0)
-  evening_break_end      DateTime? @db.Time(0)
-  evening_break_duration String?   @db.VarChar(255)
-  idle_time              DateTime? @db.Time(0)
-  created_at             DateTime? @db.Timestamp(0)
-  updated_at             DateTime? @db.Timestamp(0)
-  password               String    @db.VarChar(255)
-  type                   String    @db.VarChar(255)
-  start_time             DateTime? @db.Time(0)
-  end_time               DateTime? @db.Time(0)
-  working_hours          DateTime? @db.Time(0)
-  short_break_duration   DateTime? @default(dbgenerated("('00:00:00')")) @db.Time(0)
-}
-
 model birthday_wishes {
   id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
   user_id    BigInt    @db.UnsignedBigInt

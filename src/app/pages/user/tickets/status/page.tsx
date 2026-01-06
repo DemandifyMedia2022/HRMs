@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SidebarConfig } from '@/components/sidebar-config';
 import { toast } from 'sonner';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface Complaint {
   id: number;
@@ -29,6 +30,7 @@ export default function RaiseTicketsPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<string>('');
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+  const [currentUserDept, setCurrentUserDept] = useState<string>('');
   const [filter, setFilter] = useState<string>('all');
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [resolutionComment, setResolutionComment] = useState('');
@@ -36,10 +38,22 @@ export default function RaiseTicketsPage() {
   const [acknowledging, setAcknowledging] = useState(false);
   const [isDepartmentUser, setIsDepartmentUser] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [reportFromDate, setReportFromDate] = useState<string>('');
+  const [reportToDate, setReportToDate] = useState<string>('');
 
   useEffect(() => {
     fetchUserAndComplaints();
   }, []);
+
+  // Helpers to map between Date and YYYY-MM-DD strings for DatePicker
+  const toYMD = (d?: Date | null) =>
+    d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : '';
+  const fromYMD = (s: string) => {
+    if (!s) return undefined;
+    const [y, m, dd] = s.split('-').map(n => parseInt(n, 10));
+    if (!y || !m || !dd) return undefined;
+    return new Date(y, m - 1, dd);
+  };
 
   // Map email to complaint types they should see
   function getComplaintTypesForEmail(email: string): string[] {
@@ -63,6 +77,88 @@ export default function RaiseTicketsPage() {
     return [];
   }
 
+  function toCsvValue(val: any) {
+    const s = val == null ? '' : String(val);
+    if (s.includes('"') || s.includes(',') || s.includes('\n')) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  }
+
+  function downloadResolvedReport() {
+    // Validate date range if both provided
+    if (reportFromDate && reportToDate) {
+      const from = new Date(reportFromDate);
+      const to = new Date(reportToDate);
+      if (from > to) {
+        toast.warning('From date cannot be after To date');
+        return;
+      }
+    }
+
+    // Base: resolved tickets only
+    let resolved = complaints.filter(c => c.status?.toLowerCase() === 'resolved');
+
+    // Apply date filter on resolved_date if selected
+    if (reportFromDate || reportToDate) {
+      const from = reportFromDate ? new Date(reportFromDate + 'T00:00:00') : null;
+      const to = reportToDate ? new Date(reportToDate + 'T23:59:59') : null;
+      resolved = resolved.filter(c => {
+        if (!c.resolved_date) return false;
+        const r = new Date(c.resolved_date);
+        if (from && r < from) return false;
+        if (to && r > to) return false;
+        return true;
+      });
+    }
+    const headers = [
+      'Ticket ID',
+      'Issue Type',
+      'Raised By',
+      'Department',
+      'Reason',
+      'Raised Date',
+      'Acknowledgement Status',
+      'Acknowledged By',
+      'Acknowledged Date',
+      'Status',
+      'Resolved Date',
+      'Resolution Comment',
+      'Resolved By'
+    ];
+
+    const rows = resolved.map(c => [
+      c.id,
+      c.issuse_type,
+      c.name,
+      c.department,
+      c.reason,
+      c.raisedate ? new Date(c.raisedate).toLocaleString() : '',
+      c.acknowledgement_status ?? '',
+      c.acknowledgement_by ?? '',
+      c.acknowledgement_date ? new Date(c.acknowledgement_date).toLocaleString() : '',
+      c.status ?? '',
+      c.resolved_date ? new Date(c.resolved_date).toLocaleString() : '',
+      c.resolution_comment ?? '',
+      c.resolved_by ?? ''
+    ]);
+
+    const csv = [headers, ...rows]
+      .map(r => r.map(toCsvValue).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `IT_Resolved_Tickets_${dateStr}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   async function fetchUserAndComplaints() {
     try {
       // Get current user
@@ -71,8 +167,10 @@ export default function RaiseTicketsPage() {
         const userData = await userRes.json();
         const userName = userData.name || '';
         const userEmail = userData.email || '';
+        const userDept = (userData.department || '').toString();
         setCurrentUser(userName);
         setCurrentUserEmail(userEmail);
+        setCurrentUserDept(userDept);
 
         // Fetch all complaints
         const res = await fetch('/api/complaints');
@@ -80,21 +178,28 @@ export default function RaiseTicketsPage() {
           const data = await res.json();
           const allComplaints = data.data || [];
 
-          // Get complaint types this user should see
-          const allowedTypes = getComplaintTypesForEmail(userEmail);
-
-          // Filter complaints
+          // Special case: IT department can view all tickets with full actions
+          const deptLower = userDept.toLowerCase();
           let filteredComplaints;
-          if (allowedTypes.length > 0) {
-            // User is a department receiver - show complaints for their department
+          if (deptLower === 'it' || deptLower.includes('information technology')) {
             setIsDepartmentUser(true);
-            filteredComplaints = allComplaints.filter((c: Complaint) => allowedTypes.includes(c.issuse_type));
+            filteredComplaints = allComplaints;
           } else {
-            // Regular user - show only their own complaints
-            setIsDepartmentUser(false);
-            filteredComplaints = allComplaints.filter(
-              (c: Complaint) => c.name === userName || c.added_by_user === userName
-            );
+            // Get complaint types this user should see
+            const allowedTypes = getComplaintTypesForEmail(userEmail);
+
+            // Filter complaints
+            if (allowedTypes.length > 0) {
+              // User is a department receiver - show complaints for their department
+              setIsDepartmentUser(true);
+              filteredComplaints = allComplaints.filter((c: Complaint) => allowedTypes.includes(c.issuse_type));
+            } else {
+              // Regular user - show only their own complaints
+              setIsDepartmentUser(false);
+              filteredComplaints = allComplaints.filter(
+                (c: Complaint) => c.name === userName || c.added_by_user === userName
+              );
+            }
           }
 
           setComplaints(filteredComplaints);
@@ -255,49 +360,80 @@ export default function RaiseTicketsPage() {
           {error && <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">{error}</div>}
 
           {/* Filter Tabs */}
-          <div className="mb-6 flex gap-2 border-b bg-white px-4 rounded-t-lg">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 font-medium transition-colors ${
-                filter === 'all' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              All ({complaints.length})
-            </button>
-            <button
-              onClick={() => setFilter('pending')}
-              className={`px-4 py-2 font-medium transition-colors ${
-                filter === 'pending' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Pending (
-              {complaints.filter(c => c.status?.toLowerCase() === 'pending' && !c.acknowledgement_status).length})
-            </button>
-            <button
-              onClick={() => setFilter('acknowledged')}
-              className={`px-4 py-2 font-medium transition-colors ${
-                filter === 'acknowledged'
-                  ? 'border-b-2 border-primary text-primary'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Acknowledged (
-              {
-                complaints.filter(
-                  c =>
-                    c.acknowledgement_status?.toLowerCase() === 'acknowledged' && c.status?.toLowerCase() !== 'resolved'
-                ).length
-              }
-              )
-            </button>
-            <button
-              onClick={() => setFilter('resolved')}
-              className={`px-4 py-2 font-medium transition-colors ${
-                filter === 'resolved' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Resolved ({complaints.filter(c => c.status?.toLowerCase() === 'resolved').length})
-            </button>
+          <div className="mb-6 flex items-center justify-between bg-white px-4 rounded-t-lg border-b">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setFilter('all')}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  filter === 'all' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                All ({complaints.length})
+              </button>
+              <button
+                onClick={() => setFilter('pending')}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  filter === 'pending' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Pending (
+                {complaints.filter(c => c.status?.toLowerCase() === 'pending' && !c.acknowledgement_status).length})
+              </button>
+              <button
+                onClick={() => setFilter('acknowledged')}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  filter === 'acknowledged'
+                    ? 'border-b-2 border-primary text-primary'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Acknowledged (
+                {
+                  complaints.filter(
+                    c =>
+                      c.acknowledgement_status?.toLowerCase() === 'acknowledged' && c.status?.toLowerCase() !== 'resolved'
+                  ).length
+                }
+                )
+              </button>
+              <button
+                onClick={() => setFilter('resolved')}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  filter === 'resolved' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Resolved ({complaints.filter(c => c.status?.toLowerCase() === 'resolved').length})
+              </button>
+            </div>
+
+            {isDepartmentUser && (currentUserDept.toLowerCase() === 'it' || currentUserDept.toLowerCase().includes('information technology')) && filter === 'resolved' && (
+              <div className="ml-auto my-2 flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  {/* <label className="text-xs text-gray-600">From</label> */}
+                  <DatePicker
+                    id="it_report_from"
+                    placeholder="From"
+                    value={fromYMD(reportFromDate)}
+                    onChange={d => setReportFromDate(toYMD(d))}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* <label className="text-xs text-gray-600">To</label> */}
+                  <DatePicker
+                    id="it_report_to"
+                    placeholder="TO"
+                    value={fromYMD(reportToDate)}
+                    onChange={d => setReportToDate(toYMD(d))}
+                  />
+                </div>
+                <button
+                  onClick={downloadResolvedReport}
+                  className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+                >
+                  Download Report
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Complaints Grid/List */}
