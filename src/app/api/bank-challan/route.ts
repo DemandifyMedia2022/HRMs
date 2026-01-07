@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { verifyToken, mapTypeToRole } from '@/lib/auth';
+import { decryptRecord } from '@/lib/crypto';
 
 const prisma = new PrismaClient();
 
@@ -94,11 +95,15 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Convert BigInt to number for JSON serialization
-    const users = usersRaw.map(user => ({
-      ...user,
-      id: Number(user.id)
-    }));
+    // Decrypt sensitive fields and convert BigInt to number for JSON serialization
+    const SENSITIVE_EMP_FIELDS = new Set<string>(['pan_card_no', 'UAN', 'bank_name', 'IFSC_code', 'Account_no']);
+    const users = usersRaw.map(user => {
+      const decrypted = decryptRecord(user as any, SENSITIVE_EMP_FIELDS) as typeof user;
+      return {
+        ...decrypted,
+        id: Number(user.id)
+      };
+    });
 
     // Parse selected month
     const [year, month] = selectedMonth.split('-').map(Number);

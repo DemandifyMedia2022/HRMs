@@ -14,8 +14,10 @@ import { LiveAttendanceCard } from '@/components/LiveAttendanceCard';
 
 export default function UserPage() {
   const { user, loading } = useRouteGuard('user');
-  const [year] = useState<number>(new Date().getFullYear());
-  const [month, setMonth] = useState<number>(new Date().getMonth());
+  const [{ year, month }, setYearMonth] = useState<{ year: number; month: number }>({
+    year: new Date().getFullYear(),
+    month: new Date().getMonth()
+  });
   const [data, setData] = useState<any[]>([]);
   const [holidays, setHolidays] = useState<
     { date: string; event_name: string; event_start: string | null; event_end: string | null }[]
@@ -320,10 +322,18 @@ export default function UserPage() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => setMonth(m => (m === 0 ? 11 : m - 1))}>
+                <Button size="sm" variant="outline" onClick={() => setYearMonth(p => {
+                  const d = new Date(p.year, p.month, 1);
+                  d.setMonth(d.getMonth() - 1);
+                  return { year: d.getFullYear(), month: d.getMonth() };
+                })}>
                   Prev
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => setMonth(m => (m === 11 ? 0 : m + 1))}>
+                <Button size="sm" variant="outline" onClick={() => setYearMonth(p => {
+                  const d = new Date(p.year, p.month, 1);
+                  d.setMonth(d.getMonth() + 1);
+                  return { year: d.getFullYear(), month: d.getMonth() };
+                })}>
                   Next
                 </Button>
               </div>

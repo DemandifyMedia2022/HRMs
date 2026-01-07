@@ -71,19 +71,13 @@ export default function BankChallanPage() {
       if (filterMonth) params.append('month', filterMonth);
 
       if (params.toString()) url += `?${params.toString()}`;
-
-      console.log('Fetching from:', url);
       const response = await fetch(url, {
         credentials: 'include'
       });
-
-      console.log('Response status:', response.status);
       const result = await response.json();
-      console.log('API Response:', result);
 
       if (result.success) {
         setData(result.data || []);
-        console.log('Data loaded:', result.data?.length, 'records');
       } else {
         setError(result.error || 'Failed to fetch data');
         console.error('Failed to fetch data:', result.error);
