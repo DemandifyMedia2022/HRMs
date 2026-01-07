@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, useRef, type ChangeEvent, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -137,6 +137,8 @@ export default function EmployeeDetailsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingForm, setPendingForm] = useState<HTMLFormElement | null>(null);
   const [pendingTarget, setPendingTarget] = useState<'save' | 'documents' | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const lastLoadedIdRef = useRef<number | null>(null);
 
   function toDateInput(v?: string | null) {
     if (!v) return '';
@@ -207,8 +209,9 @@ export default function EmployeeDetailsPage() {
       toast.success('Documents uploaded successfully');
       setFlash('Documents uploaded successfully');
       setTimeout(() => setFlash(null), 2500);
-      const full = await fetch(`/api/hr/employees/${selected.id}`, { cache: 'no-store' }).then(r => r.json());
-      setSelected(prev => (prev ? { ...prev, ...full } : full));
+      // Refresh selected with latest values from server
+      lastLoadedIdRef.current = null;
+      await loadFullEmployeeDetails(selected.id);
       form.reset();
     } catch (err: any) {
       toast.error(err?.message || 'Upload failed');
@@ -300,8 +303,12 @@ export default function EmployeeDetailsPage() {
         const filtered = deptFilter === 'All' ? list : list.filter(u => (u.department || '') === deptFilter);
         setEmployees(filtered);
         // If current selection not in filtered, adjust selection
+        // Only set selected if it's actually different to prevent unnecessary re-renders
+        const newSelected = filtered[0] || null;
         if (!selected || !filtered.find(u => u.id === selected.id)) {
-          setSelected(filtered[0] || null);
+          if (newSelected?.id !== selected?.id) {
+            setSelected(newSelected);
+          }
         }
         setPageNum(1);
       } catch (e: any) {
@@ -311,24 +318,59 @@ export default function EmployeeDetailsPage() {
       }
     }
     run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qs]);
 
-  useEffect(() => {
-    let abort = false;
-    async function loadFull() {
-      if (!selected?.id) return;
-      try {
-        const res = await fetch(`/api/hr/employees/${selected.id}`, { cache: 'no-store' });
-        if (!res.ok) return;
-        const full = await res.json();
-        if (abort) return;
-        setSelected(prev => (prev ? { ...prev, ...full } : full));
-      } catch {}
+  // Function to explicitly load full employee details
+  const loadFullEmployeeDetails = async (employeeId: number) => {
+    if (!employeeId) return;
+    // Skip if already loaded this exact ID (avoid redundant calls)
+    if (lastLoadedIdRef.current === employeeId) {
+      return;
     }
-    loadFull();
-    return () => {
-      abort = true;
-    };
+    // Skip if already loading (prevent concurrent requests)
+    if (loadingDetails) {
+      return;
+    }
+    // Mark this ID as being loaded
+    const currentRequestId = employeeId;
+    lastLoadedIdRef.current = currentRequestId;
+    setLoadingDetails(true);
+    try {
+      const res = await fetch(`/api/hr/employees/${employeeId}`, { cache: 'no-store' });
+      if (!res.ok) {
+        throw new Error('Failed to load employee details');
+      }
+      const full = await res.json();
+      // Only update if this is still the current request (prevent race conditions)
+      if (lastLoadedIdRef.current === currentRequestId && full.id === employeeId) {
+        setSelected(full);
+        setError(null);
+      }
+    } catch (err: any) {
+      // Only show error if this is still the current request
+      if (lastLoadedIdRef.current === currentRequestId) {
+        const errorMsg = err?.message || 'Failed to load employee details';
+        setError(errorMsg);
+        toast.error(errorMsg);
+        console.error('Failed to load employee details:', err);
+        lastLoadedIdRef.current = null; // Reset on error so we can retry
+      }
+    } finally {
+      // Only reset loading state if this is still the current request
+      if (lastLoadedIdRef.current === currentRequestId) {
+        setLoadingDetails(false);
+      }
+    }
+  };
+
+  // Auto-load full details when selected employee ID changes (for programmatic selections)
+  useEffect(() => {
+    // Only load if ID exists, is different from last loaded, and we're not currently loading
+    if (selected?.id && lastLoadedIdRef.current !== selected.id && !loadingDetails) {
+      loadFullEmployeeDetails(selected.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.id]);
 
   useEffect(() => {
@@ -336,10 +378,15 @@ export default function EmployeeDetailsPage() {
     const filtered =
       deptFilter === 'All' ? employeesAll : employeesAll.filter(u => (u.department || '') === deptFilter);
     setEmployees(filtered);
+    const newSelected = filtered[0] || null;
     if (!selected || !filtered.find(u => u.id === selected.id)) {
-      setSelected(filtered[0] || null);
+      // Only update if the ID actually changed to prevent unnecessary re-renders
+      if (newSelected?.id !== selected?.id) {
+        setSelected(newSelected);
+      }
     }
     setPageNum(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deptFilter, employeesAll]);
 
   // Keep family marital status state in sync with selected employee
@@ -385,6 +432,12 @@ export default function EmployeeDetailsPage() {
       toast.success('Changes saved');
       setFlash('Saved successfully');
       setTimeout(() => setFlash(null), 2500);
+      // Refresh selected with latest values from server
+      try {
+        // Reset ref to force reload
+        lastLoadedIdRef.current = null;
+        loadFullEmployeeDetails(selected.id);
+      } catch {}
     } catch (err: any) {
       toast.error(err?.message || 'Save failed');
     } finally {
@@ -495,7 +548,15 @@ export default function EmployeeDetailsPage() {
                     {pagedEmployees.map(u => (
                       <Card
                         key={u.id}
-                        onClick={() => setSelected(u)}
+                        onClick={() => {
+                          // Only update if clicking a different employee
+                          if (selected?.id !== u.id) {
+                            // Reset the last loaded ref so useEffect will load new employee details
+                            lastLoadedIdRef.current = null;
+                            // Set basic employee data - useEffect will automatically load full details
+                            setSelected(u);
+                          }
+                        }}
                         className={`cursor-pointer transition-all duration-200 hover:shadow-xl hover:-translate-y-1 ${
                           selected?.id === u.id ? 'ring-2 ring-primary shadow-xl bg-blue-50' : 'hover:border-blue-300'
                         }`}
@@ -583,6 +644,13 @@ export default function EmployeeDetailsPage() {
                 <div className="text-center py-12">
                   <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-600">Select an employee from the list above to view and edit their details</p>
+                </div>
+              ) : loadingDetails ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-gray-600 mt-4">Loading employee details...</p>
+                  </div>
                 </div>
               ) : (
                 <Tabs value={tab} onValueChange={setTab} className="w-full">

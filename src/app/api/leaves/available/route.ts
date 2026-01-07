@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
+ 
 function workingDaysBetween(start: Date, end: Date): number {
   // inclusive range, exclude Sat(6)/Sun(0)
   let count = 0;
@@ -13,7 +13,7 @@ function workingDaysBetween(start: Date, end: Date): number {
   }
   return count;
 }
-
+ 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -21,17 +21,17 @@ export async function GET(req: Request) {
     if (!userName) {
       return NextResponse.json({ error: 'Missing user_name' }, { status: 400 });
     }
-
+ 
     const Approved = 'Approved';
     const totalPaidLeave = 12;
     const totalSickLeave = 6;
-
+ 
     // all leaves for the user (for table display)
     const allLeaves = await prisma.leavedata.findMany({
       where: { added_by_user: userName },
       orderBy: { start_date: 'desc' }
     });
-
+ 
     // approved leaves for counting balances
     // Count as approved if either HR OR Manager has approved (handle common case variants)
     const approvedLeaves = await prisma.leavedata.findMany({
@@ -44,15 +44,15 @@ export async function GET(req: Request) {
       },
       orderBy: { start_date: 'desc' }
     });
-
+ 
     let usedPaidLeave = 0;
     let usedSickLeave = 0;
-
+ 
     for (const leave of approvedLeaves) {
       const start = new Date(leave.start_date as any);
       const end = new Date(leave.end_date as any);
       const days = workingDaysBetween(start, end);
-
+ 
       if (leave.leave_type === 'Paid Leave') {
         usedPaidLeave += days;
       } else if (leave.leave_type === 'Sick Leave(HalfDay)') {
@@ -61,10 +61,10 @@ export async function GET(req: Request) {
         usedSickLeave += 1 * days;
       }
     }
-
+ 
     const remainingPaidLeave = Math.max(0, totalPaidLeave - usedPaidLeave);
     const remainingSickLeave = Math.max(0, totalSickLeave - usedSickLeave);
-
+ 
     return NextResponse.json({
       approvedLeaves,
       LeaveApprovalData: allLeaves,
