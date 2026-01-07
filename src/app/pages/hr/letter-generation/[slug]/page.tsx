@@ -4,6 +4,7 @@ import { useMemo, useState, use, useRef, useEffect } from "react"
 import Link from "next/link"
 import { Document as PdfDocument, Page, Text, View, Image, StyleSheet, pdf } from "@react-pdf/renderer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -495,6 +496,7 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
   const [formData, setFormData] = useState<Record<string, any>>(() => ({}))
   const [previewData, setPreviewData] = useState<Record<string, any>>(() => ({}))
   const [showPreview, setShowPreview] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const COMPANY_NAME = "Demandify Media Pvt. Ltd."
 
@@ -917,7 +919,7 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
 
                     <Button
                       type="button"
-                      onClick={handleDownloadPdfMake}
+                      onClick={isEditing ? handleDownload : handleDownloadPdfMake}
                       disabled={!showPreview}
                       variant="default"
                       className="w-50 sm:w-54"
@@ -956,12 +958,26 @@ export default function LetterFormPage({ params }: { params: Promise<{ slug: str
           {/* Preview */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Preview</CardTitle>
+              <CardTitle className="text-base flex items-center justify-between">
+                <span>Preview</span>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="edit-mode" 
+                    checked={isEditing} 
+                    onCheckedChange={(checked) => setIsEditing(checked as boolean)} 
+                  />
+                  <Label htmlFor="edit-mode" className="text-sm font-normal cursor-pointer">Enable Editing</Label>
+                </div>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {showPreview ? (
                 <div
-                  className="min-h-[600px] mx-auto max-w-[800px] bg-white border border-slate-200 rounded-xl shadow-sm ring-1 ring-slate-100 p-6 sm:p-8"
+                  className={`min-h-[600px] mx-auto max-w-[800px] bg-white border border-slate-200 rounded-xl shadow-sm p-6 sm:p-8 ${
+                    isEditing ? 'ring-2 ring-blue-500 ring-offset-2 outline-none' : 'ring-1 ring-slate-100'
+                  }`}
+                  contentEditable={isEditing}
+                  suppressContentEditableWarning={true}
                   ref={previewRef}
                   data-pdf-root
                 >
