@@ -36,7 +36,15 @@ type AvailableResponse = {
   usedSickLeave: number;
   remainingPaidLeave: number;
   remainingSickLeave: number;
-  totals: { totalPaidLeave: number; totalSickLeave: number };
+  totals: { 
+    totalPaidLeave: number; 
+    totalSickLeave: number;
+    accruedPaidLeave?: number;
+    accruedSickLeave?: number;
+    monthsAccrued?: number;
+    carryoverPaid?: number;
+    carryoverSick?: number;
+  };
   user: string;
 };
 
@@ -197,7 +205,16 @@ function HrAvailableLeavePageInner() {
               <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2">Sick Leave Usage</CardTitle>
-                  <CardDescription>Visual breakdown of sick leave consumption.</CardDescription>
+                  <CardDescription>
+                    {data.totals.monthsAccrued !== undefined 
+                      ? `Accrued: ${data.totals.accruedSickLeave?.toFixed(1) || 0} days (${data.totals.monthsAccrued} months)`
+                      : 'Visual breakdown of sick leave consumption.'}
+                    {data.totals.carryoverSick && data.totals.carryoverSick > 0 && (
+                      <span className="block text-xs text-green-600 mt-1">
+                        Carryover: {data.totals.carryoverSick.toFixed(1)} days
+                      </span>
+                    )}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer
@@ -226,6 +243,20 @@ function HrAvailableLeavePageInner() {
                       <ChartLegend content={<ChartLegendContent />} />
                     </PieChart>
                   </ChartContainer>
+                  <div className="mt-4 text-sm text-gray-600 space-y-1">
+                    <div className="flex justify-between">
+                      <span>Accrued:</span>
+                      <span className="font-semibold">{data.totals.accruedSickLeave?.toFixed(1) || data.totals.totalSickLeave} days</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Used:</span>
+                      <span className="font-semibold">{data.usedSickLeave.toFixed(1)} days</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-1">
+                      <span>Available:</span>
+                      <span className="font-semibold text-green-600">{data.remainingSickLeave.toFixed(1)} days</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
