@@ -103,7 +103,7 @@ export default function Login07({
                     <Input
                       id="email"
                       className="peer ps-9"
-                      placeholder="ephraim@blocks.so"
+                      placeholder="Enter Username"
                       type="email"
                       value={email}
                       onChange={(e) => onEmailChange(e.target.value)}

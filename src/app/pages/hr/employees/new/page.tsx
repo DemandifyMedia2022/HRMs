@@ -32,6 +32,8 @@ export default function AddEmployeePage() {
   const [businessUnit, setBusinessUnit] = useState('');
   const [department, setDepartment] = useState('');
   const [roleType, setRoleType] = useState('');
+  const [jobRole, setJobRole] = useState('');
+  const [jobRoleOptions, setJobRoleOptions] = useState<string[]>([]);
   const [joinDate, setJoinDate] = useState<Date | undefined>(undefined);
   const [dobDate, setDobDate] = useState<Date | undefined>(undefined);
   const [retirementDate, setRetirementDate] = useState<Date | undefined>(undefined);
@@ -45,11 +47,33 @@ export default function AddEmployeePage() {
     return `${y}-${m}-${dd}`;
   }
 
+  const departmentJobRoles: Record<string, string[]> = {
+    Sales: ['Sales Development Representative', 'Business Development Representative', 'Account Manager', 'Account Director'],
+    Development: ['Wordpress Developer', 'Frontend Developer', 'Full Stack Developer', 'Backend Developer'],
+    HR: ['SR. Human Resource Executive', 'HR Executive', 'HR Manager', 'Finance Executive Intern'],
+    Operation: ['Lead Generation Executive', 'Assitant Team Leader', 'Team Lead', 'Operations Manager', 'Appointment Generation', 'Data Analyst'],
+    'Quality Analyst': ['Quality Head', 'Senior Quality Analyst', 'Quality Analyst'],
+    Marketing: ['Digital Marketing Manager', 'Seo Executive', 'SR. Digital Marketing Executive', 'UI/UX Designer'],
+    IT: ['IT Manager', 'IT Executive'],
+    Administration: ['Admin'],
+    CSM: ['Client Success Manager']
+  };
+
+  useEffect(() => {
+    if (department && departmentJobRoles[department]) {
+      setJobRoleOptions(departmentJobRoles[department]);
+    } else {
+      setJobRoleOptions([]);
+    }
+    setJobRole('');
+  }, [department]);
+
   useEffect(() => {
     let abort = false;
     async function loadOptions() {
       setOptLoading(true);
       setOptError(null);
+
       try {
         const deptSet = new Set<string>();
         const buSet = new Set<string>();
@@ -136,253 +160,269 @@ export default function AddEmployeePage() {
               {error && <div className="text-sm text-destructive">{error}</div>}
               {success && <div className="text-sm text-green-600">{success}</div>}
               <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="join_date">Join Date <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <DatePicker
-                id="join_date_picker"
-                placeholder="Select date"
-                value={joinDate}
-                onChange={setJoinDate}
-                triggerClassName="w-full justify-between"
-              />
-              <input type="hidden" name="join_date" value={formatDateISO(joinDate)} required />
-            </div>
-            <div>
-              <Label>Prefix <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Select value={prefix} onValueChange={setPrefix}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Mr.">Mr.</SelectItem>
-                  <SelectItem value="Ms.">Ms.</SelectItem>
-                  <SelectItem value="Mrs.">Mrs.</SelectItem>
-                  <SelectItem value="Dr.">Dr.</SelectItem>
-                  <SelectItem value="Prof.">Prof.</SelectItem>
-                </SelectContent>
-              </Select>
-              <input type="hidden" name="Prefix" value={prefix} required />
-            </div>
-            <div>
-              <Label htmlFor="name">Name <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Input id="name" name="name" required />
-            </div>
-            <div>
-              <Label htmlFor="full_name">Full Name <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Input id="full_name" name="full_name" required />
-            </div>
-            <div>
-              <Label>Gender <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Select value={gender} onValueChange={setGender}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-              <input type="hidden" name="gender" value={gender} required />
-            </div>
-            <div>
-              <Label htmlFor="emp_code">Employee Code <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Input id="emp_code" name="emp_code" required />
-            </div>
-            <div>
-              <Label>Blood Group <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Select value={bloodGroup} onValueChange={setBloodGroup}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A+">A+</SelectItem>
-                  <SelectItem value="A-">A-</SelectItem>
-                  <SelectItem value="B+">B+</SelectItem>
-                  <SelectItem value="B-">B-</SelectItem>
-                  <SelectItem value="AB+">AB+</SelectItem>
-                  <SelectItem value="AB-">AB-</SelectItem>
-                  <SelectItem value="O+">O+</SelectItem>
-                  <SelectItem value="O-">O-</SelectItem>
-                </SelectContent>
-              </Select>
-              <input type="hidden" name="blood_group" value={bloodGroup} required />
-            </div>
-            <div>
-              <Label htmlFor="nationality">Nationality <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Input id="nationality" name="nationality" required />
-            </div>
-            <div>
-              <Label htmlFor="email">Email <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Input id="email" name="email" type="email" required />
-            </div>
-            <div>
-              <Label htmlFor="personal_email">Personal Email <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Input id="personal_email" name="personal_email" type="email" required />
-            </div>
-            <div>
-              <Label htmlFor="contact_no">Contact No <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Input id="contact_no" name="contact_no" required />
-            </div>
-            <div>
-              <Label htmlFor="dob">DOB <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <DatePicker
-                id="dob_picker"
-                placeholder="Select date"
-                value={dobDate}
-                onChange={setDobDate}
-                triggerClassName="w-full justify-between"
-              />
-              <input type="hidden" name="dob" value={formatDateISO(dobDate)} required />
-            </div>
-            <div>
-              <Label htmlFor="retirement_date">Retirement Date <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <DatePicker
-                id="retirement_date_picker"
-                placeholder="Select date"
-                value={retirementDate}
-                onChange={setRetirementDate}
-                triggerClassName="w-full justify-between"
-              />
-              <input type="hidden" name="retirement_date" value={formatDateISO(retirementDate)} />
-            </div>
-            <div>
-              <Label>Employment Type <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Select value={employmentType} onValueChange={setEmploymentType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Consultant">Consultant</SelectItem>
-                  <SelectItem value="Contractual">Contractual</SelectItem>
-                  <SelectItem value="Permanent">Permanent</SelectItem>
-                  <SelectItem value="Trainee">Trainee</SelectItem>
-                  <SelectItem value="Wages">Wages</SelectItem>
-                </SelectContent>
-              </Select>
-              <input type="hidden" name="employment_type" value={employmentType} required />
-            </div>
-            <div>
-              <Label>Employment Status <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Select value={employmentStatus} onValueChange={setEmploymentStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Probation">Probation</SelectItem>
-                  <SelectItem value="Confirmed">Confirmed</SelectItem>
-                  <SelectItem value="Resigned">Resigned</SelectItem>
-                  <SelectItem value="Relieved">Relieved</SelectItem>
-                  <SelectItem value="Settled">Settled</SelectItem>
-                </SelectContent>
-              </Select>
-              <input type="hidden" name="employment_status" value={employmentStatus} required />
-            </div>
-            <div>
-              <Label>Company <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Select value={company} onValueChange={setCompany}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Demandify Media">Demandify Media</SelectItem>
-                  <SelectItem value="Gnosis Dtata Marketing">Gnosis Dtata Marketing</SelectItem>
-                </SelectContent>
-              </Select>
-              <input type="hidden" name="company" value={company} required />
-            </div>
-            <div>
-              <Label>Business Unit <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Select value={businessUnit} onValueChange={setBusinessUnit}>
-                <SelectTrigger disabled={optLoading}>
-                  <SelectValue placeholder={optLoading ? 'Loading...' : 'Select'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {buOptions.map(bu => (
-                    <SelectItem key={bu} value={bu}>
-                      {bu}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <input type="hidden" name="Business_unit" value={businessUnit} required />
-              {optError ? <div className="text-xs text-red-600 mt-1">{optError}</div> : null}
-            </div>
-            <div>
-              <Label htmlFor="job_role">Job Role <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Input id="job_role" name="job_role" required />
-            </div>
-            <div>
-              <Label>Department <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Select value={department} onValueChange={setDepartment}>
-                <SelectTrigger disabled={optLoading}>
-                  <SelectValue placeholder={optLoading ? 'Loading...' : 'Select'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {deptOptions.map(d => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <input type="hidden" name="department" value={department} required />
-              {optError ? <div className="text-xs text-red-600 mt-1">{optError}</div> : null}
-            </div>
-            <div>
-              <Label htmlFor="reporting_manager">Reporting Manager <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Input id="reporting_manager" name="reporting_manager" required />
-            </div>
-            <div>
-              <Label htmlFor="Functional_manager">Functional Manager <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Input id="Functional_manager" name="Functional_manager" required />
-            </div>
-            <div className="md:col-span-3">
-              <Label htmlFor="emp_address">Employee Address <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Textarea id="emp_address" name="emp_address" required />
-            </div>
-            <div>
-              <Label>Role Type <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <Select value={roleType} onValueChange={setRoleType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Manager">Manager</SelectItem>
-                  <SelectItem value="HR">HR</SelectItem>
-                  <SelectItem value="Quality">Quality</SelectItem>
-                  <SelectItem value="IT">IT</SelectItem>
-                  <SelectItem value="Marketing">Marketing</SelectItem>
-                  <SelectItem value="Sales">Sales</SelectItem>
-                  <SelectItem value="Operation Agent">Operation Agent</SelectItem>
-                </SelectContent>
-              </Select>
-              <input type="hidden" name="type" value={roleType} required />
-            </div>
-            <div>
-              <Label htmlFor="password">Password <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute inset-y-0 right-0 h-full px-3 text-muted-foreground"
-                  onClick={() => setShowPassword(v => !v)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </Button>
-              </div>
-            </div>
+                <div>
+                  <Label htmlFor="join_date">Join Date <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <DatePicker
+                    id="join_date_picker"
+                    placeholder="Select date"
+                    value={joinDate}
+                    onChange={setJoinDate}
+                    triggerClassName="w-full justify-between"
+                  />
+                  <input type="hidden" name="join_date" value={formatDateISO(joinDate)} required />
+                </div>
+                <div>
+                  <Label>Prefix <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Select value={prefix} onValueChange={setPrefix}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Mr.">Mr.</SelectItem>
+                      <SelectItem value="Ms.">Ms.</SelectItem>
+                      <SelectItem value="Mrs.">Mrs.</SelectItem>
+                      <SelectItem value="Dr.">Dr.</SelectItem>
+                      <SelectItem value="Prof.">Prof.</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <input type="hidden" name="Prefix" value={prefix} required />
+                </div>
+                <div>
+                  <Label htmlFor="name">Name <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Input id="name" name="name" required className="w-full" />
+                </div>
+                <div>
+                  <Label htmlFor="full_name">Full Name <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Input id="full_name" name="full_name" required className="w-full" />
+                </div>
+                <div>
+                  <Label>Gender <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Select value={gender} onValueChange={setGender}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <input type="hidden" name="gender" value={gender} required />
+                </div>
+                <div>
+                  <Label htmlFor="emp_code">Employee Code <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Input id="emp_code" name="emp_code" required className="w-full" />
+                </div>
+                <div>
+                  <Label>Blood Group <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Select value={bloodGroup} onValueChange={setBloodGroup}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A+">A+</SelectItem>
+                      <SelectItem value="A-">A-</SelectItem>
+                      <SelectItem value="B+">B+</SelectItem>
+                      <SelectItem value="B-">B-</SelectItem>
+                      <SelectItem value="AB+">AB+</SelectItem>
+                      <SelectItem value="AB-">AB-</SelectItem>
+                      <SelectItem value="O+">O+</SelectItem>
+                      <SelectItem value="O-">O-</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <input type="hidden" name="blood_group" value={bloodGroup} required />
+                </div>
+                <div>
+                  <Label htmlFor="nationality">Nationality <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Input id="nationality" name="nationality" required className="w-full" />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Input id="email" name="email" type="email" required className="w-full" />
+                </div>
+                <div>
+                  <Label htmlFor="personal_email">Personal Email <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Input id="personal_email" name="personal_email" type="email" required className="w-full" />
+                </div>
+                <div>
+                  <Label htmlFor="contact_no">Contact No <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Input id="contact_no" name="contact_no" required className="w-full" />
+                </div>
+                <div>
+                  <Label htmlFor="dob">DOB <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <DatePicker
+                    id="dob_picker"
+                    placeholder="Select date"
+                    value={dobDate}
+                    onChange={setDobDate}
+                    triggerClassName="w-full justify-between"
+                  />
+                  <input type="hidden" name="dob" value={formatDateISO(dobDate)} required />
+                </div>
+                <div>
+                  <Label htmlFor="retirement_date">Retirement Date <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <DatePicker
+                    id="retirement_date_picker"
+                    placeholder="Select date"
+                    value={retirementDate}
+                    onChange={setRetirementDate}
+                    triggerClassName="w-full justify-between"
+                  />
+                  <input type="hidden" name="retirement_date" value={formatDateISO(retirementDate)} />
+                </div>
+                <div>
+                  <Label>Employment Type <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Select value={employmentType} onValueChange={setEmploymentType}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Consultant">Consultant</SelectItem>
+                      <SelectItem value="Contractual">Contractual</SelectItem>
+                      <SelectItem value="Permanent">Permanent</SelectItem>
+                      <SelectItem value="Trainee">Trainee</SelectItem>
+                      <SelectItem value="Wages">Wages</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <input type="hidden" name="employment_type" value={employmentType} required />
+                </div>
+                <div>
+                  <Label>Employment Status <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Select value={employmentStatus} onValueChange={setEmploymentStatus}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Probation">Probation</SelectItem>
+                      <SelectItem value="Confirmed">Confirmed</SelectItem>
+                      <SelectItem value="Resigned">Resigned</SelectItem>
+                      <SelectItem value="Relieved">Relieved</SelectItem>
+                      <SelectItem value="Settled">Settled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <input type="hidden" name="employment_status" value={employmentStatus} required />
+                </div>
+                <div>
+                  <Label>Company <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Select value={company} onValueChange={setCompany}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Demandify Media">Demandify Media</SelectItem>
+                      <SelectItem value="Gnosis Dtata Marketing">Gnosis Dtata Marketing</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <input type="hidden" name="company" value={company} required />
+                </div>
+                <div>
+                  <Label>Business Unit <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Select value={businessUnit} onValueChange={setBusinessUnit}>
+                    <SelectTrigger disabled={optLoading} className="w-full">
+                      <SelectValue placeholder={optLoading ? 'Loading...' : 'Select'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {buOptions.map(bu => (
+                        <SelectItem key={bu} value={bu}>
+                          {bu}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <input type="hidden" name="Business_unit" value={businessUnit} required />
+                  {optError ? <div className="text-xs text-red-600 mt-1">{optError}</div> : null}
+                </div>
+                <div>
+                  <Label>Department <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Select value={department} onValueChange={setDepartment}>
+                    <SelectTrigger disabled={optLoading} className="w-full">
+                      <SelectValue placeholder={optLoading ? 'Loading...' : 'Select'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {deptOptions.map(d => (
+                        <SelectItem key={d} value={d}>
+                          {d}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <input type="hidden" name="department" value={department} required />
+                  {optError ? <div className="text-xs text-red-600 mt-1">{optError}</div> : null}
+                </div>
+                <div>
+                  <Label>Job Role <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Select
+                    value={jobRole}
+                    onValueChange={setJobRole}
+                    disabled={!department || jobRoleOptions.length === 0}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={department ? 'Select Job Role' : 'Select Department first'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {jobRoleOptions.map(role => (
+                        <SelectItem key={role} value={role}>
+                          {role}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <input type="hidden" name="job_role" value={jobRole} required />
+                </div>
+                <div>
+                  <Label htmlFor="reporting_manager">Reporting Manager <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Input id="reporting_manager" name="reporting_manager" required className="w-full" />
+                </div>
+                <div>
+                  <Label htmlFor="Functional_manager">Functional Manager <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Input id="Functional_manager" name="Functional_manager" required className="w-full" />
+                </div>
+                <div className="md:col-span-3">
+                  <Label htmlFor="emp_address">Employee Address <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Textarea id="emp_address" name="emp_address" required className="w-full" />
+                </div>
+                <div>
+                  <Label>Role Type <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <Select value={roleType} onValueChange={setRoleType}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Manager">Manager</SelectItem>
+                      <SelectItem value="HR">HR</SelectItem>
+                      <SelectItem value="Quality">Quality</SelectItem>
+                      <SelectItem value="IT">IT</SelectItem>
+                      <SelectItem value="Marketing">Marketing</SelectItem>
+                      <SelectItem value="Sales">Sales</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <input type="hidden" name="type" value={roleType} required />
+                </div>
+                <div>
+                  <Label htmlFor="password">Password <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      className="w-full pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute inset-y-0 right-0 h-full px-3 text-muted-foreground"
+                      onClick={() => setShowPassword(v => !v)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </Button>
+                  </div>
+                </div>
               </section>
               <Separator />
+
               <div className="text-sm font-medium text-muted-foreground">Documents</div>
               <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

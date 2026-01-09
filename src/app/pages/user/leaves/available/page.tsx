@@ -64,7 +64,67 @@ function UserAvailableLeavePageInner() {
         throw new Error(body?.error || 'Failed to load available leaves');
       }
       const json = (await res.json()) as AvailableResponse;
-      setData(json);
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const yearStart = new Date(year, 0, 1);
+      yearStart.setHours(0, 0, 0, 0);
+      const yearEnd = new Date(year, 11, 31);
+      yearEnd.setHours(23, 59, 59, 999);
+
+      const normalize = (d: Date) => {
+        const x = new Date(d);
+        x.setHours(0, 0, 0, 0);
+        return x;
+      };
+
+      const daysInCurrentYear = (startISO: string, endISO: string) => {
+        const start = new Date(startISO);
+        const end = new Date(endISO);
+        const startClamped = start < yearStart ? yearStart : start;
+        const endClamped = end > yearEnd ? yearEnd : end;
+        if (endClamped < yearStart || startClamped > yearEnd) return 0;
+        const s = normalize(startClamped).getTime();
+        const e = normalize(endClamped).getTime();
+        return Math.max(1, Math.round((e - s) / 86400000) + 1);
+      };
+
+      const approvedCurrent = Array.isArray(json.approvedLeaves)
+        ? json.approvedLeaves.filter(l => daysInCurrentYear(l.start_date, l.end_date) > 0)
+        : [];
+      const allCurrent = Array.isArray(json.LeaveApprovalData)
+        ? json.LeaveApprovalData.filter(l => daysInCurrentYear(l.start_date, l.end_date) > 0)
+        : [];
+
+      const usedByType = (needle: string) =>
+        approvedCurrent
+          .filter(l => (l.leave_type || '').toLowerCase().includes(needle))
+          .reduce((sum, l) => sum + daysInCurrentYear(l.start_date, l.end_date), 0);
+
+      const usedPaidLeave = usedByType('paid');
+      const usedSickLeave = usedByType('sick');
+
+      const totalPaidLeave = 12;
+      const totalSickLeave = 6;
+
+      const monthsElapsed = now.getMonth() + 1;
+      const earnedPaid = Math.min(totalPaidLeave, monthsElapsed * (totalPaidLeave / 12));
+      const earnedSick = Math.min(totalSickLeave, monthsElapsed * (totalSickLeave / 12));
+
+      const remainingPaidLeave = Math.max(0, Number((earnedPaid - usedPaidLeave).toFixed(2)));
+      const remainingSickLeave = Math.max(0, Number((earnedSick - usedSickLeave).toFixed(2)));
+
+      setData({
+        ...json,
+        approvedLeaves: approvedCurrent,
+        LeaveApprovalData: allCurrent,
+        usedPaidLeave,
+        usedSickLeave,
+        remainingPaidLeave,
+        remainingSickLeave,
+        totals: { totalPaidLeave, totalSickLeave },
+        user: json.user || u
+      });
     } catch (e: any) {
       setError(e?.message || 'Failed to load available leaves');
     } finally {
