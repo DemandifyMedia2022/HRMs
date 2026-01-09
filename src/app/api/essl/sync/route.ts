@@ -276,7 +276,12 @@ export async function POST(request: NextRequest) {
         const nowSec = Math.floor(Date.now() / 1000);
         const isOngoing = nowSec >= inTs && nowSec <= windowEnd;
         const statusWithNote = statusNote.length > 0 ? `${status} (${statusNote.join(', ')})` : status;
-        const statusFinal = isOngoing ? '' : statusWithNote;
+
+        let statusFinal = isOngoing ? '' : statusWithNote;
+        // If we already reached 8 hours, mark as Present even if still ongoing
+        if (isOngoing && workingSeconds >= 8 * 3600) {
+          statusFinal = statusWithNote;
+        }
 
         const existingEmployee = await prisma.npattendance.findFirst({
           where: { employee_id: employeeIdStr },
@@ -634,7 +639,12 @@ async function handleJsonAttendance(url: string, overwriteShift?: boolean) {
         // For today's record, suppress status
         const todayLocalJson = new Date();
         const todayStrJson = `${todayLocalJson.getFullYear()}-${String(todayLocalJson.getMonth() + 1).padStart(2, '0')}-${String(todayLocalJson.getDate()).padStart(2, '0')}`;
-        const statusFinalJson = cycleDate === todayStrJson ? '' : (statusNoteJson.length ? `${status} (${statusNoteJson.join(', ')})` : status);
+
+        let statusFinalJson = cycleDate === todayStrJson ? '' : (statusNoteJson.length ? `${status} (${statusNoteJson.join(', ')})` : status);
+        // If it's today but we already reached 8 hours, mark as Present
+        if (cycleDate === todayStrJson && workingSeconds >= 8 * 3600) {
+          statusFinalJson = statusNoteJson.length ? `${status} (${statusNoteJson.join(', ')})` : status;
+        }
 
         if (existingRecord) {
           // Merge clock times

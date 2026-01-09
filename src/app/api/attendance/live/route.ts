@@ -129,6 +129,17 @@ export async function GET(request: NextRequest) {
             return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         };
 
+        // Calculate live status
+        let liveStatus = attendance.status || '';
+        const workingSeconds = workingMs / 1000;
+        if (!liveStatus || liveStatus === 'Absent') {
+            if (workingSeconds >= 8 * 3600) {
+                liveStatus = 'Present';
+            } else if (workingSeconds >= 4 * 3600) {
+                liveStatus = 'Half-day';
+            }
+        }
+
         return NextResponse.json({
             hasRecord: true,
             isOngoing,
@@ -141,7 +152,7 @@ export async function GET(request: NextRequest) {
             totalHours: formatDuration(totalMs),
             loginHours: formatDuration(workingMs),
             breakHours: formatDuration(breakMs),
-            status: attendance.status,
+            status: liveStatus,
             shiftTime: attendance.shift_time,
             lastUpdated: new Date().toISOString()
         });

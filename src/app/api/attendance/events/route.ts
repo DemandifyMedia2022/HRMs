@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+function parseTimeToSeconds(raw: any): number {
+  if (raw == null) return 0;
+  if (raw instanceof Date) {
+    return raw.getUTCHours() * 3600 + raw.getUTCMinutes() * 60 + raw.getUTCSeconds();
+  }
+  const s = String(raw);
+  const m = s.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (m) {
+    return Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3] || 0);
+  }
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    return d.getUTCHours() * 3600 + d.getUTCMinutes() * 60 + d.getUTCSeconds();
+  }
+  return 0;
+}
+
 function pickHHMM(raw: any): string {
   if (raw == null) return 'N/A';
   const s = String(raw);
@@ -72,17 +89,27 @@ export async function GET(req: NextRequest) {
         outTime = ctArr[ctArr.length - 1] || outTime;
       }
 
+      let calculatedStatus = r.status || '';
+      const loginSec = parseTimeToSeconds(r.loginHours);
+      if (!calculatedStatus || calculatedStatus === 'Absent') {
+        if (loginSec >= 8 * 3600) {
+          calculatedStatus = 'Present';
+        } else if (loginSec >= 4 * 3600) {
+          calculatedStatus = 'Half-day';
+        }
+      }
+
       const event = {
-        title: r.status || '—',
+        title: calculatedStatus || '—',
         start: `${dateISO}T00:00:00`,
         textColor: 'black',
         backgroundColor: 'transparent',
         borderColor:
-          r.status === 'Present'
+          calculatedStatus.toLowerCase().startsWith('present')
             ? 'green'
-            : r.status === 'Absent'
+            : calculatedStatus.toLowerCase().startsWith('absent')
               ? 'red'
-              : r.status === 'Half-day'
+              : calculatedStatus.toLowerCase().includes('half')
                 ? 'orange'
                 : 'gray',
         extendedProps: {
@@ -95,7 +122,7 @@ export async function GET(req: NextRequest) {
           login_hours: r.loginHours ?? '00:00:00',
           total_hours: r.totalHours ?? '00:00:00',
           break_hours: r.breakHours ?? '00:00:00',
-          status: r.status ?? '',
+          status: calculatedStatus,
           clock_times: r.clockTimes ?? '[]'
         }
       };
@@ -147,6 +174,17 @@ export async function GET(req: NextRequest) {
             event.extendedProps.login_hours = formatDuration(workingMs);
             event.extendedProps.total_hours = formatDuration(totalMs);
             event.extendedProps.break_hours = formatDuration(breakMs);
+
+            const workingSeconds = workingMs / 1000;
+            if (workingSeconds >= 8 * 3600) {
+              event.extendedProps.status = 'Present';
+              event.title = 'Present';
+              event.borderColor = 'green';
+            } else if (workingSeconds >= 4 * 3600) {
+              event.extendedProps.status = 'Half-day';
+              event.title = 'Half-day';
+              event.borderColor = 'orange';
+            }
 
             if (isOngoing) {
               // Show out time for ongoing shift in IST
