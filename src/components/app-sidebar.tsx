@@ -156,6 +156,18 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         url: '/pages/admin/task-tracking/tasks',
         icon: IconChecklist
       },
+      {
+        name: 'Operation',
+        url: '#',
+        icon: IconPhone,
+        children: [
+          { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
+          { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
+          { name: 'Call History', url: '/pages/user/operations/calls', icon: IconFileWord },
+          { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
+          { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
+        ]
+      },
       // {
       //   name: 'Campaigns',
       //   url: '#',
@@ -238,18 +250,18 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
           { name: 'My Tasks', url: '/pages/user/task-tracking/my-tasks', icon: IconClipboardList },
         ]
       },
-      // {
-      //   name: 'Operation',
-      //   url: '#',
-      //   icon: IconPhone,
-      //   children: [
-      //     { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
-      //     { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
-      //     { name: 'Call History', url: '/pages/user/operations/calls', icon: IconFileWord },
-      //     { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
-      //     { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
-      //   ]
-      // },
+      {
+        name: 'Operation',
+        url: '#',
+        icon: IconPhone,
+        children: [
+          { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
+          { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
+          { name: 'Call History', url: '/pages/user/operations/calls', icon: IconFileWord },
+          { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
+          { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
+        ]
+      },
       // {
       //   name: 'Quality',
       //   url: '#',
@@ -356,7 +368,19 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
     documents: [
       { name: 'Task Manager', url: '/pages/hr/task-tracking/tasks', icon: IconChecklist },
       { name: 'Letter Generation', url: '/pages/hr/letter-generation', icon: IconMail },
-      { name: 'Events', url: '/pages/hr/events', icon: IconCalendar }
+      { name: 'Events', url: '/pages/hr/events', icon: IconCalendar },
+      {
+        name: 'Operation',
+        url: '#',
+        icon: IconPhone,
+        children: [
+          { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
+          { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
+          { name: 'Call History', url: '/pages/user/operations/calls', icon: IconFileWord },
+          { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
+          { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
+        ]
+      }
     ]
   }
 };
@@ -459,9 +483,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     return (data.documents || []).filter(section => {
       const name = section.name.toLowerCase();
-      if (name === 'operation') {
-        return dept === 'operation';
-      }
+
       if (name === 'quality') {
         return dept === 'quality' || dept === 'quality analyst';
       }

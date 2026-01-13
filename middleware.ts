@@ -7,7 +7,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 const protectedRoutes: Record<string, readonly string[]> = {
   '/pages/admin': ['admin'],
   '/pages/hr': ['hr'],
-  '/pages/user': ['user']
+  '/pages/user': ['user', 'admin', 'hr']
 };
 
 // Security headers builder (per-request nonce)

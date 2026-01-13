@@ -205,13 +205,13 @@ export default function UserPage() {
           setFormData(s => ({ ...s, added_by_user_id: pretty }));
           try {
             localStorage.setItem('userName', pretty);
-          } catch {}
+          } catch { }
           try {
             localStorage.setItem('authUser', JSON.stringify(me));
-          } catch {}
+          } catch { }
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setAuthLoading(false));
   }, []);
 
@@ -220,7 +220,7 @@ export default function UserPage() {
     try {
       const u = typeof window !== 'undefined' ? localStorage.getItem('lastRecordingUrl') : '';
       if (u) setLastRecordingUrl(u);
-    } catch {}
+    } catch { }
   }, []);
 
   // Load campaigns for dropdown
@@ -230,7 +230,7 @@ export default function UserPage() {
       .then(j => {
         if (j?.data) setCampaigns(j.data);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const openSelectedCampaignScript = () => {
@@ -293,11 +293,7 @@ export default function UserPage() {
               Checking permissions...
             </div>
           ) : null}
-          {!authLoading && authDept.toLowerCase() !== 'operation' ? (
-            <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Forbidden: Paste call data is restricted to the Operation department.
-            </div>
-          ) : null}
+
 
           <Card>
             <CardHeader className="pb-4">
@@ -308,7 +304,6 @@ export default function UserPage() {
               <form
                 onSubmit={handleSubmit}
                 className="space-y-6"
-                aria-disabled={authDept.toLowerCase() !== 'operation'}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {FIELDS.filter(f => f !== 'added_by_user_id').map(f => (
@@ -342,23 +337,7 @@ export default function UserPage() {
                                 onChange={e => onChange(f, `${code}${e.target.value}`)}
                                 inputMode="tel"
                               />
-                              <Button
-                                type="button"
-                                size="sm"
-                                className="shrink-0"
-                                disabled={!formData[f]}
-                                onClick={() => {
-                                  const ext = typeof window !== 'undefined' ? localStorage.getItem('extension') : null;
-                                  if (!ext) {
-                                    setSipOpen(true);
-                                    return;
-                                  }
-                                  setDialNumber(String(formData[f] || ''));
-                                  setDialOpen(true);
-                                }}
-                              >
-                                Call
-                              </Button>
+
                             </div>
                           );
                         })()
@@ -411,13 +390,9 @@ export default function UserPage() {
                 <input type="hidden" name="added_by_user_id" value={formData.added_by_user_id ?? ''} />
 
                 <div className="flex items-center gap-3 pt-4 border-t">
-                  <Button type="submit" disabled={loading || authDept.toLowerCase() !== 'operation'}>
+                  <Button type="submit" disabled={loading}>
                     {loading ? 'Saving...' : 'Save to DB'}
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => setSipOpen(true)}>
-                    SIP Login
-                  </Button>
-                  <div className="text-xs text-muted-foreground">{sipStatus}</div>
                   {message ? (
                     <div className={`text-sm ${message.includes('Error') ? 'text-destructive' : 'text-emerald-600'}`}>
                       {message}
@@ -428,22 +403,9 @@ export default function UserPage() {
             </CardContent>
           </Card>
 
-          <DialerModal
-            open={dialOpen}
-            onClose={() => setDialOpen(false)}
-            number={dialNumber}
-            userName={authUserName || getCurrentUserName()}
-          />
-          <SipLoginModal
-            open={sipOpen}
-            onClose={() => {
-              setSipOpen(false);
-              const ext = typeof window !== 'undefined' ? localStorage.getItem('extension') : null;
-              setSipStatus(ext ? `Logged in as ${ext}` : 'Not logged in');
-            }}
-          />
         </div>
       </div>
+
     </>
   );
 }
