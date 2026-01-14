@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { isMonthFrozen } from '@/lib/payroll';
 
 export const runtime = 'nodejs';
 
@@ -28,6 +29,25 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    // Freeze guard: block if any targeted month is frozen
+{
+  const ymChecked = new Set<string>();
+  for (const ds of selectedDates) {
+    if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(ds)) continue;
+    const [yStr, mStr] = ds.split('-');
+    const y = Number(yStr);
+    const m = Number(mStr);
+    const key = `${y}-${m}`;
+    if (ymChecked.has(key)) continue;
+    ymChecked.add(key);
+    if (await isMonthFrozen(y, m)) {
+      return NextResponse.json(
+        { success: false, message: `Attendance is frozen for ${y}-${String(m).padStart(2, '0')}` },
+        { status: 409 }
+      );
+    }
+  }
+}
 
     const userRows: Array<{ name: string | null }> = await prisma.$queryRaw`
       SELECT COALESCE(Full_name, name) AS name

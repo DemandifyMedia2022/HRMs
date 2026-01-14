@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 import { sendMail } from '@/lib/mailer';
+import { isMonthFrozen } from '@/lib/payroll';
 
 function toUtcMidnight(dateStr: string): Date {
   const [y, m, d] = dateStr.split('-').map(n => Number(n));
@@ -108,7 +109,7 @@ export async function POST(req: NextRequest) {
           LOWER(department) = 'hr' OR UPPER(type) = 'HR'
         )
       `;
-      const to = (hrs || []).map(r => String(r.email)).filter(Boolean);
+      const to = (hrs || []).map((r: { email: string | null }) => String(r.email)).filter(Boolean);
       if (to.length > 0) {
         const dateDisp = new Date(created.Date_Attendance_Update as any).toISOString().split('T')[0];
         const subject = `📅 Attendance Update Request Submitted by ${me.name}`;
@@ -174,6 +175,19 @@ export async function PATCH(req: NextRequest) {
     const issue = await prisma.issuedata.findUnique({ where: { id } });
     if (!issue || issue.issuse_type !== 'Attendance') {
       return NextResponse.json({ message: 'Request not found' }, { status: 404 });
+    }
+
+    // Freeze guard: block approvals that modify a frozen month
+    if (issue?.Date_Attendance_Update) {
+      const d = new Date(issue.Date_Attendance_Update as any);
+      const y = d.getUTCFullYear();
+      const m = d.getUTCMonth() + 1;
+      if (await isMonthFrozen(y, m)) {
+        return NextResponse.json(
+          { message: `Attendance is frozen for ${y}-${String(m).padStart(2, '0')}` },
+          { status: 409 }
+        );
+      }
     }
 
     // Update issuedata first

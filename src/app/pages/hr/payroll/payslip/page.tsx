@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
 import { SidebarConfig } from '@/components/sidebar-config';
-import html2pdf from 'html2pdf.js';
+// Note: do not import html2pdf at module scope to avoid SSR errors
 
 interface EmployeeDetails {
   Full_name: string | null;
@@ -75,6 +75,7 @@ interface PayslipData {
 export default function PayslipPage() {
   const [payslipData, setPayslipData] = useState<PayslipData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
@@ -88,6 +89,7 @@ export default function PayslipPage() {
   const fetchPayslipData = async (month?: number, year?: number) => {
     try {
       setLoading(true);
+      setErrorMsg(null);
       let url = '/api/payroll/payslip';
       if (month && year) {
         url += `?month=${month}&year=${year}`;
@@ -106,14 +108,21 @@ export default function PayslipPage() {
         setPayslipData(data.data);
         setSelectedMonth(data.data.selectedMonth);
         setSelectedYear(data.data.selectedYear);
+        setErrorMsg(null);
       } else {
         console.error('Failed to fetch payslip data:', data.error);
         if (response.status === 401) {
           window.location.href = '/login';
+        } else if (response.status === 404) {
+          setPayslipData(null);
+          setErrorMsg('Payslip not available for the selected period. The month might not be finalized yet.');
+        } else {
+          setErrorMsg(String(data.error || 'Failed to fetch payslip'));
         }
       }
     } catch (error) {
       console.error('Error fetching payslip:', error);
+      setErrorMsg('Failed to fetch payslip. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -176,6 +185,8 @@ export default function PayslipPage() {
     netPayInWords: string,
     fullData: PayslipData
   ) => {
+    // Load html2pdf only on the client at call time to prevent SSR crash
+    const { default: html2pdf } = await import('html2pdf.js');
     const monthName = getMonthName(month);
     const e = fullData.earnings || ({} as any);
     const d = fullData.deductions || ({} as any);
@@ -544,7 +555,23 @@ export default function PayslipPage() {
         <SidebarConfig role="hr" />
         <div className="flex-1 p-4 md:p-6">
           <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">No payslip data available</CardContent>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              {errorMsg ? (
+                <div className="space-y-3">
+                  <div>{errorMsg}</div>
+                  <div>
+                    <a
+                      href="/pages/hr/payroll/finalize"
+                      className="inline-block bg-blue-600 text-white px-3 py-1 rounded"
+                    >
+                      Go to Payroll Finalize
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                'No payslip data available'
+              )}
+            </CardContent>
           </Card>
         </div>
       </>
@@ -689,6 +716,9 @@ export default function PayslipPage() {
                 </p>
                 <p>
                   <strong>Net Pay in Words:</strong> {netPayInWords}
+                </p>
+                <p>
+                  <strong>Total Days:</strong> {payslipData.attendance.totalDays}
                 </p>
                 <p>
                   <strong>Pay Days:</strong> {payDays}

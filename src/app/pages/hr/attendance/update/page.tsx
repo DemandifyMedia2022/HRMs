@@ -181,7 +181,16 @@ export default function AdminAttendanceBulkPage() {
       else next.add(dateStr);
       return next;
     });
+
+  
   }
+
+  function changeMonth(delta: number) {
+  const d = new Date(year, month, 1); // month is 0-based
+  d.setMonth(d.getMonth() + delta);   // handles wrap and year changes
+  setYear(d.getFullYear());
+  setMonth(d.getMonth());
+}
 
   async function submit() {
     setMessage('');
@@ -359,34 +368,8 @@ export default function AdminAttendanceBulkPage() {
                     {months[month]} {year}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setMonth(m => {
-                          if (m === 0) {
-                            setYear(y => y - 1);
-                            return 11;
-                          }
-                          return m - 1;
-                        });
-                      }}
-                    >
-                      Prev
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setMonth(m => {
-                          if (m === 11) {
-                            setYear(y => y + 1);
-                            return 0;
-                          }
-                          return m + 1;
-                        });
-                      }}
-                    >
-                      Next
-                    </Button>
+                    <Button variant="outline" onClick={() => changeMonth(-1)}>Prev</Button>
+                    <Button variant="outline" onClick={() => changeMonth(1)}>Next</Button>
                   </div>
                 </div>
                 <div className="grid grid-cols-7 gap-2 text-xs">

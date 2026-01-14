@@ -117,8 +117,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'User not found.' }, { status: 404 });
     }
 
-    // Get month and year from query params
+    // Optional target employee override (for HR): ?emp=EMP_CODE_OR_ID
     const { searchParams } = new URL(request.url);
+    const empOverride = (searchParams.get('emp') || '').toString();
+
+    // Normalize employee identifier to match snapshots created from npattendance.employee_id
+    const baseEmp = empOverride ? empOverride : (user.emp_code || '').toString();
+    const empCode = baseEmp.trim();
+    const empCodeNoSpace = empCode.replace(/\s+/g, '');
+    const userIdStr = String(userIdNum);
+    const candidateIds = Array.from(new Set([empCode, empCodeNoSpace, userIdStr]));
+
+    // Get month and year from query params
     let month: number;
     let year: number;
 
@@ -126,167 +136,91 @@ export async function GET(request: NextRequest) {
       month = parseInt(searchParams.get('month')!);
       year = parseInt(searchParams.get('year')!);
     } else {
+      // Default to the latest available snapshot for this employee (exclude current month)
       const now = new Date();
-      const currentDay = now.getDate();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
 
-      if (currentDay < 28) {
-        month = now.getMonth() + 1;
-        year = now.getFullYear();
-      } else {
-        const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        month = prevDate.getMonth() + 1;
-        year = prevDate.getFullYear();
-      }
-    }
-
-    // Calculate total days in the month
-    const totalDays = new Date(year, month, 0).getDate();
-
-    // Fetch attendance from npattendance table
-    const attendance =
-      (await prisma.npattendance
-        .findMany({
+      const latest = await prisma.payroll_attendance_snapshot
+        .findFirst({
           where: {
-            employee_id: user.emp_code,
-            date: {
-              gte: new Date(year, month - 1, 1),
-              lt: new Date(year, month, 1)
-            }
-          },
-          orderBy: { date: 'asc' }
-        })
-        .catch(() => [])) || [];
-
-    // Fetch holidays
-    const holidays =
-      (await prisma.crud_events
-        .findMany({
-          where: {
-            event_date: {
-              gte: new Date(year, month - 1, 1),
-              lt: new Date(year, month, 1)
-            }
-          },
-          select: { event_date: true }
-        })
-        .catch(() => [])) || [];
-    const holidayDates = holidays
-      .map(h => h.event_date?.toISOString().split('T')[0])
-      .filter((d): d is string => d !== undefined);
-
-    // Get all dates in month
-    const allDates: string[] = [];
-    for (let day = 1; day <= totalDays; day++) {
-      allDates.push(new Date(year, month - 1, day).toISOString().split('T')[0]);
-    }
-
-    const existingDates = attendance.map(a => a.date.toISOString().split('T')[0]);
-    const missingDates = allDates.filter(d => !existingDates.includes(d));
-
-    // Count paid days from attendance records
-    let paidDays = 0;
-
-    // Process each attendance record
-    for (const att of attendance) {
-      const status = (att.status || '').trim();
-      const dateStr = att.date.toISOString().split('T')[0];
-      const isHoliday = holidayDates.includes(dateStr);
-
-      // Half day (not on holiday) - count as 0.5
-      if (status === 'Half-day' && !isHoliday) {
-        paidDays += 0.5;
-      }
-      // All statuses including Absent are counted as paid (1 day) unless it's unpaid leave
-      // This is because salary deduction happens only for unpaid leave, not for absent marking
-      else if (status) {
-        paidDays += 1;
-      }
-    }
-
-    // Missing dates that are holidays should be counted as paid
-    const missingHolidays = missingDates.filter(d => holidayDates.includes(d)).length;
-    paidDays += missingHolidays;
-
-    // Count weekends in missing dates as paid (Week Off)
-    for (const dateStr of missingDates) {
-      const date = new Date(dateStr);
-      const dayOfWeek = date.getDay();
-      // If it's a weekend (Saturday=6 or Sunday=0) and not already counted as holiday
-      if ((dayOfWeek === 0 || dayOfWeek === 6) && !holidayDates.includes(dateStr)) {
-        paidDays += 1;
-      }
-    }
-
-    // Fetch approved leaves to add any missing paid leave days
-    const leaveDays =
-      (await prisma.leavedata
-        .findMany({
-          where: {
-            emp_code: user.emp_code,
-            HRapproval: 'Approved',
-            Managerapproval: 'Approved',
-            leave_type: {
-              in: ['Paid Leave', 'Sick Leave(HalfDay)', 'Sick Leave(FullDay)', 'work From Home']
-            },
+            employee_id: { in: candidateIds as any },
             OR: [
-              {
-                start_date: {
-                  gte: new Date(year, month - 1, 1),
-                  lt: new Date(year, month, 1)
-                }
-              },
-              {
-                end_date: {
-                  gte: new Date(year, month - 1, 1),
-                  lt: new Date(year, month, 1)
-                }
-              }
+              { year: { lt: currentYear } },
+              { year: currentYear, month: { lt: currentMonth } }
             ]
-          }
+          },
+          orderBy: [{ year: 'desc' }, { month: 'desc' }]
         })
-        .catch(() => [])) || [];
+        .catch(() => null);
 
-    // Add approved leaves that are not already in attendance
-    for (const leave of leaveDays) {
-      const startDate = new Date(leave.start_date);
-      const endDate = new Date(leave.end_date);
-
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        if (d.getMonth() + 1 !== month || d.getFullYear() !== year) continue;
-        if (d.getDay() === 0 || d.getDay() === 6) continue; // Skip weekends
-
-        const dateStr = d.toISOString().split('T')[0];
-
-        // Only add if this date is not already in attendance records
-        if (!existingDates.includes(dateStr)) {
-          if (['Paid Leave', 'work From Home', 'Sick Leave(FullDay)'].includes(leave.leave_type)) {
-            paidDays += 1;
-          } else if (leave.leave_type === 'Sick Leave(HalfDay)') {
-            paidDays += 0.5;
-          }
-        }
+      if (!latest) {
+        return NextResponse.json(
+          { success: false, error: 'Payslip not available. Month not finalized or snapshot missing.' },
+          { status: 404 }
+        );
       }
+      month = latest.month;
+      year = latest.year;
     }
 
-    // Final pay days calculation
-    let payDays = Math.min(paidDays, totalDays); // Ensure it doesn't exceed total days in month
-    payDays = Math.max(0, payDays); // Ensure it's not negative
+    // Strict rule: payslip must read from payroll_attendance_snapshot
+    // Attempt strict composite match; if schema differs (spaces), fallback to findFirst with IN
+    let snapshot = await prisma.payroll_attendance_snapshot.findUnique({
+      where: { employee_id_year_month: { employee_id: empCode as any, year, month } as any },
+    }).catch(() => null);
+    if (!snapshot) {
+      snapshot = await prisma.payroll_attendance_snapshot.findFirst({
+        where: { employee_id: { in: candidateIds as any }, year, month }
+      }).catch(() => null);
+    }
 
-    // Calculate presentDays, absentDays and halfDays for display
-    let presentDays = paidDays;
-    let absentDays = Math.max(0, totalDays - paidDays);
-    const halfDays =
-      attendance.filter(a => a.status === 'Half-day' && !holidayDates.includes(a.date.toISOString().split('T')[0]))
-        .length * 0.5;
+    if (!snapshot) {
+      // Fallback: use latest available snapshot for this employee (exclude current month)
+      const now2 = new Date();
+      const currentMonth2 = now2.getMonth() + 1;
+      const currentYear2 = now2.getFullYear();
+      const latestAlt = await prisma.payroll_attendance_snapshot
+        .findFirst({
+          where: {
+            employee_id: { in: candidateIds as any },
+            OR: [
+              { year: { lt: currentYear2 } },
+              { year: currentYear2, month: { lt: currentMonth2 } }
+            ]
+          },
+          orderBy: [{ year: 'desc' }, { month: 'desc' }]
+        })
+        .catch(() => null);
+
+      if (!latestAlt) {
+        return NextResponse.json(
+          { success: false, error: 'Payslip not available. Month not finalized or snapshot missing.' },
+          { status: 404 }
+        );
+      }
+      snapshot = latestAlt as any;
+      month = latestAlt.month;
+      year = latestAlt.year;
+    }
+
+    // Use snapshot values but pro-rate against calendar days in month
+    const calendarDays = new Date(year, month, 0).getDate();
+    const presentDays = Number(snapshot.present_days || 0);
+    const leaveDaysCount = Number(snapshot.leave_days || 0);
+    const absentDays = Number(snapshot.absent_days || 0);
+    const halfDays = presentDays % 1; // 0.5 if any half-day counted in present
+    const payDays = Math.max(0, Math.min(calendarDays, presentDays + leaveDaysCount));
 
     // Calculate component-wise earnings
     const basic = parseFloat(user.Basic_Monthly_Remuneration || '0');
     const hra = parseFloat(user.HRA_Monthly_Remuneration || '0');
     const other = parseFloat(user.OTHER_ALLOWANCE_Monthly_Remuneration || '0');
 
-    const basicEarned = (basic / totalDays) * payDays;
-    const hraEarned = (hra / totalDays) * payDays;
-    const otherEarned = (other / totalDays) * payDays;
+    const denom = calendarDays || 1;
+    const basicEarned = (basic / denom) * payDays;
+    const hraEarned = (hra / denom) * payDays;
+    const otherEarned = (other / denom) * payDays;
     const totalEarning = Math.round(basicEarned) + Math.round(hraEarned) + Math.round(otherEarned);
 
     // Calculate Professional Tax
@@ -320,7 +254,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate ESI
     const employeeEsicMonthly = user.Employee_Esic_Monthly || 0;
-    const esiEarned = (employeeEsicMonthly / totalDays) * payDays;
+    const esiEarned = (employeeEsicMonthly / calendarDays) * payDays;
 
     // Fetch Income Tax (TDS)
     const investmentDeclaration = await prisma.investment_declaration
@@ -334,7 +268,7 @@ export async function GET(request: NextRequest) {
     // Calculate PF Contribution
     let pfContribution = 0;
     if (user.PF_Monthly_Contribution && parseFloat(user.PF_Monthly_Contribution) > 0) {
-      const basicEarnedForPF = (basic / totalDays) * payDays;
+      const basicEarnedForPF = (basic / calendarDays) * payDays;
       pfContribution = Math.min(Math.round(basicEarnedForPF * 0.12), 1800);
     }
 
@@ -343,29 +277,29 @@ export async function GET(request: NextRequest) {
     const inhandSalary = Math.round(totalEarning - totalDeduction);
     const netPayInWords = convertNumberToWords(inhandSalary);
 
-    // Fetch all available payslips (grouped by month and year)
-    const availablePayslips =
-      (await prisma
-        .$queryRawUnsafe<any[]>(
-          `SELECT
-        YEAR(date) as year,
-        MONTH(date) as month
-      FROM npattendance
-      WHERE npattendance.employee_id = ?
-      GROUP BY year, month
-      ORDER BY year DESC, month DESC`,
-          user.emp_code
-        )
-        .catch(() => [])) || [];
+    // Fetch all available payslips from snapshot (grouped by month and year)
+    // Try listing with a broad IN filter via ORM (safer than raw REPLACE logic)
+    const availablePayslips = (await prisma.payroll_attendance_snapshot
+      .findMany({
+        where: { employee_id: { in: candidateIds as any } },
+        select: { year: true, month: true },
+        orderBy: [{ year: 'desc' }, { month: 'desc' }]
+      })
+      .catch(() => [])) as any[];
 
     // Filter out current month
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
 
-    const filteredPayslips = availablePayslips.filter((payslip: any) => {
-      return !(payslip.month === currentMonth && payslip.year === currentYear);
-    });
+    const filteredPayslips = availablePayslips
+      .filter((payslip: any) => {
+        return !(payslip.month === currentMonth && payslip.year === currentYear);
+      })
+      .filter((payslip: any) => {
+        // Show only from Jan 2025 onwards
+        return payslip.year > 2024;
+      });
 
     return NextResponse.json({
       success: true,
@@ -389,10 +323,11 @@ export async function GET(request: NextRequest) {
           netSalary: parseFloat(user.netSalary || '0')
         },
         attendance: {
-          totalDays,
+          totalDays: calendarDays,
           presentDays: Math.round(presentDays * 10) / 10,
           absentDays: Math.round(absentDays * 10) / 10,
           halfDays: Math.round(halfDays * 10) / 10,
+          leaveDays: Math.round(leaveDaysCount * 10) / 10,
           payDays: Math.round(payDays * 10) / 10
         },
         earnings: {
