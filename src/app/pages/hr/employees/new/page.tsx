@@ -38,6 +38,18 @@ export default function AddEmployeePage() {
   const [dobDate, setDobDate] = useState<Date | undefined>(undefined);
   const [retirementDate, setRetirementDate] = useState<Date | undefined>(undefined);
   const [showPassword, setShowPassword] = useState(false);
+  const [employmentTypeIsCustom, setEmploymentTypeIsCustom] = useState(false);
+  const [employmentTypeCustom, setEmploymentTypeCustom] = useState('');
+  const [employmentStatusIsCustom, setEmploymentStatusIsCustom] = useState(false);
+  const [employmentStatusCustom, setEmploymentStatusCustom] = useState('');
+  const [businessUnitIsCustom, setBusinessUnitIsCustom] = useState(false);
+  const [businessUnitCustom, setBusinessUnitCustom] = useState('');
+  const [departmentIsCustom, setDepartmentIsCustom] = useState(false);
+  const [departmentCustom, setDepartmentCustom] = useState('');
+  const [jobRoleIsCustom, setJobRoleIsCustom] = useState(false);
+  const [jobRoleCustom, setJobRoleCustom] = useState('');
+  const [roleTypeIsCustom, setRoleTypeIsCustom] = useState(false);
+  const [roleTypeCustom, setRoleTypeCustom] = useState('');
 
   function formatDateISO(d?: Date) {
     if (!d) return '';
@@ -59,13 +71,15 @@ export default function AddEmployeePage() {
     CSM: ['Client Success Manager']
   };
 
-  useEffect(() => {
+    useEffect(() => {
     if (department && departmentJobRoles[department]) {
       setJobRoleOptions(departmentJobRoles[department]);
     } else {
       setJobRoleOptions([]);
     }
     setJobRole('');
+    setJobRoleIsCustom(false);
+    setJobRoleCustom('');
   }, [department]);
 
   useEffect(() => {
@@ -270,9 +284,21 @@ export default function AddEmployeePage() {
                   />
                   <input type="hidden" name="retirement_date" value={formatDateISO(retirementDate)} />
                 </div>
-                <div>
+                               <div>
                   <Label>Employment Type <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-                  <Select value={employmentType} onValueChange={setEmploymentType}>
+                  <Select
+                    value={employmentTypeIsCustom ? '__custom__' : employmentType}
+                    onValueChange={(v) => {
+                      if (v === '__custom__') {
+                        setEmploymentTypeIsCustom(true);
+                        setEmploymentType('');
+                      } else {
+                        setEmploymentTypeIsCustom(false);
+                        setEmploymentTypeCustom('');
+                        setEmploymentType(v);
+                      }
+                    }}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
@@ -282,13 +308,36 @@ export default function AddEmployeePage() {
                       <SelectItem value="Permanent">Permanent</SelectItem>
                       <SelectItem value="Trainee">Trainee</SelectItem>
                       <SelectItem value="Wages">Wages</SelectItem>
+                      <SelectItem value="__custom__">Custom</SelectItem>
                     </SelectContent>
                   </Select>
-                  <input type="hidden" name="employment_type" value={employmentType} required />
+                  {employmentTypeIsCustom && (
+                    <div className="mt-2">
+                      <Input
+                        placeholder="Enter custom employment type"
+                        value={employmentTypeCustom}
+                        onChange={(e) => setEmploymentTypeCustom(e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
+                  <input type="hidden" name="employment_type" value={employmentTypeIsCustom ? employmentTypeCustom : employmentType} required />
                 </div>
-                <div>
+                                <div>
                   <Label>Employment Status <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-                  <Select value={employmentStatus} onValueChange={setEmploymentStatus}>
+                  <Select
+                    value={employmentStatusIsCustom ? '__custom__' : employmentStatus}
+                    onValueChange={(v) => {
+                      if (v === '__custom__') {
+                        setEmploymentStatusIsCustom(true);
+                        setEmploymentStatus('');
+                      } else {
+                        setEmploymentStatusIsCustom(false);
+                        setEmploymentStatusCustom('');
+                        setEmploymentStatus(v);
+                      }
+                    }}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
@@ -298,9 +347,20 @@ export default function AddEmployeePage() {
                       <SelectItem value="Resigned">Resigned</SelectItem>
                       <SelectItem value="Relieved">Relieved</SelectItem>
                       <SelectItem value="Settled">Settled</SelectItem>
+                      <SelectItem value="__custom__">Custom</SelectItem>
                     </SelectContent>
                   </Select>
-                  <input type="hidden" name="employment_status" value={employmentStatus} required />
+                  {employmentStatusIsCustom && (
+                    <div className="mt-2">
+                      <Input
+                        placeholder="Enter custom employment status"
+                        value={employmentStatusCustom}
+                        onChange={(e) => setEmploymentStatusCustom(e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
+                  <input type="hidden" name="employment_status" value={employmentStatusIsCustom ? employmentStatusCustom : employmentStatus} required />
                 </div>
                 <div>
                   <Label>Company <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
@@ -315,9 +375,21 @@ export default function AddEmployeePage() {
                   </Select>
                   <input type="hidden" name="company" value={company} required />
                 </div>
-                <div>
+                                <div>
                   <Label>Business Unit <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-                  <Select value={businessUnit} onValueChange={setBusinessUnit}>
+                  <Select
+                    value={businessUnitIsCustom ? '__custom__' : businessUnit}
+                    onValueChange={(v) => {
+                      if (v === '__custom__') {
+                        setBusinessUnitIsCustom(true);
+                        setBusinessUnit('');
+                      } else {
+                        setBusinessUnitIsCustom(false);
+                        setBusinessUnitCustom('');
+                        setBusinessUnit(v);
+                      }
+                    }}
+                  >
                     <SelectTrigger disabled={optLoading} className="w-full">
                       <SelectValue placeholder={optLoading ? 'Loading...' : 'Select'} />
                     </SelectTrigger>
@@ -327,14 +399,37 @@ export default function AddEmployeePage() {
                           {bu}
                         </SelectItem>
                       ))}
+                      <SelectItem value="__custom__">Custom</SelectItem>
                     </SelectContent>
                   </Select>
-                  <input type="hidden" name="Business_unit" value={businessUnit} required />
+                  {businessUnitIsCustom && (
+                    <div className="mt-2">
+                      <Input
+                        placeholder="Enter custom business unit"
+                        value={businessUnitCustom}
+                        onChange={(e) => setBusinessUnitCustom(e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
+                  <input type="hidden" name="Business_unit" value={businessUnitIsCustom ? businessUnitCustom : businessUnit} required />
                   {optError ? <div className="text-xs text-red-600 mt-1">{optError}</div> : null}
                 </div>
-                <div>
+                                <div>
                   <Label>Department <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-                  <Select value={department} onValueChange={setDepartment}>
+                  <Select
+                    value={departmentIsCustom ? '__custom__' : department}
+                    onValueChange={(v) => {
+                      if (v === '__custom__') {
+                        setDepartmentIsCustom(true);
+                        setDepartment('');
+                      } else {
+                        setDepartmentIsCustom(false);
+                        setDepartmentCustom('');
+                        setDepartment(v);
+                      }
+                    }}
+                  >
                     <SelectTrigger disabled={optLoading} className="w-full">
                       <SelectValue placeholder={optLoading ? 'Loading...' : 'Select'} />
                     </SelectTrigger>
@@ -344,20 +439,39 @@ export default function AddEmployeePage() {
                           {d}
                         </SelectItem>
                       ))}
+                      <SelectItem value="__custom__">Custom</SelectItem>
                     </SelectContent>
                   </Select>
-                  <input type="hidden" name="department" value={department} required />
+                  {departmentIsCustom && (
+                    <div className="mt-2">
+                      <Input
+                        placeholder="Enter custom department"
+                        value={departmentCustom}
+                        onChange={(e) => setDepartmentCustom(e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
+                  <input type="hidden" name="department" value={departmentIsCustom ? departmentCustom : department} required />
                   {optError ? <div className="text-xs text-red-600 mt-1">{optError}</div> : null}
                 </div>
-                <div>
+                                <div>
                   <Label>Job Role <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
                   <Select
-                    value={jobRole}
-                    onValueChange={setJobRole}
-                    disabled={!department || jobRoleOptions.length === 0}
+                    value={jobRoleIsCustom ? '__custom__' : jobRole}
+                    onValueChange={(v) => {
+                      if (v === '__custom__') {
+                        setJobRoleIsCustom(true);
+                        setJobRole('');
+                      } else {
+                        setJobRoleIsCustom(false);
+                        setJobRoleCustom('');
+                        setJobRole(v);
+                      }
+                    }}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder={department ? 'Select Job Role' : 'Select Department first'} />
+                      <SelectValue placeholder={department ? 'Select Job Role' : 'Select Job Role or choose Custom'} />
                     </SelectTrigger>
                     <SelectContent>
                       {jobRoleOptions.map(role => (
@@ -365,9 +479,20 @@ export default function AddEmployeePage() {
                           {role}
                         </SelectItem>
                       ))}
+                      <SelectItem value="__custom__">Custom</SelectItem>
                     </SelectContent>
                   </Select>
-                  <input type="hidden" name="job_role" value={jobRole} required />
+                  {jobRoleIsCustom && (
+                    <div className="mt-2">
+                      <Input
+                        placeholder="Enter custom job role"
+                        value={jobRoleCustom}
+                        onChange={(e) => setJobRoleCustom(e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
+                  <input type="hidden" name="job_role" value={jobRoleIsCustom ? jobRoleCustom : jobRole} required />
                 </div>
                 <div>
                   <Label htmlFor="reporting_manager">Reporting Manager <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
@@ -381,9 +506,21 @@ export default function AddEmployeePage() {
                   <Label htmlFor="emp_address">Employee Address <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
                   <Textarea id="emp_address" name="emp_address" required className="w-full" />
                 </div>
-                <div>
+                                <div>
                   <Label>Role Type <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
-                  <Select value={roleType} onValueChange={setRoleType}>
+                  <Select
+                    value={roleTypeIsCustom ? '__custom__' : roleType}
+                    onValueChange={(v) => {
+                      if (v === '__custom__') {
+                        setRoleTypeIsCustom(true);
+                        setRoleType('');
+                      } else {
+                        setRoleTypeIsCustom(false);
+                        setRoleTypeCustom('');
+                        setRoleType(v);
+                      }
+                    }}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
@@ -394,9 +531,20 @@ export default function AddEmployeePage() {
                       <SelectItem value="IT">IT</SelectItem>
                       <SelectItem value="Marketing">Marketing</SelectItem>
                       <SelectItem value="Sales">Sales</SelectItem>
+                      <SelectItem value="__custom__">Custom</SelectItem>
                     </SelectContent>
                   </Select>
-                  <input type="hidden" name="type" value={roleType} required />
+                  {roleTypeIsCustom && (
+                    <div className="mt-2">
+                      <Input
+                        placeholder="Enter custom role type"
+                        value={roleTypeCustom}
+                        onChange={(e) => setRoleTypeCustom(e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
+                  <input type="hidden" name="type" value={roleTypeIsCustom ? roleTypeCustom : roleType} required />
                 </div>
                 <div>
                   <Label htmlFor="password">Password <span style={{ color: 'lab(37.963% .55404 -46.454)' }}>*</span></Label>
