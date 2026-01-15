@@ -1029,31 +1029,31 @@ model tasks {
 
 /// Controls month-level freeze state for attendance/payroll calculations
 model attendance_freeze {
-  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
   year       Int
   month      Int
-  is_frozen  Boolean  @default(false)
-  frozen_by  BigInt?  @db.UnsignedBigInt
+  is_frozen  Boolean   @default(false)
+  frozen_by  BigInt?   @db.UnsignedBigInt
   frozen_at  DateTime? @db.Timestamp(0)
-  created_at DateTime @default(now()) @db.Timestamp(0)
-  updated_at DateTime @default(now()) @db.Timestamp(0)
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  updated_at DateTime  @default(now()) @db.Timestamp(0)
 
   @@unique([year, month])
 }
 
 /// Snapshot of monthly attendance totals per employee used by payslips
 model payroll_attendance_snapshot {
-  id                  BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  employee_id         String   @db.VarChar(255)
-  year                Int
-  month               Int
-  present_days        Decimal  @db.Decimal(10,2) @default(0)  // allows half-days
-  absent_days         Decimal  @db.Decimal(10,2) @default(0)
-  leave_days          Decimal  @db.Decimal(10,2) @default(0)
-  lop_days            Decimal  @db.Decimal(10,2) @default(0)
-  total_working_days  Int      @default(0)
-  created_at          DateTime @default(now()) @db.Timestamp(0)
-  updated_at          DateTime @default(now()) @db.Timestamp(0)
+  id                 BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  employee_id        String   @db.VarChar(255)
+  year               Int
+  month              Int
+  present_days       Decimal  @default(0.00) @db.Decimal(10, 2)
+  absent_days        Decimal  @default(0.00) @db.Decimal(10, 2)
+  leave_days         Decimal  @default(0.00) @db.Decimal(10, 2)
+  lop_days           Decimal  @default(0.00) @db.Decimal(10, 2)
+  total_working_days Int      @default(0)
+  created_at         DateTime @default(now()) @db.Timestamp(0)
+  updated_at         DateTime @default(now()) @db.Timestamp(0)
 
   @@unique([employee_id, year, month])
   @@index([year, month])

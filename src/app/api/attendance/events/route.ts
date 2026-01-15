@@ -45,40 +45,42 @@ export async function GET(req: NextRequest) {
     const startOfYear = new Date(Date.UTC(year, 0, 1, 0, 0, 0));
     const endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59));
 
-    // Use raw SQL to join users (users.emp_code = npattendance.employee_id)
-    // Fields selected mirror npattendance plus users.Full_name
-    const records: Array<any> = await prisma.$queryRaw`
-      SELECT 
-        a.id,
-        a.employee_id AS employeeId,
-        a.emp_name    AS empName,
-        a.date        AS date,
-        a.in_time     AS inTime,
-        a.out_time    AS outTime,
-        a.clock_times AS clockTimes,
-        a.total_hours AS totalHours,
-        a.login_hours AS loginHours,
-        a.break_hours AS breakHours,
-        a.status      AS status,
-        u.Full_name   AS fullName,
-        a.shift_time  AS shiftTime
-      FROM npattendance a
-      LEFT JOIN users u ON u.emp_code = a.employee_id
-      WHERE a.date BETWEEN ${startOfYear} AND ${endOfYear}
-      ORDER BY a.employee_id ASC, a.date ASC
-    `;
+
+    // Fetch users for name mapping
+    const users = await prisma.users.findMany({
+      select: { emp_code: true, Full_name: true },
+    });
+    const userMap = new Map<string, string>();
+    users.forEach((u: any) => {
+      if (u.emp_code) userMap.set(u.emp_code, u.Full_name || 'Unknown');
+    });
+
+    const records = await prisma.npattendance.findMany({
+      where: {
+        date: {
+          gte: startOfYear,
+          lte: endOfYear
+        }
+      },
+      orderBy: [
+        { employee_id: 'asc' },
+        { date: 'asc' }
+      ]
+    });
 
     // Group by employeeId
     const byUser: Record<string, any[]> = {};
     for (const r of records) {
       const dateISO = new Date(r.date).toISOString().split('T')[0];
-      let inTime = pickHHMM(r.inTime);
-      let outTime = pickHHMM(r.outTime);
+
+      // r.in_time etc are Date objects. helper pickHHMM handles them.
+      let inTime = pickHHMM(r.in_time);
+      let outTime = pickHHMM(r.out_time);
 
       let ctArr: string[] | null = null;
       try {
-        if (r.clockTimes) {
-          const parsed = typeof r.clockTimes === 'string' ? JSON.parse(r.clockTimes) : r.clockTimes;
+        if (r.clock_times) {
+          const parsed = typeof r.clock_times === 'string' ? JSON.parse(r.clock_times) : r.clock_times;
           if (Array.isArray(parsed) && parsed.length > 0) {
             ctArr = parsed.map((t: any) => pickHHMM(t)).filter((t: string) => t !== 'N/A');
           }
@@ -90,7 +92,9 @@ export async function GET(req: NextRequest) {
       }
 
       let calculatedStatus = r.status || '';
-      const loginSec = parseTimeToSeconds(r.loginHours);
+      // Parse login_hours (which is DateTime in Prisma)
+      const loginSec = parseTimeToSeconds(r.login_hours);
+
       if (!calculatedStatus || calculatedStatus === 'Absent') {
         if (loginSec >= 8 * 3600) {
           calculatedStatus = 'Present';
@@ -98,6 +102,13 @@ export async function GET(req: NextRequest) {
           calculatedStatus = 'Half-day';
         }
       }
+
+      const empName = userMap.get(r.employee_id) || r.emp_name || 'Unknown';
+
+      // Access login_hours safely safely (handle null)
+      const loginHoursStr = r.login_hours ? new Date(r.login_hours).toISOString().substr(11, 8) : '00:00:00';
+      const totalHoursStr = r.total_hours ? new Date(r.total_hours).toISOString().substr(11, 8) : '00:00:00';
+      const breakHoursStr = r.break_hours ? new Date(r.break_hours).toISOString().substr(11, 8) : '00:00:00';
 
       const event = {
         title: calculatedStatus || '—',
@@ -113,17 +124,17 @@ export async function GET(req: NextRequest) {
                 ? 'orange'
                 : 'gray',
         extendedProps: {
-          user: r.fullName || r.empName || 'Unknown',
-          emp_code: String(r.employeeId),
+          user: empName,
+          emp_code: String(r.employee_id),
           date: dateISO,
           in_time: inTime,
           out_time: outTime,
-          shift_time: r.shiftTime ?? null,
-          login_hours: r.loginHours ?? '00:00:00',
-          total_hours: r.totalHours ?? '00:00:00',
-          break_hours: r.breakHours ?? '00:00:00',
+          shift_time: r.shift_time ?? null,
+          login_hours: loginHoursStr,
+          total_hours: totalHoursStr,
+          break_hours: breakHoursStr,
           status: calculatedStatus,
-          clock_times: r.clockTimes ?? '[]'
+          clock_times: r.clock_times ?? '[]'
         }
       };
 
@@ -131,9 +142,9 @@ export async function GET(req: NextRequest) {
       // Use IST to determine "today"
       const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
-      if (dateISO === todayIST && r.clockTimes) {
+      if (dateISO === todayIST && r.clock_times) {
         try {
-          const clockTimes = typeof r.clockTimes === 'string' ? JSON.parse(r.clockTimes) : r.clockTimes;
+          const clockTimes = typeof r.clock_times === 'string' ? JSON.parse(r.clock_times) : r.clock_times;
           if (Array.isArray(clockTimes) && clockTimes.length > 0) {
             const now = Date.now();
             const timestamps = clockTimes.map((t: string) => {
@@ -200,7 +211,7 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      const key = String(r.employeeId);
+      const key = String(r.employee_id);
       if (!byUser[key]) byUser[key] = [];
       byUser[key].push(event);
     }
