@@ -409,10 +409,10 @@ model dm_task {
   f_campaign_name String   @db.VarChar(50)
   f_start_date    DateTime @db.Date
   f_end_date      DateTime @db.Date
-  f_assignto      String   @db.VarChar(25)
+  f_assignto      String?  @db.VarChar(25)
   f_allocation    String   @db.VarChar(255)
   f_method        String   @db.VarChar(255)
-  f_script        Bytes    @db.Blob
+  f_script        Bytes?   @db.Blob
   f_status        String   @db.VarChar(11)
 }
 

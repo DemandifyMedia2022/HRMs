@@ -56,6 +56,29 @@ const FIELDS = [
   'added_by_user_id'
 ];
 
+const HIDDEN_FIELDS = [
+  'f_cq1',
+  'f_cq2',
+  'f_cq3',
+  'f_cq4',
+  'f_cq5',
+  'f_cq6',
+  'f_cq7',
+  'f_cq8',
+  'f_cq9',
+  'f_cq10',
+  'f_asset_name1',
+  'f_asset_name2',
+  'f_call_recording',
+  'f_dq_reason1',
+  'f_dq_reason2',
+  'f_dq_reason3',
+  'f_dq_reason4',
+  'f_call_links',
+  'f_date',
+  'added_by_user_id'
+];
+
 function getCurrentUserName() {
   // TODO: Replace with your real authentication/session logic
   if (typeof window !== 'undefined') {
@@ -203,7 +226,7 @@ export default function UserPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6" aria-disabled={authDept.toLowerCase() !== 'operation'}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {FIELDS.filter(f => f !== 'added_by_user_id').map(f => (
+            {FIELDS.filter(f => !HIDDEN_FIELDS.includes(f)).map(f => (
               <div key={f} className="space-y-1.5">
                 <label className="block text-sm font-medium text-gray-700">
                   {f.replace('f_', '').replace(/_/g, ' ')}

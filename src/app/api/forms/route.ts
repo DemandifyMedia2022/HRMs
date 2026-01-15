@@ -5,11 +5,65 @@ import { verifyToken } from '@/lib/auth';
 function getAuth(req: NextRequest) {
   try {
     const token = req.cookies.get('access_token')?.value;
-    if (!token) return null;
+    console.log('Token found:', !!token);
+    if (!token) {
+      console.log('No access_token cookie found');
+      return null;
+    }
     const payload = verifyToken(token) as any;
+    console.log('Token verified successfully, payload:', { id: payload.id, email: payload.email, role: payload.role });
     return payload; // Returns the whole payload including id, email, role, etc.
-  } catch {
+  } catch (error: any) {
+    console.error('Token verification failed:', error.message);
     return null;
+  }
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    console.log('GET /api/forms - Request received');
+    
+    const auth = getAuth(req);
+    console.log('Auth result:', auth ? 'Authenticated' : 'Not authenticated');
+    
+    if (!auth) {
+      console.log('Returning 401 - Unauthorized');
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const userName = searchParams.get('user_name');
+
+    // Build where clause based on user role
+    let whereClause: any = {};
+    
+    // If user is not admin, only show their own data
+    if (auth.role !== 'admin') {
+      whereClause.added_by_user_id = String(auth.id);
+      console.log('Non-admin user, filtering by user_id:', String(auth.id));
+    }
+
+    console.log('Querying dm_form table with where clause:', whereClause);
+    
+    const formData = await prisma.dm_form.findMany({
+      where: whereClause,
+      orderBy: {
+        f_date: 'desc'
+      },
+      take: 1000 // Limit to last 1000 records for performance
+    });
+
+    console.log('Query successful, found', formData.length, 'records');
+
+    return NextResponse.json({
+      success: true,
+      data: formData
+    });
+
+  } catch (error: any) {
+    console.error('Error fetching form data:', error);
+    console.error('Error stack:', error.stack);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
 
