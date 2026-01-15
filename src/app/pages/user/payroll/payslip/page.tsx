@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
 import { SidebarConfig } from '@/components/sidebar-config';
-import html2pdf from 'html2pdf.js';
 
 interface EmployeeDetails {
   Full_name: string | null;
@@ -176,6 +175,8 @@ export default function PayslipPage() {
     netPayInWords: string,
     fullData: PayslipData
   ) => {
+    // Load html2pdf only on the client-side to avoid SSR error (self is not defined)
+    const { default: html2pdf } = await import('html2pdf.js');
     const monthName = getMonthName(month);
     const e = fullData.earnings || ({} as any);
     const d = fullData.deductions || ({} as any);

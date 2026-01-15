@@ -327,7 +327,9 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
             url: '/pages/hr/payroll/employee-salary-structure',
             icon: IconFileDescription
           },
-          { title: 'Employee Expenses', url: '/pages/hr/payroll/tax', icon: IconReport }
+          { title: 'Employee Expenses', url: '/pages/hr/payroll/tax', icon: IconReport },
+
+          {title : 'Finalize Attendance', url: '/pages/hr/payroll/finalize', icon: IconReport}
         ]
       },
       {
