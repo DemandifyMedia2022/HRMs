@@ -522,7 +522,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   />
                 </div>
                 <div className="flex flex-col leading-tight">
-                  <span className="text-lg font-semibold tracking-tight">HRMS</span>
+                  <span className="text-lg font-semibold tracking-tight">DemandFlow</span>
 
                 </div>
               </Link>
