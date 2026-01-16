@@ -141,15 +141,34 @@ function UserAvailableLeavePageInner() {
       (async () => {
         try {
           const meRes = await fetch('/api/auth/me', { cache: 'no-store' });
+          let candidate = '';
           if (meRes.ok) {
             const me = await meRes.json();
-            const candidate: string = me?.name || me?.email || '';
-            if (candidate) {
-              setUserName(candidate);
-              load(candidate);
+            candidate = me?.email || me?.name || '';
+          }
+          // Fallback: decode email from JWT in cookies if needed
+          if (!candidate && typeof document !== 'undefined') {
+            const match = document.cookie.match(/(?:^|; )access_token=([^;]+)/);
+            if (match) {
+              const token = decodeURIComponent(match[1]);
+              const parts = token.split('.');
+              if (parts.length >= 2) {
+                try {
+                  const payload = JSON.parse(atob(parts[1]));
+                  candidate = payload?.email || '';
+                } catch { }
+              }
             }
           }
-        } catch (e) { }
+          if (candidate) {
+            setUserName(candidate);
+            load(candidate);
+          } else {
+            setError('Unable to determine current user. Please enter your email to load leave data.');
+          }
+        } catch {
+          setError('Unable to retrieve current user. Please enter your email to load leave data.');
+        }
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -180,15 +199,20 @@ function UserAvailableLeavePageInner() {
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-[2fr,auto]">
                 <div className="space-y-2">
-  <div className="space-y-2">
-  <Label className="text-sm font-medium">Employee</Label>
-  <p className="px-3 py-2 border rounded-md bg-gray-50">
-    {userName}
-  </p>
-</div>
-</div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Employee</Label>
+                    <div className="grid grid-cols-[1fr_auto] gap-2">
+                      <Input
+                        placeholder="user email (e.g. name@company.com)"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                      />
+                      <Button type="button" onClick={() => load(userName)}>Load</Button>
+                    </div>
+                  </div>
+                </div>
 
-                
+
               </div>
 
               {error && (

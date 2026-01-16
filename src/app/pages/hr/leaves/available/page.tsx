@@ -61,24 +61,33 @@ function HrAvailableLeavePageInner() {
   const [error, setError] = useState<string | null>(null);
 
   async function load(targetUser?: string) {
-    const u = (targetUser ?? userName).trim();
-    if (!u) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/leaves/available?user_name=${encodeURIComponent(u)}`, { cache: 'no-store' });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || 'Failed to load available leaves');
-      }
-      const json = (await res.json()) as AvailableResponse;
-      setData(json);
-    } catch (e: any) {
-      setError(e?.message || 'Failed to load available leaves');
-    } finally {
-      setLoading(false);
+  const u = (targetUser ?? userName).trim();
+  if (!u) return;
+  setLoading(true);
+  setError(null);
+  try {
+    // first try with the provided value
+    let res = await fetch(`/api/leaves/available?user_name=${encodeURIComponent(u)}`, { cache: 'no-store' });
+    let body: any = null;
+    if (res.ok) body = await res.json().catch(() => null);
+
+    // if nothing came back or invalid structure, and it looks like an email,
+    // retry with a fallback guess (email <-> name)
+    if ((!res.ok || !body || !Array.isArray(body?.LeaveApprovalData)) && u.includes('@')) {
+      const fallback = u.split('@')[0].replace(/\./g, ' ').trim();
+      const res2 = await fetch(`/api/leaves/available?user_name=${encodeURIComponent(fallback)}`, { cache: 'no-store' });
+      if (res2.ok) body = await res2.json().catch(() => null);
     }
+
+    if (!body) throw new Error('Failed to load available leaves');
+
+    // ... keep your current-year filter and setData exactly as you have it ...
+  } catch (e: any) {
+    setError(e?.message || 'Failed to load available leaves');
+  } finally {
+    setLoading(false);
   }
+}
 
   useEffect(() => {
     if (userFromQuery) {
@@ -91,7 +100,7 @@ function HrAvailableLeavePageInner() {
           const meRes = await fetch('/api/auth/me', { cache: 'no-store' });
           if (meRes.ok) {
             const me = await meRes.json();
-            const candidate: string = me?.name || me?.email || '';
+           const candidate: string = me?.email || me?.name || '';
             if (candidate) {
               setUserName(candidate);
               load(candidate);

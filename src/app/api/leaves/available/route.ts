@@ -26,17 +26,35 @@ export async function GET(req: Request) {
     const totalPaidLeave = 12;
     const totalSickLeave = 6;
  
+       // Compute flexible match variants: if email provided, also try name tokens
+    const isEmail = userName.includes('@');
+    const local = isEmail ? userName.split('@')[0] : userName;
+    const tokens = local.split(/[._\s]+/).filter(Boolean);
+
+    const whereUser =
+      isEmail && tokens.length > 0
+        ? ({
+            OR: [
+              { added_by_user: userName },
+              {
+                AND: tokens.map((t) => ({
+                  added_by_user: { contains: t } as any
+                }))
+              }
+            ]
+          } as any)
+        : ({ added_by_user: userName } as any);
+
     // all leaves for the user (for table display)
     const allLeaves = await prisma.leavedata.findMany({
-      where: { added_by_user: userName },
+      where: whereUser,
       orderBy: { start_date: 'desc' }
     });
- 
     // approved leaves for counting balances
     // Count as approved if either HR OR Manager has approved (handle common case variants)
-    const approvedLeaves = await prisma.leavedata.findMany({
+        const approvedLeaves = await prisma.leavedata.findMany({
       where: {
-        added_by_user: userName,
+        ...whereUser,
         OR: [
           { HRapproval: { in: ['approved', 'Approved', 'APPROVED'] } as any },
           { Managerapproval: { in: ['approved', 'Approved', 'APPROVED'] } as any }
