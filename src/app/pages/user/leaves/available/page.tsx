@@ -249,13 +249,13 @@ function UserAvailableLeavePageInner() {
         {data && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+              {/* <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2">Paid Leave Usage</CardTitle>
                   <CardDescription>Visual breakdown of paid leave consumption.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <ChartContainer
+                <CardContent> */}
+                  {/* <ChartContainer
                     className="h-64"
                     config={{
                       Used: { label: 'Used', color: '#5ea3f2' },
@@ -282,9 +282,9 @@ function UserAvailableLeavePageInner() {
                     </PieChart>
                   </ChartContainer>
                 </CardContent>
-              </Card>
+              </Card> */}
 
-              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+              {/* <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2">Sick Leave Usage</CardTitle>
                   <CardDescription>Visual breakdown of sick leave consumption.</CardDescription>
@@ -317,7 +317,7 @@ function UserAvailableLeavePageInner() {
                     </PieChart>
                   </ChartContainer>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
 
             <Card className="shadow-lg border-0 bg-white/90 backdrop-blur">
