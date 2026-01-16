@@ -309,6 +309,18 @@ export default function UserPage() {
     }
   };
 
+  const handleReset = () => {
+    setFormData({
+      ...Object.fromEntries(FIELDS.map(f => [f, ''])),
+      f_campaign_name: 'Data Processing',
+      f_lead: 'verified',
+      f_resource_name: authUserName || getCurrentUserName(),
+      f_data_source: '',
+      added_by_user_id: authUserName || getCurrentUserName()
+    });
+    setMessage(null);
+  };
+
   return (
     <>
       <SidebarConfig role="user" />
@@ -425,6 +437,9 @@ export default function UserPage() {
                 <div className="flex items-center gap-3 pt-4 border-t">
                   <Button type="submit" disabled={loading}>
                     {loading ? 'Saving...' : 'Save Data'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleReset}>
+                    Reset
                   </Button>
                   {message ? (
                     <div className={`text-sm ${message.includes('Error') ? 'text-destructive' : 'text-emerald-600'}`}>
