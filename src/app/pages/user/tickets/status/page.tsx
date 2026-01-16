@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SidebarConfig } from '@/components/sidebar-config';
 import { toast } from 'sonner';
 import { DatePicker } from '@/components/ui/date-picker';
+import ReadMore from '@/components/ui/read-more';
 
 interface Complaint {
   id: number;
@@ -26,6 +27,7 @@ interface Complaint {
 export default function RaiseTicketsPage() {
   const router = useRouter();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [allComplaints, setAllComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<string>('');
@@ -44,6 +46,35 @@ export default function RaiseTicketsPage() {
   useEffect(() => {
     fetchUserAndComplaints();
   }, []);
+
+  // Check if user can access this ticket based on department
+  function canUserAccessTicket(complaint: Complaint): boolean {
+    const userDeptLower = currentUserDept.toLowerCase();
+    const issueTypeLower = complaint.issuse_type.toLowerCase();
+    
+    // IT users can only access technical tickets
+    if (userDeptLower === 'it' || userDeptLower.includes('information technology')) {
+      return issueTypeLower === 'technical' || issueTypeLower.includes('technical');
+    }
+    
+    // HR-related tickets can only be accessed by HR department
+    if (issueTypeLower === 'hr-related' || issueTypeLower.includes('hr')) {
+      return userDeptLower === 'hr' || userDeptLower.includes('hr');
+    }
+    
+    // Other departments can access their respective ticket types
+    if (issueTypeLower === 'hrms' || issueTypeLower.includes('haritech hrms')) {
+      return userDeptLower === 'hr' || userDeptLower.includes('hr');
+    }
+    
+    // General tickets can be accessed by anyone except IT (they only get technical)
+    if (issueTypeLower === 'general') {
+      return userDeptLower !== 'it' && !userDeptLower.includes('information technology');
+    }
+    
+    // Other tickets - allow access for non-IT departments
+    return userDeptLower !== 'it' && !userDeptLower.includes('information technology');
+  }
 
   // Helpers to map between Date and YYYY-MM-DD strings for DatePicker
   const toYMD = (d?: Date | null) =>
@@ -176,27 +207,32 @@ export default function RaiseTicketsPage() {
         const res = await fetch('/api/complaints');
         if (res.ok) {
           const data = await res.json();
-          const allComplaints = data.data || [];
+          const allComplaintsData = data.data || [];
+          setAllComplaints(allComplaintsData);
 
-          // Special case: IT department can view all tickets with full actions
+          // Special case: IT department can view only technical tickets
           const deptLower = userDept.toLowerCase();
           let filteredComplaints;
           if (deptLower === 'it' || deptLower.includes('information technology')) {
             setIsDepartmentUser(true);
-            filteredComplaints = allComplaints;
+            // IT users see only technical tickets (not their own raised tickets)
+            filteredComplaints = allComplaintsData.filter((c: Complaint) => {
+              const issueTypeLower = c.issuse_type.toLowerCase();
+              return issueTypeLower === 'technical' || issueTypeLower.includes('technical');
+            });
           } else {
             // Get complaint types this user should see
             const allowedTypes = getComplaintTypesForEmail(userEmail);
 
             // Filter complaints
             if (allowedTypes.length > 0) {
-              // User is a department receiver - show complaints for their department
+              // User is a department receiver - show only complaints for their department (not their own raised tickets)
               setIsDepartmentUser(true);
-              filteredComplaints = allComplaints.filter((c: Complaint) => allowedTypes.includes(c.issuse_type));
+              filteredComplaints = allComplaintsData.filter((c: Complaint) => allowedTypes.includes(c.issuse_type));
             } else {
               // Regular user - show only their own complaints
               setIsDepartmentUser(false);
-              filteredComplaints = allComplaints.filter(
+              filteredComplaints = allComplaintsData.filter(
                 (c: Complaint) => c.name === userName || c.added_by_user === userName
               );
             }
@@ -274,17 +310,19 @@ export default function RaiseTicketsPage() {
     }
   }
 
-  const filteredComplaints = complaints.filter(complaint => {
-    if (filter === 'all') return true;
-    if (filter === 'pending') return complaint.status?.toLowerCase() === 'pending' && !complaint.acknowledgement_status;
-    if (filter === 'acknowledged')
-      return (
-        complaint.acknowledgement_status?.toLowerCase() === 'acknowledged' &&
-        complaint.status?.toLowerCase() !== 'resolved'
-      );
-    if (filter === 'resolved') return complaint.status?.toLowerCase() === 'resolved';
-    return true;
-  });
+  const filteredComplaints = filter === 'my-raised' 
+    ? allComplaints.filter(complaint => complaint.name === currentUser || complaint.added_by_user === currentUser)
+    : complaints.filter(complaint => {
+        if (filter === 'all') return true;
+        if (filter === 'pending') return complaint.status?.toLowerCase() === 'pending' && !complaint.acknowledgement_status;
+        if (filter === 'acknowledged')
+          return (
+            complaint.acknowledgement_status?.toLowerCase() === 'acknowledged' &&
+            complaint.status?.toLowerCase() !== 'resolved'
+          );
+        if (filter === 'resolved') return complaint.status?.toLowerCase() === 'resolved';
+        return true;
+      });
 
   const getStatusColor = (status: string | null, acknowledgement: string | null) => {
     if (status?.toLowerCase() === 'resolved') {
@@ -404,6 +442,14 @@ export default function RaiseTicketsPage() {
               >
                 Resolved ({complaints.filter(c => c.status?.toLowerCase() === 'resolved').length})
               </button>
+              <button
+                onClick={() => setFilter('my-raised')}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  filter === 'my-raised' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                My Raised ({allComplaints.filter(c => c.name === currentUser || c.added_by_user === currentUser).length})
+              </button>
             </div>
 
             {isDepartmentUser && (currentUserDept.toLowerCase() === 'it' || currentUserDept.toLowerCase().includes('information technology')) && filter === 'resolved' && (
@@ -505,9 +551,11 @@ export default function RaiseTicketsPage() {
                     {/* Reason */}
                     <div className={`mb-4 ${viewMode === 'list' ? 'flex-1' : 'flex-grow'}`}>
                       <p className="text-xs text-gray-600 mb-1 font-medium">Reason:</p>
-                      <p className={`text-sm text-gray-800 ${viewMode === 'grid' ? 'line-clamp-3' : ''}`}>
-                        {complaint.reason}
-                      </p>
+                      <ReadMore 
+                        text={complaint.reason} 
+                        maxLength={viewMode === 'grid' ? 120 : 200}
+                        className="text-sm text-gray-800"
+                      />
                     </div>
 
                     {/* Actions / Resolution */}
@@ -579,7 +627,7 @@ export default function RaiseTicketsPage() {
                           </div>
                         )}
                       </div>
-                    ) : isDepartmentUser ? (
+                    ) : isDepartmentUser && canUserAccessTicket(complaint) ? (
                       <div className="mt-auto pt-3 border-t flex justify-center">
                         <button
                           onClick={() => handleAcknowledge(complaint.id)}

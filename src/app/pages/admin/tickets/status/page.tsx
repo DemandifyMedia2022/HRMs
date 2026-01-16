@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SidebarConfig } from '@/components/sidebar-config';
 import { toast } from 'sonner';
+import ReadMore from '@/components/ui/read-more';
 
 interface Complaint {
   id: number;
@@ -29,6 +30,7 @@ export default function RaiseTicketsPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<string>('');
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+  const [currentUserDept, setCurrentUserDept] = useState<string>('');
   const [filter, setFilter] = useState<string>('all');
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [resolutionComment, setResolutionComment] = useState('');
@@ -40,6 +42,35 @@ export default function RaiseTicketsPage() {
   useEffect(() => {
     fetchUserAndComplaints();
   }, []);
+
+  // Check if user can access this ticket based on department
+  function canUserAccessTicket(complaint: Complaint): boolean {
+    const userDeptLower = currentUserDept.toLowerCase();
+    const issueTypeLower = complaint.issuse_type.toLowerCase();
+    
+    // HR-related tickets can only be accessed by HR department
+    if (issueTypeLower === 'hr-related' || issueTypeLower.includes('hr')) {
+      return userDeptLower === 'hr' || userDeptLower.includes('hr');
+    }
+    
+    // Technical tickets can only be accessed by IT department
+    if (issueTypeLower === 'technical' || issueTypeLower.includes('technical')) {
+      return userDeptLower === 'it' || userDeptLower.includes('information technology');
+    }
+    
+    // Other departments can access their respective ticket types
+    if (issueTypeLower === 'hrms' || issueTypeLower.includes('haritech hrms')) {
+      return userDeptLower === 'hr' || userDeptLower.includes('hr');
+    }
+    
+    // General tickets can be accessed by anyone
+    if (issueTypeLower === 'general') {
+      return true;
+    }
+    
+    // Other tickets - allow access for now
+    return true;
+  }
 
   // Map email to complaint types they should see
   function getComplaintTypesForEmail(email: string): string[] {
@@ -71,8 +102,10 @@ export default function RaiseTicketsPage() {
         const userData = await userRes.json();
         const userName = userData.name || '';
         const userEmail = userData.email || '';
+        const userDept = (userData.department || '').toString();
         setCurrentUser(userName);
         setCurrentUserEmail(userEmail);
+        setCurrentUserDept(userDept);
 
         // Fetch all complaints
         const res = await fetch('/api/complaints');
@@ -178,6 +211,7 @@ export default function RaiseTicketsPage() {
         complaint.status?.toLowerCase() !== 'resolved'
       );
     if (filter === 'resolved') return complaint.status?.toLowerCase() === 'resolved';
+    if (filter === 'my-raised') return complaint.name === currentUser || complaint.added_by_user === currentUser;
     return true;
   });
 
@@ -298,6 +332,14 @@ export default function RaiseTicketsPage() {
             >
               Resolved ({complaints.filter(c => c.status?.toLowerCase() === 'resolved').length})
             </button>
+            <button
+              onClick={() => setFilter('my-raised')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                filter === 'my-raised' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              My Raised ({complaints.filter(c => c.name === currentUser || c.added_by_user === currentUser).length})
+            </button>
           </div>
 
           {/* Complaints Grid/List */}
@@ -369,9 +411,11 @@ export default function RaiseTicketsPage() {
                     {/* Reason */}
                     <div className={`mb-4 ${viewMode === 'list' ? 'flex-1' : 'flex-grow'}`}>
                       <p className="text-xs text-gray-600 mb-1 font-medium">Reason:</p>
-                      <p className={`text-sm text-gray-800 ${viewMode === 'grid' ? 'line-clamp-3' : ''}`}>
-                        {complaint.reason}
-                      </p>
+                      <ReadMore 
+                        text={complaint.reason} 
+                        maxLength={viewMode === 'grid' ? 120 : 200}
+                        className="text-sm text-gray-800"
+                      />
                     </div>
 
                     {/* Actions / Resolution */}
@@ -443,7 +487,7 @@ export default function RaiseTicketsPage() {
                           </div>
                         )}
                       </div>
-                    ) : isDepartmentUser ? (
+                    ) : isDepartmentUser && canUserAccessTicket(complaint) ? (
                       <div className="mt-auto pt-3 border-t flex justify-center">
                         <button
                           onClick={() => handleAcknowledge(complaint.id)}

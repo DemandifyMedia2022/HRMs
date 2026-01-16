@@ -170,7 +170,7 @@ export default function UserPage() {
     f_campaign_name: 'Data Processing',
     f_lead: 'verified',
     f_resource_name: getCurrentUserName(),
-    f_data_source: 'LinkedIn',
+    f_data_source: '',
     added_by_user_id: userName
   });
   const [loading, setLoading] = useState(false);
@@ -399,10 +399,9 @@ export default function UserPage() {
                       ) : f === 'f_data_source' ? (
                         <Input
                           id={f}
-                          value="LinkedIn"
-                          disabled={true}
-                          className="bg-gray-50"
-                          readOnly
+                          value={formData[f] ?? ''}
+                          onChange={e => onChange(f, e.target.value)}
+                          placeholder="Enter data source..."
                         />
                       ) : f === 'f_date' ? (
                         <DateTimePicker
