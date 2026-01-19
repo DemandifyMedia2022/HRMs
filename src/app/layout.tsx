@@ -2,6 +2,7 @@ import type React from 'react';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { LayoutContent } from '@/components/layout-content';
+import { AuthKeepAlive } from '@/components/auth-keep-alive';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 const geistSans = Geist({
@@ -28,6 +29,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <LayoutContent>{children}</LayoutContent>
+        <AuthKeepAlive />
         <Toaster richColors position="top-right" />
       </body>
     </html>

@@ -32,11 +32,12 @@ export async function GET(req: NextRequest) {
     );
 
     // Refresh the token cookie to keep session alive
-    const isProd = process.env.NODE_ENV === 'production';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const isSecure = baseUrl.startsWith('https://');
     res.cookies.set('access_token', token, {
       httpOnly: true,
       sameSite: 'strict',
-      secure: isProd,
+      secure: isSecure,
       path: '/',
       maxAge: 60 * 60 // 1 hour - refresh the expiration
     });
