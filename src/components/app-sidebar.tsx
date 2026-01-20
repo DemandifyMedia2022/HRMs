@@ -163,22 +163,22 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         children: [
           { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
           { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
-          { name: 'Call History', url: '/pages/user/operations/calls', icon: IconFileWord },
+          { name: 'Records', url: '/pages/user/operations/records', icon: IconList },
+                    { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
+          { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
+        ]
+      },
+      {
+        name: 'Operation',
+        url: '#',
+        icon: IconPhone,
+        children: [
+          { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
+          { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
           { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
           { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
         ]
       },
-      // {
-      //   name: 'Campaigns',
-      //   url: '#',
-      //   icon: IconSpeakerphone,
-      //   children: [
-      //     { name: 'Campaign list', url: '/pages/admin/campaigns', icon: IconReport },
-      //     { name: 'Add Campaigns', url: '/pages/admin/campaigns/add', icon: IconPlus },
-      //     { name: 'Call Data', url: '/pages/admin/call-data', icon: IconDatabase },
-      //     { name: 'Paste Call Data', url: '/pages/admin/paste-call-data', icon: IconDialpad }
-      //   ]
-      // },
       // { name: 'Team', url: '/pages/admin/team', icon: IconUsers }
     ]
   },
@@ -257,8 +257,8 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         children: [
           { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
           { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
-          { name: 'Call History', url: '/pages/user/operations/calls', icon: IconFileWord },
-          { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
+          { name: 'Records', url: '/pages/user/operations/records', icon: IconList },
+                    { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
           { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
         ]
       },
@@ -378,8 +378,8 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         children: [
           { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
           { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
-          { name: 'Call History', url: '/pages/user/operations/calls', icon: IconFileWord },
-          { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
+          { name: 'Records', url: '/pages/user/operations/records', icon: IconList },
+                    { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
           { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
         ]
       }

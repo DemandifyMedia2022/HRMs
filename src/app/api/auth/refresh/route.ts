@@ -4,8 +4,7 @@ import { generateToken, verifyRefreshToken, mapTypeToRole, generateRefreshToken 
 
 export async function POST(req: NextRequest) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const isSecure = baseUrl.startsWith('https://');
+    const isProd = process.env.NODE_ENV === 'production';
     const refresh = req.cookies.get('refresh_token')?.value;
     if (!refresh) {
       const res = NextResponse.json({ message: 'No refresh token' }, { status: 401 });
@@ -54,17 +53,16 @@ export async function POST(req: NextRequest) {
     res.cookies.set('access_token', accessToken, {
       httpOnly: true,
       sameSite: 'strict',
-      secure: isSecure,
+      secure: isProd,
       path: '/',
       maxAge: 60 * 15
     });
-    // rotate refresh (persist 30 days like login)
+    // rotate refresh
     res.cookies.set('refresh_token', newRefresh, {
       httpOnly: true,
       sameSite: 'strict',
-      secure: isSecure,
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30
+      secure: isProd,
+      path: '/'
     });
 
     return res;

@@ -59,7 +59,6 @@ const prettyLabel = (key: string) =>
     .replace(/\b\w/g, c => c.toUpperCase());
 
 import React, { useState, useEffect } from 'react';
-import { fetchWithAuth } from '@/lib/api';
 import { SidebarConfig } from '@/components/sidebar-config';
 import DialerModal from '@/components/dialer/dialer-modal';
 import SipLoginModal from '@/components/dialer/sip-login-modal';
@@ -74,6 +73,7 @@ const FIELDS = [
   'f_campaign_name',
   'f_lead',
   'f_resource_name',
+  'f_conatct_no',
   'f_data_source',
   'f_salutation',
   'f_first_name',
@@ -83,7 +83,6 @@ const FIELDS = [
   'f_job_level',
   'f_email_add',
   'Secondary_Email',
-  'f_conatct_no',
   'f_company_name',
   'f_website',
   'f_address1',
@@ -99,6 +98,29 @@ const FIELDS = [
   'f_profile_link',
   'f_company_link',
   'f_address_link',
+  'f_cq1',
+  'f_cq2',
+  'f_cq3',
+  'f_cq4',
+  'f_cq5',
+  'f_cq6',
+  'f_cq7',
+  'f_cq8',
+  'f_cq9',
+  'f_cq10',
+  'f_asset_name1',
+  'f_asset_name2',
+  'f_call_recording',
+  'f_dq_reason1',
+  'f_dq_reason2',
+  'f_dq_reason3',
+  'f_dq_reason4',
+  'f_call_links',
+  'f_date',
+  'added_by_user_id'
+];
+
+const HIDDEN_FIELDS = [
   'f_cq1',
   'f_cq2',
   'f_cq3',
@@ -145,6 +167,10 @@ export default function UserPage() {
   const [authLoading, setAuthLoading] = useState<boolean>(true);
   const [formData, setFormData] = useState<Record<string, string | null>>({
     ...Object.fromEntries(FIELDS.map(f => [f, ''])),
+    f_campaign_name: 'Data Processing',
+    f_lead: 'verified',
+    f_resource_name: getCurrentUserName(),
+    f_data_source: '',
     added_by_user_id: userName
   });
   const [loading, setLoading] = useState(false);
@@ -190,7 +216,7 @@ export default function UserPage() {
     const ext = typeof window !== 'undefined' ? localStorage.getItem('extension') : null;
     setSipStatus(ext ? `Logged in as ${ext}` : 'Not logged in');
     // Try to fetch authenticated user
-    fetchWithAuth('/api/auth/me')
+    fetch('/api/auth/me', { credentials: 'include' })
       .then(async r => {
         if (r.status === 401 || r.status === 403) {
           // Not authenticated, redirect to login/home
@@ -203,7 +229,11 @@ export default function UserPage() {
         setAuthDept(String(me?.department || ''));
         if (pretty) {
           setAuthUserName(pretty);
-          setFormData(s => ({ ...s, added_by_user_id: pretty }));
+          setFormData(s => ({ 
+            ...s, 
+            added_by_user_id: pretty,
+            f_resource_name: pretty 
+          }));
           try {
             localStorage.setItem('userName', pretty);
           } catch { }
@@ -226,7 +256,7 @@ export default function UserPage() {
 
   // Load campaigns for dropdown
   useEffect(() => {
-    fetchWithAuth('/api/campaigns')
+    fetch('/api/campaigns')
       .then(r => r.json())
       .then(j => {
         if (j?.data) setCampaigns(j.data);
@@ -261,7 +291,7 @@ export default function UserPage() {
     setLoading(true);
     setMessage(null);
     try {
-      const res = await fetchWithAuth('/api/forms', {
+      const res = await fetch('/api/forms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -277,6 +307,18 @@ export default function UserPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleReset = () => {
+    setFormData({
+      ...Object.fromEntries(FIELDS.map(f => [f, ''])),
+      f_campaign_name: 'Data Processing',
+      f_lead: 'verified',
+      f_resource_name: authUserName || getCurrentUserName(),
+      f_data_source: '',
+      added_by_user_id: authUserName || getCurrentUserName()
+    });
+    setMessage(null);
   };
 
   return (
@@ -307,7 +349,7 @@ export default function UserPage() {
                 className="space-y-6"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {FIELDS.filter(f => f !== 'added_by_user_id').map(f => (
+                  {FIELDS.filter(f => !HIDDEN_FIELDS.includes(f)).map(f => (
                     <div key={f} className="space-y-2">
                       <Label htmlFor={f}>{prettyLabel(f)}</Label>
                       {f === 'f_conatct_no' ? (
@@ -343,34 +385,36 @@ export default function UserPage() {
                           );
                         })()
                       ) : f === 'f_campaign_name' ? (
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={formData[f] || '' || EMPTY}
-                            onValueChange={v => onChange(f, v === EMPTY ? '' : v)}
-                          >
-                            <SelectTrigger id={f} className="w-full">
-                              <SelectValue placeholder="Select campaign..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value={EMPTY}>Select campaign...</SelectItem>
-                              {campaigns.map(c => (
-                                <SelectItem key={c.id} value={c.f_campaign_name}>
-                                  {c.f_campaign_name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="shrink-0"
-                            disabled={!formData[f]}
-                            onClick={openSelectedCampaignScript}
-                          >
-                            Open Script
-                          </Button>
-                        </div>
+                        <Input
+                          id={f}
+                          value="Data Processing"
+                          disabled={true}
+                          className="bg-gray-50"
+                          readOnly
+                        />
+                      ) : f === 'f_lead' ? (
+                        <Input
+                          id={f}
+                          value="verified"
+                          disabled={true}
+                          className="bg-gray-50"
+                          readOnly
+                        />
+                      ) : f === 'f_resource_name' ? (
+                        <Input
+                          id={f}
+                          value={authUserName || getCurrentUserName()}
+                          disabled={true}
+                          className="bg-gray-50"
+                          readOnly
+                        />
+                      ) : f === 'f_data_source' ? (
+                        <Input
+                          id={f}
+                          value={formData[f] ?? ''}
+                          onChange={e => onChange(f, e.target.value)}
+                          placeholder="Enter data source..."
+                        />
                       ) : f === 'f_date' ? (
                         <DateTimePicker
                           label=""
@@ -392,7 +436,10 @@ export default function UserPage() {
 
                 <div className="flex items-center gap-3 pt-4 border-t">
                   <Button type="submit" disabled={loading}>
-                    {loading ? 'Saving...' : 'Save to DB'}
+                    {loading ? 'Saving...' : 'Save Data'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleReset}>
+                    Reset
                   </Button>
                   {message ? (
                     <div className={`text-sm ${message.includes('Error') ? 'text-destructive' : 'text-emerald-600'}`}>
