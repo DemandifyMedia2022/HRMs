@@ -363,7 +363,7 @@ model dm_form {
   f_industry        String?  @db.VarChar(255)
   f_sub_industry    String?  @db.VarChar(255)
   f_revenue         String?  @db.VarChar(255)
-  f_revenue_link    String?  @db.VarChar(1000)
+  f_revenue_link    String?  @db.Text
   f_profile_link    String?  @db.Text
   f_company_link    String?  @db.Text
   f_address_link    String?  @db.Text
@@ -1057,4 +1057,28 @@ model payroll_attendance_snapshot {
 
   @@unique([employee_id, year, month])
   @@index([year, month])
+}
+
+model tickets {
+  id                    Int               @id @default(autoincrement()) @db.UnsignedInt
+  name                  String            @db.VarChar(100)
+  email                 String            @db.VarChar(150)
+  company_name          String?           @db.VarChar(150)
+  contact_number        String?           @db.VarChar(20)
+  account_manager_name  String?           @db.VarChar(100)
+  account_manager_email String?           @db.VarChar(150)
+  category              String?           @db.VarChar(100)
+  subject               String            @db.VarChar(255)
+  description           String?           @db.Text
+  attachments           String?           @db.VarChar(255)
+  priority              tickets_priority? @default(Medium)
+  created_at            DateTime?         @default(now()) @db.Timestamp(0)
+  updated_at            DateTime?         @default(now()) @db.Timestamp(0)
+}
+
+enum tickets_priority {
+  Low
+  Medium
+  High
+  Critical
 }

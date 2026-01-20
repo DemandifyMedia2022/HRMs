@@ -60,23 +60,13 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method.toUpperCase();
   const nonce = crypto.randomUUID().replace(/-/g, '');
+  const isProd = process.env.NODE_ENV === 'production';
   const clientIP = request.headers.get('x-forwarded-for') ||
     request.headers.get('x-real-ip') ||
     request.headers.get('cf-connecting-ip') ||
     'unknown';
 
-  // Enforce HTTPS in production
-  // if (process.env.NODE_ENV === 'production') {
-  //   const forwarded = request.headers.get('x-forwarded-proto');
-  //   const currentProto = forwarded || request.nextUrl.protocol.replace(':', '');
-  //   if (currentProto !== 'https') {
-  //     const url = request.nextUrl.clone();
-  //     url.protocol = 'https';
-  //     return NextResponse.redirect(url, 308);
-  //   }
-  // }
-
-  // Input validation and security checks
+  
   if (!isValidPath(pathname)) {
     console.warn(`Blocked suspicious path attempt: ${pathname} from IP: ${clientIP}`);
     return applySecurityHeaders(new NextResponse('Bad Request', { status: 400 }), nonce);
@@ -152,6 +142,14 @@ export function middleware(request: NextRequest) {
       try {
         const user = verifyToken(apiToken);
         const response = NextResponse.next();
+        // Sliding session: refresh access token cookie expiry on each valid API request
+        response.cookies.set('access_token', apiToken, {
+          httpOnly: true,
+          sameSite: 'strict',
+          secure: isProd,
+          path: '/',
+          maxAge: 60 * 60
+        });
         response.headers.set('x-user-role', user.role);
         response.headers.set('x-user-id', String(user.id));
         response.headers.set('x-user-department', user.department || '');
@@ -223,6 +221,14 @@ export function middleware(request: NextRequest) {
 
     // Pass user context to downstream handlers via headers
     const response = NextResponse.next();
+    // Sliding session: refresh access token cookie expiry on each valid page request
+    response.cookies.set('access_token', token, {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: isProd,
+      path: '/',
+      maxAge: 60 * 60
+    });
     response.headers.set('x-user-role', user.role);
     response.headers.set('x-user-id', String(user.id));
     response.headers.set('x-user-department', user.department || '');

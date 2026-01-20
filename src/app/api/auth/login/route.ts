@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       sameSite: 'strict',
       secure: isSecure,
       path: '/',
-      maxAge: 60 * 15 // 15 minutes
+      maxAge: 60 * 60 // 1 hour
     });
     // CSRF token cookie (double-submit; httpOnly to prevent JS access)
     res.cookies.set('csrf_token', csrfToken, {

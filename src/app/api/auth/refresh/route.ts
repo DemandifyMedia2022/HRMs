@@ -55,14 +55,16 @@ export async function POST(req: NextRequest) {
       sameSite: 'strict',
       secure: isProd,
       path: '/',
-      maxAge: 60 * 15
+      maxAge: 60 * 60
     });
     // rotate refresh
     res.cookies.set('refresh_token', newRefresh, {
       httpOnly: true,
       sameSite: 'strict',
       secure: isProd,
-      path: '/'
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30
+      
     });
 
     return res;
