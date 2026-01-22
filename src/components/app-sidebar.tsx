@@ -312,6 +312,7 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
         children: [
           { title: 'New Leave', url: '/pages/hr/leaves/new', icon: IconListDetails },
           { title: 'Available Leaves', url: '/pages/hr/leaves/available', icon: IconReport },
+          { title: 'Company Leave Policies', url: '/pages/hr/leave-policies', icon: IconListDetails },
           { title: 'All Leaves', url: '/pages/hr/leaves', icon: IconListDetails }
         ]
       },

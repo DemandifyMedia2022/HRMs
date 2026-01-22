@@ -31,6 +31,7 @@ export default function NewLeavePage() {
   const [endDate, setEndDate] = useState('');
   const [reason, setReason] = useState('');
   const [addedByUser, setAddedByUser] = useState('');
+  const [company, setCompany] = useState(''); // client_company_name
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +42,13 @@ export default function NewLeavePage() {
         if (res.ok) {
           const userData = await res.json();
           // Use Full_name if available, otherwise fall back to name
-          setAddedByUser(userData.Full_name || userData.name || '');
+          const userName = userData.Full_name || userData.name || '';
+          setAddedByUser(userName);
+          
+          // Also set the company if available
+          if (userData.client_company_name) {
+            setCompany(userData.client_company_name);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch current user:', err);
@@ -64,7 +71,8 @@ export default function NewLeavePage() {
           Leave_Start_Date: startDate,
           Leave_End_Date: endDate,
           Reson: reason,
-          added_by_user: addedByUser
+          added_by_user: addedByUser,
+          client_company_name: company // Send company name
         })
       });
       if (!res.ok) {
@@ -87,7 +95,7 @@ export default function NewLeavePage() {
         <Card className="border-muted/50 bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/70">
           <CardHeader className="pb-4">
             <CardTitle>New Leave Request</CardTitle>
-            <CardDescription>Capture the leave details and submit to notify the HR team.</CardDescription>
+            <CardDescription>Capture the leave details and submit to notify HR team.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {error ? (
@@ -96,63 +104,88 @@ export default function NewLeavePage() {
               </Alert>
             ) : null}
 
-            <form onSubmit={onSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="leave_type">Leave Type</Label>
-                  <Select value={leaveType} onValueChange={setLeaveType}>
-                    <SelectTrigger id="leave_type" className="h-10">
-                      <SelectValue placeholder="Select leave type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {leaveOptions.map(option => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                       <form onSubmit={onSubmit} className="space-y-6 max-w-3xl mx-auto">
+              {/* Hidden field for company name */}
+              <input type="hidden" name="client_company_name" value={company} readOnly />
 
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="leave_start">Start Date</Label>
-                  <DatePicker
-                    id="leave_start"
-                    placeholder="Select start date"
-                    value={fromYMD(startDate)}
-                    onChange={d => setStartDate(toYMD(d))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="leave_end">End Date</Label>
-                  <DatePicker
-                    id="leave_end"
-                    placeholder="Select end date"
-                    value={fromYMD(endDate)}
-                    onChange={d => setEndDate(toYMD(d))}
-                  />
-                </div>
-              </div>
-
+              {/* Row 1: Leave Type (Full Width) */}
               <div className="space-y-2">
-                <Label htmlFor="leave_reason">Reason</Label>
+                <Label htmlFor="leave_type" className="font-medium text-slate-700">
+                  Leave Type
+                </Label>
+                <Select value={leaveType} onValueChange={setLeaveType}>
+                  <SelectTrigger id="leave_type" className="h-10 w-full">
+                    <SelectValue placeholder="Select the type of leave" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {leaveOptions.map(option => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Row 2: Start / End Dates (Responsive Grid) */}
+<div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+  <div className="space-y-2">
+    <Label htmlFor="leave_start" className="font-medium text-slate-700">
+      Start Date
+    </Label>
+    <DatePicker
+      id="leave_start"
+      placeholder="Select start date"
+      value={fromYMD(startDate)}
+      onChange={d => setStartDate(toYMD(d))}
+    />
+  </div>
+  <div className="space-y-2">
+    <Label htmlFor="leave_end" className="font-medium text-slate-700">
+      End Date
+    </Label>
+    <DatePicker
+      id="leave_end"
+      placeholder="Select end date"
+      value={fromYMD(endDate)}
+      onChange={d => setEndDate(toYMD(d))}
+    />
+  </div>
+</div>
+
+              {/* Row 3: Reason (Full Width) */}
+              <div className="space-y-2">
+                <Label htmlFor="leave_reason" className="font-medium text-slate-700">
+                  Reason for Leave
+                </Label>
                 <Textarea
                   id="leave_reason"
                   value={reason}
                   onChange={e => setReason(e.target.value)}
-                  placeholder="Provide context for the leave request"
-                  className="min-h-[120px]"
+                  placeholder="Please provide details about your leave request..."
+                  className="min-h-[120px] resize-none"
                   required
                 />
+                <p className="text-xs text-slate-500">
+                  Include any necessary context for your manager.
+                </p>
               </div>
 
-              <CardFooter className="flex flex-col gap-2 px-0 sm:flex-row sm:justify-end sm:gap-3">
-                <Button type="button" variant="outline" onClick={() => router.back()}>
+              {/* Row 4: Action Buttons */}
+              <CardFooter className="flex flex-col gap-3 px-0 pt-4 sm:flex-row sm:justify-end">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => router.back()}
+                  className="w-full sm:w-28"
+                >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={submitting}>
+                <Button 
+                  type="submit" 
+                  disabled={submitting}
+                  className="w-full sm:w-auto px-8 bg-primary text-white"
+                >
                   {submitting ? 'Submitting...' : 'Submit Request'}
                 </Button>
               </CardFooter>
@@ -163,3 +196,4 @@ export default function NewLeavePage() {
     </div>
   );
 }
+

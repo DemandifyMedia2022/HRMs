@@ -66,6 +66,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+
+
+     // Resolve employee's company using the normalized addedByUser
+   // Resolve employee's company using the normalized addedByUser
+const isEmail = typeof addedByUser === 'string' && addedByUser.includes('@');
+const emp = await prisma.users.findFirst({
+  where: isEmail
+    ? { email: addedByUser }
+    : { OR: [{ Full_name: addedByUser }, { name: addedByUser }] },
+  select: { client_company_name: true, Full_name: true, name: true }
+});
+const client_company_name = emp?.client_company_name || null;
+// Always store the name, not the email
+const employeeName = emp?.Full_name || emp?.name || addedByUser;
+
+
+
     const created = await prisma.leavedata.create({
       data: {
         leave_type: String(leaveType),
@@ -77,7 +94,8 @@ export async function POST(req: Request) {
         Managerapproval: 'pending',
         ManagerRejecjetReason: 'pending',
         leaveregdate: new Date(),
-        added_by_user: String(addedByUser)
+        added_by_user: String(employeeName),
+        client_company_name
       }
     });
 
