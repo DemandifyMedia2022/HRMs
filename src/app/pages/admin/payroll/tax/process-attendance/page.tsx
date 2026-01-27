@@ -226,7 +226,7 @@ export default function ProcessAttendancePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="rounded-md border p-3">
                 <div className="text-sm text-muted-foreground">Employees</div>
-                <div className="text-2xl font-semibold">{data.length}</div>
+                <div className="text-2xl font-semibold">{pagination.totalCount}</div>
               </div>
               <div className="rounded-md border p-3">
                 <div className="text-sm text-muted-foreground">Total Net Pay</div>

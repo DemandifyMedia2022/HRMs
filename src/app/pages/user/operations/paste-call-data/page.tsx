@@ -324,34 +324,41 @@ export default function UserPage() {
   return (
     <>
       <SidebarConfig role="user" />
-      <div className="p-6">
-        <div className="mx-auto max-w-6xl space-y-6">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight">Paste Call Data</h1>
-            <p className="text-sm text-muted-foreground"></p>
+      <div className="min-h-screen p-4 md:p-6 bg-slate-50 dark:bg-slate-950">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Paste Call Data</h1>
+              <p className="text-sm text-muted-foreground mt-1">Enter call data and contact information</p>
+            </div>
           </div>
 
-          {authLoading ? (
-            <div className="rounded border border-muted/50 bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-              Checking permissions...
-            </div>
-          ) : null}
+          {authLoading && (
+            <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+              <CardContent className="flex items-center gap-3 pt-6">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <p className="text-sm text-blue-800 dark:text-blue-200">Checking permissions...</p>
+              </CardContent>
+            </Card>
+          )}
 
 
-          <Card>
+          <Card className="shadow-lg border-0">
             <CardHeader className="pb-4">
-              <CardTitle>Form Fields</CardTitle>
-              <CardDescription>Provide all relevant details before submitting.</CardDescription>
+              <CardTitle className="text-lg">Form Fields</CardTitle>
+              <CardDescription className="mt-1">Provide all relevant details before submitting.</CardDescription>
             </CardHeader>
             <CardContent>
               <form
                 onSubmit={handleSubmit}
                 className="space-y-6"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {FIELDS.filter(f => !HIDDEN_FIELDS.includes(f)).map(f => (
                     <div key={f} className="space-y-2">
-                      <Label htmlFor={f}>{prettyLabel(f)}</Label>
+                      <Label htmlFor={f} className="text-sm font-medium">
+                        {prettyLabel(f)}
+                      </Label>
                       {f === 'f_conatct_no' ? (
                         (() => {
                           const { code, local } = splitPhone(String(formData[f] || ''));
@@ -363,7 +370,7 @@ export default function UserPage() {
                                   onChange(f, `${cc}${local}`);
                                 }}
                               >
-                                <SelectTrigger className="w-[120px]">
+                                <SelectTrigger className="w-[120px] flex-shrink-0">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -379,8 +386,9 @@ export default function UserPage() {
                                 value={local}
                                 onChange={e => onChange(f, `${code}${e.target.value}`)}
                                 inputMode="tel"
+                                className="flex-1"
+                                placeholder="Enter contact number"
                               />
-
                             </div>
                           );
                         })()
@@ -389,7 +397,7 @@ export default function UserPage() {
                           id={f}
                           value="Data Processing"
                           disabled={true}
-                          className="bg-gray-50"
+                          className="w-full bg-muted/50 cursor-not-allowed"
                           readOnly
                         />
                       ) : f === 'f_lead' ? (
@@ -397,7 +405,7 @@ export default function UserPage() {
                           id={f}
                           value="verified"
                           disabled={true}
-                          className="bg-gray-50"
+                          className="w-full bg-muted/50 cursor-not-allowed"
                           readOnly
                         />
                       ) : f === 'f_resource_name' ? (
@@ -405,7 +413,7 @@ export default function UserPage() {
                           id={f}
                           value={authUserName || getCurrentUserName()}
                           disabled={true}
-                          className="bg-gray-50"
+                          className="w-full bg-muted/50 cursor-not-allowed"
                           readOnly
                         />
                       ) : f === 'f_data_source' ? (
@@ -414,7 +422,24 @@ export default function UserPage() {
                           value={formData[f] ?? ''}
                           onChange={e => onChange(f, e.target.value)}
                           placeholder="Enter data source..."
+                          className="w-full"
                         />
+                      ) : f === 'f_salutation' ? (
+                        <Select
+                          value={formData[f] ?? ''}
+                          onValueChange={v => onChange(f, v)}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select salutation" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Mr">Mr</SelectItem>
+                            <SelectItem value="Mrs">Mrs</SelectItem>
+                            <SelectItem value="Ms">Ms</SelectItem>
+                            <SelectItem value="Dr">Dr</SelectItem>
+                            <SelectItem value="Prof">Prof</SelectItem>
+                          </SelectContent>
+                        </Select>
                       ) : f === 'f_date' ? (
                         <DateTimePicker
                           label=""
@@ -426,7 +451,9 @@ export default function UserPage() {
                           id={f}
                           value={formData[f] ?? ''}
                           onChange={e => onChange(f, e.target.value)}
-                          type={f.includes('email') ? 'email' : 'text'}
+                          type={f.includes('email') ? 'email' : f.includes('website') || f.includes('link') ? 'url' : 'text'}
+                          className="w-full"
+                          placeholder={f.includes('email') ? 'Enter email address' : f.includes('website') || f.includes('link') ? 'Enter URL' : `Enter ${prettyLabel(f).toLowerCase()}`}
                         />
                       )}
                     </div>
@@ -434,18 +461,31 @@ export default function UserPage() {
                 </div>
                 <input type="hidden" name="added_by_user_id" value={formData.added_by_user_id ?? ''} />
 
-                <div className="flex items-center gap-3 pt-4 border-t">
-                  <Button type="submit" disabled={loading}>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t">
+                  <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full sm:w-auto sm:min-w-[140px]"
+                  >
                     {loading ? 'Saving...' : 'Save Data'}
                   </Button>
-                  <Button type="button" variant="outline" onClick={handleReset}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleReset}
+                    className="w-full sm:w-auto"
+                  >
                     Reset
                   </Button>
-                  {message ? (
-                    <div className={`text-sm ${message.includes('Error') ? 'text-destructive' : 'text-emerald-600'}`}>
+                  {message && (
+                    <div className={`flex-1 text-sm px-3 py-2 rounded-md ${
+                      message.includes('Error') 
+                        ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800' 
+                        : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                    }`}>
                       {message}
                     </div>
-                  ) : null}
+                  )}
                 </div>
               </form>
             </CardContent>

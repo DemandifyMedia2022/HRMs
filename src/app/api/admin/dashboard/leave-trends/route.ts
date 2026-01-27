@@ -9,18 +9,33 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const year = Number(url.searchParams.get('year') || new Date().getFullYear());
+    const includePending = url.searchParams.get('include_pending') === 'true';
     const { from, to } = yStartEnd(year);
 
+    let whereClause: any = {
+      start_date: { lte: to },
+      end_date: { gte: from }
+    };
+
+    if (!includePending) {
+      // Original behavior - only approved leaves
+      whereClause.OR = [
+        { status: { equals: 'Approved' } },
+        { HRapproval: { equals: 'Approved' }, Managerapproval: { equals: 'Approved' } }
+      ];
+    }
+    // If includePending is true, we get all leaves regardless of approval status
+
     const rows = await (prisma as any).leavedata.findMany({
-      where: {
-        start_date: { lte: to },
-        end_date: { gte: from },
-        OR: [
-          { status: { equals: 'Approved' } },
-          { HRapproval: { equals: 'Approved' }, Managerapproval: { equals: 'Approved' } }
-        ]
-      },
-      select: { leave_type: true, start_date: true, end_date: true }
+      where: whereClause,
+      select: { 
+        leave_type: true, 
+        start_date: true, 
+        end_date: true,
+        HRapproval: true,
+        Managerapproval: true,
+        status: true
+      }
     });
 
     const months: { [k: number]: Record<string, number> } = {};
@@ -32,10 +47,34 @@ export async function GET(req: NextRequest) {
       const start = s < from ? from : s;
       const end = e > to ? to : e;
       const cur = new Date(start);
+      
+      // Determine leave type with status if includePending is true
+      let leaveTypeDisplay = String((r as any).leave_type ?? 'Unknown');
+      
+      if (includePending) {
+        const hrApproval = String((r as any).HRapproval || '').toLowerCase();
+        const mgrApproval = String((r as any).Managerapproval || '').toLowerCase();
+        const status = String((r as any).status || '').toLowerCase();
+        
+        if (
+          (hrApproval.includes('approved') && mgrApproval.includes('approved')) ||
+          status.includes('approved')
+        ) {
+          leaveTypeDisplay += ' (Approved)';
+        } else if (
+          hrApproval.includes('rejected') || 
+          mgrApproval.includes('rejected') ||
+          status.includes('rejected')
+        ) {
+          leaveTypeDisplay += ' (Rejected)';
+        } else {
+          leaveTypeDisplay += ' (Pending)';
+        }
+      }
+      
       while (cur <= end) {
         const m = cur.getMonth();
-        const t = String((r as any).leave_type ?? 'Unknown');
-        months[m][t] = (months[m][t] || 0) + 1;
+        months[m][leaveTypeDisplay] = (months[m][leaveTypeDisplay] || 0) + 1;
         cur.setDate(cur.getDate() + 1);
       }
     }
@@ -46,7 +85,14 @@ export async function GET(req: NextRequest) {
       return { month: m, types };
     });
 
-    return NextResponse.json({ year, items }, { headers: { 'Cache-Control': 'public, max-age=120' } });
+    return NextResponse.json({ 
+      year, 
+      items,
+      includePending,
+      totalLeaves: rows.length
+    }, { 
+      headers: { 'Cache-Control': 'public, max-age=120' } 
+    });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'error' }, { status: 500 });
   }

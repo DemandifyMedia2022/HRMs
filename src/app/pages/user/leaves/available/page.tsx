@@ -17,7 +17,7 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from '@/components/ui/chart';
-import { Pie, PieChart, Cell } from 'recharts';
+import { Pie, PieChart, Cell, Bar, BarChart, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 
 type Leave = {
   l_id: number;
@@ -38,6 +38,14 @@ type AvailableResponse = {
   remainingSickLeave: number;
   totals: { totalPaidLeave: number; totalSickLeave: number };
   user: string;
+  monthlyBreakdown?: Array<{
+    month: string;
+    monthIndex: number;
+    paidDays: number;
+    sickDays: number;
+    totalDays: number;
+    leaves: number;
+  }>;
 };
 
 function UserAvailableLeavePageInner() {
@@ -104,6 +112,53 @@ function UserAvailableLeavePageInner() {
       const usedPaidLeave = usedByType('paid');
       const usedSickLeave = usedByType('sick');
 
+      // Calculate month-wise breakdown
+      const monthlyBreakdown = Array.from({ length: 12 }, (_, monthIndex) => {
+        const monthStart = new Date(year, monthIndex, 1);
+        const monthEnd = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+        
+        const monthName = monthStart.toLocaleDateString('en-US', { month: 'short' });
+        
+        const monthLeaves = approvedCurrent.filter(leave => {
+          const leaveStart = new Date(leave.start_date);
+          const leaveEnd = new Date(leave.end_date);
+          
+          // Check if leave overlaps with this month
+          return leaveStart <= monthEnd && leaveEnd >= monthStart;
+        });
+        
+        let paidDays = 0;
+        let sickDays = 0;
+        
+        monthLeaves.forEach(leave => {
+          const leaveStart = new Date(leave.start_date);
+          const leaveEnd = new Date(leave.end_date);
+          
+          // Clamp to month boundaries
+          const clampedStart = leaveStart < monthStart ? monthStart : leaveStart;
+          const clampedEnd = leaveEnd > monthEnd ? monthEnd : leaveEnd;
+          
+          if (clampedStart <= clampedEnd) {
+            const days = daysInCurrentYear(clampedStart.toISOString(), clampedEnd.toISOString());
+            
+            if (leave.leave_type?.toLowerCase().includes('paid')) {
+              paidDays += days;
+            } else if (leave.leave_type?.toLowerCase().includes('sick')) {
+              sickDays += days;
+            }
+          }
+        });
+        
+        return {
+          month: monthName,
+          monthIndex,
+          paidDays,
+          sickDays,
+          totalDays: paidDays + sickDays,
+          leaves: monthLeaves.length
+        };
+      });
+
       const totalPaidLeave = 12;
       const totalSickLeave = 6;
 
@@ -123,7 +178,8 @@ function UserAvailableLeavePageInner() {
         remainingPaidLeave,
         remainingSickLeave,
         totals: { totalPaidLeave, totalSickLeave },
-        user: json.user || u
+        user: json.user || u,
+        monthlyBreakdown
       });
     } catch (e: any) {
       setError(e?.message || 'Failed to load available leaves');
@@ -249,76 +305,172 @@ function UserAvailableLeavePageInner() {
         {data && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2">Paid Leave Usage</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <PlaneTakeoff className="h-5 w-5" />
+                    Paid Leave Usage
+                  </CardTitle>
                   <CardDescription>Visual breakdown of paid leave consumption.</CardDescription>
                 </CardHeader>
-                <CardContent> */}
-                  {/* <ChartContainer
-                    className="h-64"
-                    config={{
-                      Used: { label: 'Used', color: '#5ea3f2' },
-                      Remaining: { label: 'Remaining', color: '#125ca5' }
-                    }}
-                  >
-                    <PieChart>
-                      <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                      <Pie
-                        data={[
-                          { name: 'Used', value: data.usedPaidLeave },
-                          { name: 'Remaining', value: data.remainingPaidLeave }
-                        ]}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={60}
-                        outerRadius={90}
-                        strokeWidth={6}
-                      >
-                        <Cell fill="#5ea3f2" />
-                        <Cell fill="#125ca5" />
-                      </Pie>
-                      <ChartLegend content={<ChartLegendContent />} />
-                    </PieChart>
-                  </ChartContainer>
+                <CardContent>
+                  {data.usedPaidLeave === 0 && data.remainingPaidLeave === 0 ? (
+                    <div className="h-64 flex items-center justify-center text-muted-foreground">
+                      <div className="text-center">
+                        <PlaneTakeoff className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No paid leave data available</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <ChartContainer
+                      className="h-64"
+                      config={{
+                        Used: { label: 'Used', color: '#ef4444' },
+                        Remaining: { label: 'Remaining', color: '#22c55e' }
+                      }}
+                    >
+                      <PieChart>
+                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                        <Pie
+                          data={[
+                            { name: 'Used', value: Math.max(0, data.usedPaidLeave) },
+                            { name: 'Remaining', value: Math.max(0, data.remainingPaidLeave) }
+                          ]}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={60}
+                          outerRadius={90}
+                          strokeWidth={6}
+                        >
+                          <Cell fill="#ef4444" />
+                          <Cell fill="#22c55e" />
+                        </Pie>
+                        <ChartLegend content={<ChartLegendContent />} />
+                      </PieChart>
+                    </ChartContainer>
+                  )}
                 </CardContent>
-              </Card> */}
+              </Card>
 
-              {/* <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2">Sick Leave Usage</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5" />
+                    Sick Leave Usage
+                  </CardTitle>
                   <CardDescription>Visual breakdown of sick leave consumption.</CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {data.usedSickLeave === 0 && data.remainingSickLeave === 0 ? (
+                    <div className="h-64 flex items-center justify-center text-muted-foreground">
+                      <div className="text-center">
+                        <AlertCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No sick leave data available</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <ChartContainer
+                      className="h-64"
+                      config={{
+                        Used: { label: 'Used', color: '#f97316' },
+                        Remaining: { label: 'Remaining', color: '#06b6d4' }
+                      }}
+                    >
+                      <PieChart>
+                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                        <Pie
+                          data={[
+                            { name: 'Used', value: Math.max(0, data.usedSickLeave) },
+                            { name: 'Remaining', value: Math.max(0, data.remainingSickLeave) }
+                          ]}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={60}
+                          outerRadius={90}
+                          strokeWidth={6}
+                        >
+                          <Cell fill="#f97316" />
+                          <Cell fill="#06b6d4" />
+                        </Pie>
+                        <ChartLegend content={<ChartLegendContent />} />
+                      </PieChart>
+                    </ChartContainer>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Month-wise Leave Breakdown Chart */}
+            {data.monthlyBreakdown && data.monthlyBreakdown.some(m => m.totalDays > 0) && (
+              <Card className="shadow-lg border-0 bg-white/90 backdrop-blur">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Monthly Leave Breakdown
+                  </CardTitle>
+                  <CardDescription>Month-wise distribution of paid and sick leaves taken this year.</CardDescription>
+                </CardHeader>
+                <CardContent>
                   <ChartContainer
-                    className="h-64"
+                    className="h-80"
                     config={{
-                      Used: { label: 'Used', color: '#5ea3f2' },
-                      Remaining: { label: 'Remaining', color: '#125ca5' }
+                      paidDays: { label: 'Paid Leave Days', color: '#3b82f6' },
+                      sickDays: { label: 'Sick Leave Days', color: '#ef4444' }
                     }}
                   >
-                    <PieChart>
-                      <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                      <Pie
-                        data={[
-                          { name: 'Used', value: data.usedSickLeave },
-                          { name: 'Remaining', value: data.remainingSickLeave }
-                        ]}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={60}
-                        outerRadius={90}
-                        strokeWidth={6}
-                      >
-                        <Cell fill="#5ea3f2" />
-                        <Cell fill="#125ca5" />
-                      </Pie>
-                      <ChartLegend content={<ChartLegendContent />} />
-                    </PieChart>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={data.monthlyBreakdown}>
+                        <XAxis 
+                          dataKey="month" 
+                          tick={{ fontSize: 12 }}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis 
+                          tick={{ fontSize: 12 }}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <ChartTooltip 
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-white p-3 border rounded-lg shadow-lg">
+                                  <p className="font-medium">{label}</p>
+                                  <p className="text-sm text-blue-600">
+                                    Paid Leave: {data.paidDays} days
+                                  </p>
+                                  <p className="text-sm text-red-600">
+                                    Sick Leave: {data.sickDays} days
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    Total: {data.totalDays} days ({data.leaves} requests)
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar 
+                          dataKey="paidDays" 
+                          fill="#3b82f6" 
+                          name="Paid Leave Days"
+                          radius={[0, 0, 4, 4]}
+                        />
+                        <Bar 
+                          dataKey="sickDays" 
+                          fill="#ef4444" 
+                          name="Sick Leave Days"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </ChartContainer>
                 </CardContent>
-              </Card> */}
-            </div>
+              </Card>
+            )}
 
             <Card className="shadow-lg border-0 bg-white/90 backdrop-blur">
               <CardHeader>

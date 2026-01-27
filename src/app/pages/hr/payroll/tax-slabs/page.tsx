@@ -36,7 +36,7 @@ export default function TaxSlabsPage() {
       id: '2',
       title: 'Bonus (Minimum Wages)',
       status: 'Created',
-      link: '/pages/hr/payroll/bonus',
+      link: '/pages/hr/payroll/statutory/bonus',
       isCreated: true,
       icon: IconGift,
       description: 'Set up minimum wage slabs for bonus calculations'

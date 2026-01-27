@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
@@ -16,7 +14,15 @@ export async function GET() {
     }));
     return NextResponse.json({ success: true, data: serialized });
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to load feedbacks' }, { status: 500 });
+    console.error('Error fetching feedbacks:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Failed to load feedbacks',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, 
+      { status: 500 }
+    );
   }
 }
 

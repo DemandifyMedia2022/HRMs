@@ -113,6 +113,14 @@ export default function AdminPage() {
           fetch(`/api/admin/dashboard/today-events`).then(r => r.json())
         ]);
         if (ignore) return;
+        
+        // Debug logging for troubleshooting
+        console.log('Dashboard API responses:', {
+          headcount: hc,
+          attendance: at,
+          leavesToday: lt
+        });
+        
         setHeadcount(hc);
         setGender(gd);
         setBreakdown(br.items || []);

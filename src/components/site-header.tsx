@@ -146,8 +146,9 @@ export function SiteHeader() {
                 <span className="sr-only">Notifications</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0 sm:w-96" align="end" sideOffset={8}>
-              <div className="flex items-center justify-between border-b px-4 py-3 bg-muted/30">
+            <PopoverContent className="w-80 p-0 sm:w-96 flex flex-col max-h-[500px]" align="end" sideOffset={8}>
+              {/* Fixed Header - Always visible */}
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b px-4 py-3 bg-muted/30 backdrop-blur-sm">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm">Notifications</span>
                   {hasNotifications && (
@@ -169,7 +170,8 @@ export function SiteHeader() {
                 )}
               </div>
 
-              <ScrollArea className="h-[calc(100vh-16rem)] max-h-[400px]">
+              {/* Scrollable Content */}
+              <ScrollArea className="flex-1">
                 <div className="flex flex-col gap-1 p-2">
                   {!hasNotifications ? (
                     <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">

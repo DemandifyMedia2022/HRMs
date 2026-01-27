@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { triggerEsslSync, waitForSync } from '@/lib/essl-sync';
 
 /**
  * API endpoint to get live attendance data with real-time calculations
@@ -25,33 +26,12 @@ export async function GET(request: NextRequest) {
         };
         const targetDate = date || getISTDate();
 
-        // Trigger a quick ESSL sync in the background (fire-and-forget)
-        // This ensures we get the latest punch data from the device
-        const syncUrl = process.env.ESSL_SYNC_URL;
-        if (syncUrl) {
-            try {
-                const controller = new AbortController();
-                const timeout = Number(process.env.ESSL_SYNC_TIMEOUT_MS || 5000);
-                const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-                // Fire-and-forget sync request
-                fetch(syncUrl, {
-                    method: 'POST',
-                    signal: controller.signal,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        fromDate: `${targetDate} 00:00:00`,
-                        toDate: 'now',
-                        lookbackDays: 0 // Only sync today
-                    })
-                }).then(() => clearTimeout(timeoutId)).catch(() => clearTimeout(timeoutId));
-            } catch {
-                // Ignore sync errors, continue with existing data
-            }
-        }
-
-        // Small delay to allow sync to complete (if it's fast)
-        await new Promise(resolve => setTimeout(resolve, 150));
+        // Trigger ESSL sync with rate limiting for specific employee
+        const syncInitiated = await triggerEsslSync({ 
+            date: targetDate, 
+            employeeCode: employeeId 
+        });
+        await waitForSync(syncInitiated);
 
         // Get attendance record
         const attendance = await prisma.npattendance.findFirst({

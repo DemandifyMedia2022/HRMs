@@ -8,8 +8,8 @@
                               │ Enters Email & Password
                               ▼
         ╔═══════════════════════════════════════════════╗
-        ║         🏰 GATE 1: LOGIN GATE                 ║
-        ║    "You say you're Sir Email-Password?"      ║
+        ║          GATE 1: LOGIN GATE                   ║
+        ║    "You say you're Sir Email-Password?"       ║
         ╠═══════════════════════════════════════════════╣
         ║  POST /api/auth/login                         ║
         ║  ✓ Check email exists in database             ║
@@ -28,7 +28,7 @@
                               ▼
         ╔═══════════════════════════════════════════════╗
         ║      🛡️ GATE 2: VALIDATION GATE               ║
-        ║   "Show token. Let me verify it's real."     ║
+        ║   "Show token. Let me verify it's real."      ║
         ╠═══════════════════════════════════════════════╣
         ║  POST /api/auth/validate                      ║
         ║  ✓ Verify JWT signature                       ║
@@ -45,14 +45,14 @@
                               │ Token Validated ✓
                               ▼
         ╔═══════════════════════════════════════════════╗
-        ║       📜 GATE 3: TREASURY GATE                ║
-        ║  "Let me check your official scrolls..."     ║
+        ║       GATE 3: TREASURY GATE                   ║
+        ║  "Let me check your official scrolls..."      ║
         ╠═══════════════════════════════════════════════╣
         ║  POST /api/auth/user-details                  ║
-        ║  ✓ Re-verify token (defense in depth)        ║
-        ║  ✓ Query database for user record             ║
-        ║  ✓ Fetch department & name, role              ║
-        ║  ✓ Determine role based on rules:            ║
+        ║  1.Re-verify token (defense in depth)         ║
+        ║  2. Query database for user record            ║
+        ║  3. Fetch department & name, role             ║
+        ║  4. Determine role based on rules:            ║
         ║    • "Viresh Kumbhar" → admin                 ║
         ║    • department="hr" → hr                     ║
         ║    • department="administration" → admin      ║
@@ -68,7 +68,7 @@
                               ▼
         ╔═══════════════════════════════════════════════╗
         ║      🚪 GATE 4: REDIRECTION GATE              ║
-        ║   "Proceed to your designated area."         ║
+        ║   "Proceed to your designated area."          ║
         ╠═══════════════════════════════════════════════╣
         ║  Frontend Logic (page.tsx)                    ║
         ║                                               ║

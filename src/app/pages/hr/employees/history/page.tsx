@@ -19,7 +19,10 @@ import {
   Hash,
   Calendar,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  DollarSign,
+  Calculator,
+  Receipt
 } from 'lucide-react';
 import { SidebarConfig } from '@/components/sidebar-config';
 
@@ -41,6 +44,17 @@ type Row = {
   resignation_reason_approver: string | null;
   settelment_employee_other_status: string | null;
   employee_other_status_remarks: string | null;
+  ctc: number | string | null;
+  gross_salary: number | string | null;
+  netSalary: number | string | null;
+  basic_monthly_remuneration: number | string | null;
+  hra_monthly_remuneration: number | string | null;
+  other_allowance_monthly_remuneration: number | string | null;
+  pf_monthly_contribution: number | string | null;
+  Employee_Esic_Monthly: string | null;
+  advanced_salary: number | string | null;
+  reimbursement_amount: number | string | null;
+  paygroup: string | null;
 };
 
 export default function Page() {
@@ -367,6 +381,130 @@ export default function Page() {
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
                           <span className="text-sm font-medium">{fmt(selected.date_of_relieving) || 'N/A'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Settlement & Salary Details */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 pb-2 border-b">
+                        <Receipt className="w-5 h-5 text-primary-600" />
+                        <h3 className="text-lg font-semibold text-gray-900">Settlement & Salary Details</h3>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="space-y-2 p-4 bg-green-50 rounded-lg border border-green-200">
+                          <Label className="text-xs text-gray-500 font-medium flex items-center gap-2">
+                            <DollarSign className="w-4 h-4 text-green-600" />
+                            CTC (Annual)
+                          </Label>
+                          <div className="text-lg font-bold text-green-700">
+                            ₹{selected.ctc ? parseFloat(String(selected.ctc)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'}
+                          </div>
+                        </div>
+                        <div className="space-y-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <Label className="text-xs text-gray-500 font-medium flex items-center gap-2">
+                            <Calculator className="w-4 h-4 text-blue-600" />
+                            Gross Salary (Monthly)
+                          </Label>
+                          <div className="text-lg font-bold text-blue-700">
+                            ₹{selected.gross_salary ? parseFloat(String(selected.gross_salary)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'}
+                          </div>
+                        </div>
+                        <div className="space-y-2 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                          <Label className="text-xs text-gray-500 font-medium flex items-center gap-2">
+                            <DollarSign className="w-4 h-4 text-purple-600" />
+                            Net Salary (Monthly)
+                          </Label>
+                          <div className="text-lg font-bold text-purple-700">
+                            ₹{selected.netSalary ? parseFloat(String(selected.netSalary)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+                          <Label className="text-xs text-gray-500 font-medium">Basic Salary (Monthly)</Label>
+                          <div className="text-sm font-medium">
+                            ₹{selected.basic_monthly_remuneration ? parseFloat(String(selected.basic_monthly_remuneration)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'}
+                          </div>
+                        </div>
+                        <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+                          <Label className="text-xs text-gray-500 font-medium">HRA (Monthly)</Label>
+                          <div className="text-sm font-medium">
+                            ₹{selected.hra_monthly_remuneration ? parseFloat(String(selected.hra_monthly_remuneration)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'}
+                          </div>
+                        </div>
+                        <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+                          <Label className="text-xs text-gray-500 font-medium">Other Allowance (Monthly)</Label>
+                          <div className="text-sm font-medium">
+                            ₹{selected.other_allowance_monthly_remuneration ? parseFloat(String(selected.other_allowance_monthly_remuneration)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'}
+                          </div>
+                        </div>
+                        <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+                          <Label className="text-xs text-gray-500 font-medium">PF Contribution (Monthly)</Label>
+                          <div className="text-sm font-medium">
+                            ₹{selected.pf_monthly_contribution ? parseFloat(String(selected.pf_monthly_contribution)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'}
+                          </div>
+                        </div>
+                        <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+                          <Label className="text-xs text-gray-500 font-medium">ESIC (Monthly)</Label>
+                          <div className="text-sm font-medium">
+                            ₹{selected.Employee_Esic_Monthly ? parseFloat(String(selected.Employee_Esic_Monthly)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'}
+                          </div>
+                        </div>
+                        <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+                          <Label className="text-xs text-gray-500 font-medium">Pay Group</Label>
+                          <div className="text-sm font-medium">{selected.paygroup || 'N/A'}</div>
+                        </div>
+                      </div>
+                      {(selected.advanced_salary || selected.reimbursement_amount) && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
+                          {selected.advanced_salary && (
+                            <div className="space-y-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                              <Label className="text-xs text-gray-500 font-medium">Advanced Salary</Label>
+                              <div className="text-sm font-semibold text-orange-700">
+                                ₹{parseFloat(String(selected.advanced_salary)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </div>
+                            </div>
+                          )}
+                          {selected.reimbursement_amount && (
+                            <div className="space-y-2 p-3 bg-teal-50 rounded-lg border border-teal-200">
+                              <Label className="text-xs text-gray-500 font-medium">Reimbursement Amount</Label>
+                              <div className="text-sm font-semibold text-teal-700">
+                                ₹{parseFloat(String(selected.reimbursement_amount)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Deductions Summary */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 pb-2 border-b">
+                        <Calculator className="w-5 h-5 text-primary-600" />
+                        <h3 className="text-lg font-semibold text-gray-900">Deductions Summary</h3>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2 p-4 bg-red-50 rounded-lg border border-red-200">
+                          <Label className="text-xs text-gray-500 font-medium">Total Monthly Deductions</Label>
+                          <div className="text-lg font-bold text-red-700">
+                            ₹{(() => {
+                              const pf = selected.pf_monthly_contribution ? parseFloat(String(selected.pf_monthly_contribution)) : 0;
+                              const esic = selected.Employee_Esic_Monthly ? parseFloat(String(selected.Employee_Esic_Monthly)) : 0;
+                              const total = pf + esic;
+                              return total > 0 ? total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
+                            })()}
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            (PF: ₹{selected.pf_monthly_contribution ? parseFloat(String(selected.pf_monthly_contribution)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'} + ESIC: ₹{selected.Employee_Esic_Monthly ? parseFloat(String(selected.Employee_Esic_Monthly)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'})
+                          </div>
+                        </div>
+                        <div className="space-y-2 p-4 bg-green-50 rounded-lg border border-green-200">
+                          <Label className="text-xs text-gray-500 font-medium">Final Settlement Amount</Label>
+                          <div className="text-lg font-bold text-green-700">
+                            ₹{selected.netSalary ? parseFloat(String(selected.netSalary)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'}
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">Net Salary after deductions</div>
                         </div>
                       </div>
                     </div>

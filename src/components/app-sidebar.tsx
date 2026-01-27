@@ -164,17 +164,6 @@ const baseDataByRole: Record<UserRole, SidebarData> = {
           { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
           { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
           { name: 'Records', url: '/pages/user/operations/records', icon: IconList },
-                    { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
-          { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
-        ]
-      },
-      {
-        name: 'Operation',
-        url: '#',
-        icon: IconPhone,
-        children: [
-          { name: 'Team', url: '/pages/user/operations/extensions', icon: IconUsers },
-          { name: 'Paste Call Data', url: '/pages/user/operations/paste-call-data', icon: IconReport },
           { name: 'Analytics', url: '/pages/user/operations/call-analytics', icon: IconChartBar },
           { name: 'Campaigns', url: '/pages/user/operations/campaigns', icon: IconDatabase }
         ]

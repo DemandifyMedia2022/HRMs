@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { SidebarConfig } from '@/components/sidebar-config';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 import { Download, ArrowLeft } from 'lucide-react';
 import { useParams } from 'next/navigation';

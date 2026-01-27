@@ -42,14 +42,35 @@ export async function GET(req: Request) {
           resignation_reason_employee: true,
           resignation_reason_approver: true,
           settelment_employee_other_status: true,
-          employee_other_status_remarks: true
+          employee_other_status_remarks: true,
+          ctc: true,
+          gross_salary: true,
+          netSalary: true,
+          basic_monthly_remuneration: true,
+          hra_monthly_remuneration: true,
+          other_allowance_monthly_remuneration: true,
+          pf_monthly_contribution: true,
+          Employee_Esic_Monthly: true,
+          advanced_salary: true,
+          reimbursement_amount: true,
+          paygroup: true
         }
       })
     ]);
 
     const data = rows.map((r: any) => ({
       ...r,
-      id: r.Deleted_User_ID
+      id: r.Deleted_User_ID,
+      // Convert Decimal types to numbers/strings for JSON serialization
+      ctc: r.ctc != null ? (typeof r.ctc === 'object' && 'toNumber' in r.ctc ? r.ctc.toNumber() : Number(r.ctc)) : null,
+      gross_salary: r.gross_salary != null ? (typeof r.gross_salary === 'object' && 'toNumber' in r.gross_salary ? r.gross_salary.toNumber() : Number(r.gross_salary)) : null,
+      netSalary: r.netSalary != null ? (typeof r.netSalary === 'object' && 'toNumber' in r.netSalary ? r.netSalary.toNumber() : Number(r.netSalary)) : null,
+      basic_monthly_remuneration: r.basic_monthly_remuneration != null ? (typeof r.basic_monthly_remuneration === 'object' && 'toNumber' in r.basic_monthly_remuneration ? r.basic_monthly_remuneration.toNumber() : Number(r.basic_monthly_remuneration)) : null,
+      hra_monthly_remuneration: r.hra_monthly_remuneration != null ? (typeof r.hra_monthly_remuneration === 'object' && 'toNumber' in r.hra_monthly_remuneration ? r.hra_monthly_remuneration.toNumber() : Number(r.hra_monthly_remuneration)) : null,
+      other_allowance_monthly_remuneration: r.other_allowance_monthly_remuneration != null ? (typeof r.other_allowance_monthly_remuneration === 'object' && 'toNumber' in r.other_allowance_monthly_remuneration ? r.other_allowance_monthly_remuneration.toNumber() : Number(r.other_allowance_monthly_remuneration)) : null,
+      pf_monthly_contribution: r.pf_monthly_contribution != null ? (typeof r.pf_monthly_contribution === 'object' && 'toNumber' in r.pf_monthly_contribution ? r.pf_monthly_contribution.toNumber() : Number(r.pf_monthly_contribution)) : null,
+      advanced_salary: r.advanced_salary != null ? (typeof r.advanced_salary === 'object' && 'toNumber' in r.advanced_salary ? r.advanced_salary.toNumber() : Number(r.advanced_salary)) : null,
+      reimbursement_amount: r.reimbursement_amount != null ? (typeof r.reimbursement_amount === 'object' && 'toNumber' in r.reimbursement_amount ? r.reimbursement_amount.toNumber() : Number(r.reimbursement_amount)) : null
     }));
 
     return NextResponse.json({

@@ -171,14 +171,22 @@ export async function POST(request: NextRequest) {
                 });
                 const resolvedShift = attendanceRecord?.shift_time || shift?.shift_time || null;
 
-                // Calculate status
+                // Calculate status based on strict business rules
                 let status = '';
                 let statusNote: string[] = [];
-                const baseStatus = workingSeconds >= 8 * 3600
+                
+                // Strict business rules for attendance status
+                const FULL_DAY_SECONDS = 6 * 3600;      // 6 hours = full day present
+                const HALF_DAY_SECONDS = 4 * 3600;      // 4 hours = half day
+                const MINIMUM_SECONDS = 4 * 3600;       // 4 hours minimum = present (strict)
+                
+                const baseStatus = workingSeconds >= FULL_DAY_SECONDS
                     ? 'Present'
-                    : workingSeconds >= 4 * 3600
+                    : workingSeconds >= HALF_DAY_SECONDS
                         ? 'Half-day'
-                        : 'Absent';
+                        : workingSeconds >= MINIMUM_SECONDS
+                            ? 'Half-day'  // 4+ hours but less than 6 = half-day
+                            : 'Absent';   // Less than 4 hours = absent
 
                 if (!resolvedShift) {
                     status = baseStatus;

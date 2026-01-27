@@ -2,6 +2,7 @@
 
 import { type Icon } from '@tabler/icons-react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 import {
   DropdownMenu,
@@ -55,17 +56,18 @@ export function NavDocuments({
                 <DropdownMenuContent
                   className="w-48 rounded-lg"
                   side={isMobile ? 'bottom' : 'right'}
-                  align={isMobile ? 'end' : 'start'}
+                  align="start"
+                  sideOffset={8}
                 >
                   {item.children.map(child => (
-                    <DropdownMenuItem key={child.name}>
-                      <a
+                    <DropdownMenuItem key={child.name} asChild>
+                      <Link
                         href={child.url}
-                        className={`flex items-center gap-2 ${child.url !== '#' && pathname.startsWith(child.url) ? 'font-medium' : ''}`}
+                        className={`flex items-center gap-2 w-full ${child.url !== '#' && pathname.startsWith(child.url) ? 'font-medium' : ''}`}
                       >
                         {child.icon && <child.icon />}
                         <span>{child.name}</span>
-                      </a>
+                      </Link>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -80,10 +82,10 @@ export function NavDocuments({
                     : 'rounded-md'
                 }
               >
-                <a href={item.url}>
+                <Link href={item.url}>
                   <item.icon />
                   <span>{item.name}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             )}
           </SidebarMenuItem>

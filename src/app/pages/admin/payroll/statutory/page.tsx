@@ -37,7 +37,7 @@ export default function StatutoryPage() {
       id: '1',
       title: 'Tax Settings',
       status: 'Reviewed',
-      link: '/pages/hr/payroll/statutory/tax-settings',
+      link: '/pages/admin/payroll/statutory/tax-settings',
       isReviewed: true,
       icon: IconFileText,
       description: 'Configure tax exemptions, deductions, and TDS settings'
@@ -46,7 +46,7 @@ export default function StatutoryPage() {
       id: '2',
       title: 'Provident Fund',
       status: 'Reviewed',
-      link: '/pages/hr/payroll/statutory/provident-fund',
+      link: '/pages/admin/payroll/statutory/provident-fund',
       isReviewed: true,
       icon: IconCoin,
       description: 'Manage PF contributions, VPF, and admin charges'
@@ -55,7 +55,7 @@ export default function StatutoryPage() {
       id: '3',
       title: 'Employee State Insurance',
       status: 'Reviewed',
-      link: '/pages/hr/payroll/statutory/state-insurance',
+      link: '/pages/admin/payroll/statutory/state-insurance',
       isReviewed: true,
       icon: IconShieldCheck,
       description: 'Configure ESI wage ceiling and contribution settings'
@@ -64,7 +64,7 @@ export default function StatutoryPage() {
       id: '4',
       title: 'Labour Welfare Fund',
       status: 'Reviewed',
-      link: '/pages/hr/payroll/statutory/labour-welfare',
+      link: '/pages/admin/payroll/statutory/labour-welfare',
       isReviewed: true,
       icon: IconBriefcase,
       description: 'Set up labour welfare fund applicability'
@@ -73,7 +73,7 @@ export default function StatutoryPage() {
       id: '5',
       title: 'Bonus',
       status: 'Reviewed',
-      link: '/pages/hr/payroll/statutory/bonus',
+      link: '/pages/admin/payroll/statutory/bonus',
       isReviewed: true,
       icon: IconGift,
       description: 'Configure bonus payment settings'
@@ -82,7 +82,7 @@ export default function StatutoryPage() {
       id: '6',
       title: 'Gratuity',
       status: 'Reviewed',
-      link: '/pages/hr/payroll/statutory/gratuity',
+      link: '/pages/admin/payroll/statutory/gratuity',
       isReviewed: true,
       icon: IconCertificate,
       description: 'Manage gratuity applicability and calculation'
@@ -91,7 +91,7 @@ export default function StatutoryPage() {
       id: '7',
       title: 'Professional Tax',
       status: 'Reviewed',
-      link: '/pages/hr/payroll/statutory/professional-tax',
+      link: '/pages/admin/payroll/statutory/professional-tax',
       isReviewed: true,
       icon: IconReceipt,
       description: 'Set professional tax exemptions and calculations'
@@ -100,7 +100,7 @@ export default function StatutoryPage() {
       id: '8',
       title: 'TDS Deductor Information',
       status: 'Reviewed',
-      link: '/pages/hr/payroll/statutory/tds-deductor',
+      link: '/pages/admin/payroll/statutory/tds-deductor',
       isReviewed: true,
       icon: IconFileInvoice,
       description: 'Configure TDS deductor and organization details'
@@ -120,7 +120,7 @@ export default function StatutoryPage() {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" asChild>
-              <Link href="/pages/hr/payroll/tax">Back</Link>
+              <Link href="/pages/admin/payroll/tax">Back</Link>
             </Button>
           </div>
         </div>

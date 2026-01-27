@@ -27,7 +27,7 @@ export default function TaxSlabsPage() {
       id: '1',
       title: 'Labour Welfare Fund',
       status: 'Created',
-      link: '/pages/hr/payroll/tax-slabs/labour-welfare-details',
+      link: '/pages/admin/payroll/tax-slabs/labour-welfare-details',
       isCreated: true,
       icon: IconBriefcase,
       description: 'Configure labour welfare fund slabs and rates'
@@ -36,7 +36,7 @@ export default function TaxSlabsPage() {
       id: '2',
       title: 'Bonus (Minimum Wages)',
       status: 'Created',
-      link: '/pages/hr/payroll/bonus',
+      link: '/pages/admin/payroll/statutory/bonus',
       isCreated: true,
       icon: IconGift,
       description: 'Set up minimum wage slabs for bonus calculations'
@@ -45,7 +45,7 @@ export default function TaxSlabsPage() {
       id: '3',
       title: 'Professional Tax',
       status: 'Created',
-      link: '/pages/hr/payroll/tax-slabs/professional-tax',
+      link: '/pages/admin/payroll/tax-slabs/professional-tax',
       isCreated: true,
       icon: IconReceipt,
       description: 'Define professional tax slabs and brackets'
@@ -54,7 +54,7 @@ export default function TaxSlabsPage() {
       id: '4',
       title: 'Income Tax',
       status: 'Created',
-      link: '/pages/hr/payroll/tax-slabs/slabs-details',
+      link: '/pages/admin/payroll/tax-slabs/slabs-details',
       isCreated: true,
       icon: IconFileText,
       description: 'Manage income tax slabs and rate structures'
@@ -63,7 +63,7 @@ export default function TaxSlabsPage() {
 
   return (
     <>
-      <SidebarConfig role="hr" />
+      <SidebarConfig role="admin" />
       <div className="p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -72,7 +72,7 @@ export default function TaxSlabsPage() {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" asChild>
-              <Link href="/pages/hr/payroll/tax">Back</Link>
+              <Link href="/pages/admin/payroll/tax">Back</Link>
             </Button>
           </div>
         </div>

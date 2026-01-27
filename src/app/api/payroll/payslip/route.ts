@@ -283,7 +283,8 @@ export async function GET(request: NextRequest) {
       .findMany({
         where: { employee_id: { in: candidateIds as any } },
         select: { year: true, month: true },
-        orderBy: [{ year: 'desc' }, { month: 'desc' }]
+        orderBy: [{ year: 'desc' }, { month: 'desc' }],
+        distinct: ['year', 'month']
       })
       .catch(() => [])) as any[];
 

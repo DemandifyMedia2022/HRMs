@@ -145,11 +145,10 @@ export default function BankChallanPage() {
 
   return (
     <>
-      <div className="p-4 space-y-3 bg-slate-50 dark:bg-slate-950 overflow-x-hidden">
-        <SidebarConfig role="hr" />
-
+      <SidebarConfig role="hr" />
+      <div className="p-4 md:p-6 space-y-4 bg-slate-50 dark:bg-slate-950 min-h-screen">
         {/* Filters & Actions */}
-        <Card className="rounded border border-slate-200 dark:border-slate-800 max-w-[1200px]">
+        <Card className="rounded border border-slate-200 dark:border-slate-800 w-full">
           <CardContent className="py-2 px-3">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
               <div>
@@ -208,13 +207,13 @@ export default function BankChallanPage() {
         </Card>
 
         {/* Data Table */}
-        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded max-w-[1200px] overflow-hidden">
+        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded w-full overflow-hidden">
           <div className="border-b border-slate-200 dark:border-slate-800 px-3 lg:px-4 py-2">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               Employee Records ({data.length})
             </h2>
           </div>
-          <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-260px)] w-full">
+          <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)] w-full">
             <table className="min-w-[1200px] text-xs">
               <thead className="sticky top-0 z-10">
                 <tr className="bg-slate-100 dark:bg-slate-800">
