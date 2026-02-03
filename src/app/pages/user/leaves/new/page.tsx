@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DatePicker } from '@/components/ui/date-picker';
 
-const leaveOptions = ['Casual Leave', 'Sick Leave', 'Paid Leave', 'Comp-Off', 'WFH'];
+const leaveOptions = ['Casual Leave', 'Sick Leave', 'Paid Leave', 'Comp-Off', 'WFH', 'Maternity Leave', 'Paternity Leave'];
 
 const toYMD = (d?: Date | null) =>
   d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : '';
@@ -32,8 +32,10 @@ export default function NewLeavePage() {
   const [reason, setReason] = useState('');
   const [addedByUser, setAddedByUser] = useState('');
   const [company, setCompany] = useState(''); // client_company_name
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -62,25 +64,79 @@ export default function NewLeavePage() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    setSuccess(null);
+    
+    // Validate required fields
+    if (!leaveType) {
+      setError('Please select a leave type');
+      setSubmitting(false);
+      return;
+    }
+    
+    if (!startDate) {
+      setError('Please select a start date');
+      setSubmitting(false);
+      return;
+    }
+    
+    if (!endDate) {
+      setError('Please select an end date');
+      setSubmitting(false);
+      return;
+    }
+    
+    if (!reason.trim()) {
+      setError('Please provide a reason for leave');
+      setSubmitting(false);
+      return;
+    }
+    
+    // Validate attachment for Sick Leave
+    if (leaveType === 'Sick Leave' && !attachment) {
+      setError('Medical attachment is required for Sick Leave');
+      setSubmitting(false);
+      return;
+    }
+    
     try {
+      const formData = new FormData();
+      formData.append('Leave_Type', leaveType);
+      formData.append('Leave_Start_Date', startDate);
+      formData.append('Leave_End_Date', endDate);
+      formData.append('Reson', reason);
+      formData.append('added_by_user', addedByUser);
+      formData.append('client_company_name', company);
+      
+      // Add attachment if it exists (for Sick Leave)
+      if (attachment) {
+        formData.append('attachment', attachment);
+      }
+
       const res = await fetch('/api/leaves', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          Leave_Type: leaveType,
-          Leave_Start_Date: startDate,
-          Leave_End_Date: endDate,
-          Reson: reason,
-          added_by_user: addedByUser,
-          client_company_name: company // Send company name
-        })
+        body: formData // Don't set Content-Type header, let browser set it for FormData
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || 'Failed to submit leave');
       }
-      router.push('/pages/user');
-      router.refresh();
+      
+      // Show success message
+      setSuccess('Leave request submitted successfully! HR team has been notified.');
+      
+      // Reset form
+      setLeaveType('');
+      setStartDate('');
+      setEndDate('');
+      setReason('');
+      setAttachment(null);
+      
+      // Redirect after a short delay
+      setTimeout(() => {
+        router.push('/pages/user');
+        router.refresh();
+      }, 2000);
+      
     } catch (err: any) {
       setError(err?.message || 'Something went wrong');
     } finally {
@@ -103,6 +159,12 @@ export default function NewLeavePage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             ) : null}
+            
+            {success ? (
+              <Alert className="border-green-500/50 bg-green-50">
+                <AlertDescription className="text-green-800">{success}</AlertDescription>
+              </Alert>
+            ) : null}
 
                        <form onSubmit={onSubmit} className="space-y-6 max-w-3xl mx-auto">
               {/* Hidden field for company name */}
@@ -113,7 +175,7 @@ export default function NewLeavePage() {
                 <Label htmlFor="leave_type" className="font-medium text-slate-700">
                   Leave Type
                 </Label>
-                <Select value={leaveType} onValueChange={setLeaveType}>
+                <Select value={leaveType} onValueChange={setLeaveType} required>
                   <SelectTrigger id="leave_type" className="h-10 w-full">
                     <SelectValue placeholder="Select the type of leave" />
                   </SelectTrigger>
@@ -171,7 +233,27 @@ export default function NewLeavePage() {
                 </p>
               </div>
 
-              {/* Row 4: Action Buttons */}
+              {/* Row 4: Attachment (Only for Sick Leave) */}
+              {leaveType === 'Sick Leave' && (
+                <div className="space-y-2">
+                  <Label htmlFor="attachment" className="font-medium text-slate-700">
+                    Medical Attachment <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="attachment"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+                    className="h-10"
+                    required
+                  />
+                  <p className="text-xs text-slate-500">
+                    Upload medical documents (PDF, JPG, PNG) - Required for Sick Leave
+                  </p>
+                </div>
+              )}
+
+              {/* Row 5: Action Buttons */}
               <CardFooter className="flex flex-col gap-3 px-0 pt-4 sm:flex-row sm:justify-end">
                 <Button 
                   type="button" 

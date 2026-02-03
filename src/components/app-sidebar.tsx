@@ -58,8 +58,9 @@ import {
   SidebarMenuItem
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
+import { useState, useEffect } from 'react';
 
-const baseDataByRole: Record<UserRole, SidebarData> = {
+const baseDataByRole: Record<string, SidebarData> = {
   admin: {
     user: { name: 'Loading...', email: 'loading@example.com', avatar: '' },
     navMain: [
@@ -425,6 +426,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { role, dataOverrides } = useSidebarConfig();
   const { user } = useAuth();
   const pathname = usePathname();
+  const [isReportingManager, setIsReportingManager] = useState(false);
+
+  // Check if user is a reporting manager
+  useEffect(() => {
+    async function checkReportingManager() {
+      if (user?.email) {
+        try {
+          const res = await fetch('/api/users/reporting-manager-check');
+          if (res.ok) {
+            const data = await res.json();
+            setIsReportingManager(data.isReportingManager);
+          }
+        } catch (err) {
+          console.error('Failed to check reporting manager status:', err);
+        }
+      }
+    }
+    
+    checkReportingManager();
+  }, [user?.email]);
 
   // Prefer the authenticated user's role when available to avoid briefly
   // rendering the wrong sidebar (e.g. user sidebar on HR/admin routes).
@@ -440,7 +461,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }
 
-  const base = baseDataByRole[effectiveRole as keyof typeof baseDataByRole] ?? baseDataByRole.user;
+  const baseRoleKey = effectiveRole === 'superadmin' ? 'admin' : effectiveRole;
+  const base = baseDataByRole[baseRoleKey] ?? baseDataByRole.user;
 
   // Create user data from auth hook to replace the static "Loading..." base
   const authUserData = React.useMemo(() => {
@@ -461,7 +483,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     user: authUserData || base.user
   };
 
-  const data = mergeData(effectiveBase, dataOverrides);
+  // Add manager leaves navigation for reporting managers
+  const modifiedNavMain = React.useMemo(() => {
+    if (effectiveRole === 'user' && isReportingManager) {
+      const leavesNav = effectiveBase.navMain.find(item => item.title === 'Leaves');
+      if (leavesNav && leavesNav.children) {
+        return effectiveBase.navMain.map(item => {
+          if (item.title === 'Leaves') {
+            return {
+              ...item,
+              children: [...(leavesNav.children || []), { title: 'Team Leaves', url: '/pages/user/manager-leaves', icon: IconUsers }]
+            };
+          }
+          return item;
+        });
+      }
+    }
+    return effectiveBase.navMain;
+  }, [effectiveRole, isReportingManager, effectiveBase.navMain]);
+
+  const data = mergeData({
+    ...effectiveBase,
+    navMain: modifiedNavMain
+  }, dataOverrides);
 
   const dashboardUrl = React.useMemo(() => {
     switch (effectiveRole) {

@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
       maybeEncryptForRequest(req.headers, {
         role,
         name: (user as any).name ?? null,
+        Full_name: (user as any).Full_name ?? null,
         email: (user as any).email ?? null,
         department: (user as any).department ?? null,
         emp_code: (user as any).emp_code ?? null,

@@ -58,6 +58,7 @@ interface NetPayData {
 interface Payslip {
   year: number;
   month: number;
+  period?: string;
 }
 
 interface PayslipData {
@@ -658,16 +659,18 @@ export default function PayslipPage() {
                       <th className="p-3 text-center font-medium">Employee ID</th>
                       <th className="p-3 text-center font-medium">Month</th>
                       <th className="p-3 text-center font-medium">Year</th>
+                      <th className="p-3 text-center font-medium">Period</th>
                       <th className="p-3 text-center font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {payslipData.payslips.length > 0 ? (
                       payslipData.payslips.map(payslip => (
-                        <tr key={`${payslip.year}-${payslip.month}`} className="border-b hover:bg-muted/50">
+                        <tr key={`${payslip.year}-${payslip.month}-${payslip.period}`} className="border-b hover:bg-muted/50">
                           <td className="p-3 text-center">{payslipData.employee?.emp_code}</td>
                           <td className="p-3 text-center">{getMonthName(payslip.month)}</td>
                           <td className="p-3 text-center">{payslip.year}</td>
+                          <td className="p-3 text-center">{payslip.period || 'Full Month'}</td>
                           <td className="p-3 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <Button
@@ -686,7 +689,7 @@ export default function PayslipPage() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={4} className="p-6 text-center text-muted-foreground">
+                        <td colSpan={5} className="p-6 text-center text-muted-foreground">
                           No payslips available
                         </td>
                       </tr>

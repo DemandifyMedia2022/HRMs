@@ -4,7 +4,7 @@ import { verifyToken } from './auth';
 export type RequestUser = {
   id: number;
   email: string;
-  role: 'admin' | 'hr' | 'user';
+  role: 'superadmin' | 'admin' | 'hr' | 'user';
   department: 'sales' | 'marketing' | 'quality' | 'it' | 'csm' | 'operation' | null;
 };
 

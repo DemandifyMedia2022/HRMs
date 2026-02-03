@@ -18,6 +18,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userName = searchParams.get('user_name') || searchParams.get('added_by_user');
+    const month = searchParams.get('month'); // YYYY-MM; if null, default to current month for table
     if (!userName) {
       return NextResponse.json({ error: 'Missing user_name' }, { status: 400 });
     }
@@ -25,11 +26,14 @@ export async function GET(req: Request) {
     // 1) Resolve the exact user (email/name) and their company from users
     let resolvedCompany: string | null = null;
     let displayNameOptions: string[] = []; // exact values to match in leavedata.added_by_user
+    let resolvedEmpCode: string | null = null;
+    let resolvedTokens: string[] = [];
 
     try {
       const isEmail = userName.includes('@');
       const local = isEmail ? userName.split('@')[0] : userName;
       const tokens = local.split(/[._\s]+/).filter(Boolean);
+      resolvedTokens = tokens;
 
       const user = await prisma.users.findFirst({
         where: isEmail
@@ -37,10 +41,11 @@ export async function GET(req: Request) {
           : tokens.length
           ? { AND: tokens.map(t => ({ OR: [{ name: { contains: t } }, { Full_name: { contains: t } }] })) }
           : { OR: [{ name: userName }, { Full_name: userName }] },
-        select: { client_company_name: true, email: true, name: true, Full_name: true }
+        select: { client_company_name: true, email: true, name: true, Full_name: true, emp_code: true }
       });
 
       resolvedCompany = user?.client_company_name ?? null;
+      resolvedEmpCode = user?.emp_code ? String(user.emp_code) : null;
 
       const candidates = [
         user?.email,
@@ -70,13 +75,37 @@ export async function GET(req: Request) {
       }
     }
 
-    // 3) STRICT per-user filter + company guard (prevents same-name collisions)
-    const andFilters: any[] = [];
+    // 3) Per-user filter using strong identifier (emp_code) when available.
+    // Keep a company guard for name-based matching, but allow legacy rows with null company
+    // when emp_code matches (older records / failed company resolution on create).
+    const orUser: any[] = [];
+    if (resolvedEmpCode) {
+      orUser.push({ emp_code: resolvedEmpCode });
+    }
     if (displayNameOptions.length > 0) {
-      andFilters.push({ OR: displayNameOptions.map(v => ({ added_by_user: v })) });
+      orUser.push(...displayNameOptions.map(v => ({ added_by_user: v })));
+    }
+
+    // Fallback: match on name tokens (helps when added_by_user has different formatting)
+    // Still scoped by company below to avoid cross-user leakage.
+    if (resolvedTokens.length > 0) {
+      orUser.push({
+        AND: resolvedTokens.map(t => ({
+          added_by_user: { contains: t } as any
+        }))
+      });
+    }
+
+    const andFilters: any[] = [];
+    if (orUser.length > 0) {
+      andFilters.push({ OR: orUser });
     }
     if (resolvedCompany) {
-      andFilters.push({ client_company_name: resolvedCompany });
+      if (resolvedEmpCode) {
+        andFilters.push({ OR: [{ client_company_name: resolvedCompany }, { client_company_name: null }] });
+      } else {
+        andFilters.push({ client_company_name: resolvedCompany });
+      }
     }
     const whereUser = andFilters.length ? { AND: andFilters } : {};
 
@@ -86,9 +115,31 @@ export async function GET(req: Request) {
     const yearStart = new Date(Date.UTC(year, 0, 1));
     const yearEnd = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
 
-    // all leaves for the user (table) - keep full history
+    // Determine month window for LeaveApprovalData (table)
+    let monthStart: Date | null = null;
+    let monthEnd: Date | null = null;
+    if (month) {
+      const [y, m] = month.split('-');
+      const yearNum = Number(y);
+      const monthNum = Number(m) - 1;
+      if (!isNaN(yearNum) && !isNaN(monthNum)) {
+        monthStart = new Date(Date.UTC(yearNum, monthNum, 1));
+        monthEnd = new Date(Date.UTC(yearNum, monthNum + 1, 0, 23, 59, 59, 999));
+      }
+    } else {
+      // Default to current month for the table
+      const currentYear = now.getUTCFullYear();
+      const currentMonth = now.getUTCMonth();
+      monthStart = new Date(Date.UTC(currentYear, currentMonth, 1));
+      monthEnd = new Date(Date.UTC(currentYear, currentMonth + 1, 0, 23, 59, 59, 999));
+    }
+
+    // all leaves for the user (table) - default to current month unless month param is provided
     const allLeaves = await prisma.leavedata.findMany({
-      where: whereUser as any,
+      where: {
+        ...(whereUser as any),
+        ...(monthStart && monthEnd ? { start_date: { gte: monthStart, lte: monthEnd } } : {})
+      },
       orderBy: { start_date: 'desc' }
     });
 
@@ -118,38 +169,45 @@ export async function GET(req: Request) {
         usedSickLeave += 0.5 * days;
       } else if (leave.leave_type === 'Sick Leave(FullDay)') {
         usedSickLeave += 1 * days;
+      } else if (leave.leave_type === 'Maternity Leave') {
+        // Maternity leave typically has separate policies, track separately if needed
+        // For now, we can track it as paid leave or add separate tracking
+        usedPaidLeave += days;
+      } else if (leave.leave_type === 'Paternity Leave') {
+        // Paternity leave typically has separate policies, track separately if needed
+        // For now, we can track it as paid leave or add separate tracking
+        usedPaidLeave += days;
       }
     }
 
-
     const viewerName = searchParams.get('viewer_name'); // optional
 
-if (viewerName) {
-  try {
-    const isViewerEmail = viewerName.includes('@');
-    const localV = isViewerEmail ? viewerName.split('@')[0] : viewerName;
-    const tokensV = localV.split(/[._\s]+/).filter(Boolean);
+    if (viewerName) {
+      try {
+        const isViewerEmail = viewerName.includes('@');
+        const localV = isViewerEmail ? viewerName.split('@')[0] : viewerName;
+        const tokensV = localV.split(/[._\s]+/).filter(Boolean);
 
-    const viewer = await prisma.users.findFirst({
-      where: isViewerEmail
-        ? { email: viewerName }
-        : tokensV.length
-        ? { AND: tokensV.map(t => ({ OR: [{ name: { contains: t } }, { Full_name: { contains: t } }] })) }
-        : { OR: [{ name: viewerName }, { Full_name: viewerName }] },
-      select: { client_company_name: true }
-    });
+        const viewer = await prisma.users.findFirst({
+          where: isViewerEmail
+            ? { email: viewerName }
+            : tokensV.length
+            ? { AND: tokensV.map(t => ({ OR: [{ name: { contains: t } }, { Full_name: { contains: t } }] })) }
+            : { OR: [{ name: viewerName }, { Full_name: viewerName }] },
+          select: { client_company_name: true }
+        });
 
-    const viewerCompany = viewer?.client_company_name ?? null;
-    if (viewerCompany && resolvedCompany && viewerCompany !== resolvedCompany) {
-      return NextResponse.json(
-        { error: 'Forbidden: cross-company access is not allowed' },
-        { status: 403 }
-      );
+        const viewerCompany = viewer?.client_company_name ?? null;
+        if (viewerCompany && resolvedCompany && viewerCompany !== resolvedCompany) {
+          return NextResponse.json(
+            { error: 'Forbidden: cross-company access is not allowed' },
+            { status: 403 }
+          );
+        }
+      } catch {
+        return NextResponse.json({ error: 'Forbidden: cannot resolve viewer' }, { status: 403 });
+      }
     }
-  } catch {
-    return NextResponse.json({ error: 'Forbidden: cannot resolve viewer' }, { status: 403 });
-  }
-}
 
     const remainingPaidLeave = Math.max(0, totalPaidLeave - usedPaidLeave);
     const remainingSickLeave = Math.max(0, totalSickLeave - usedSickLeave);

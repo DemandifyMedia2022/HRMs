@@ -17,7 +17,7 @@ if (!JWT_REFRESH_SECRET || JWT_REFRESH_SECRET.trim() === '') {
 export type JwtUser = {
   id: number;
   email: string;
-  role: 'admin' | 'hr' | 'user';
+  role: 'superadmin' | 'admin' | 'hr' | 'user';
   department:
     | 'sales'
     | 'marketing'
@@ -32,8 +32,9 @@ export type JwtUser = {
 };
 
 // Helper to normalize DB `type` column to one of allowed roles
-export function mapTypeToRole(type: string | null | undefined): 'admin' | 'hr' | 'user' {
+export function mapTypeToRole(type: string | null | undefined): 'superadmin' | 'admin' | 'hr' | 'user' {
   const t = (type || 'user').toLowerCase().trim();
+  if (t.includes('superadmin') || t.includes('super-admin') || t.includes('super admin')) return 'superadmin';
   if (t.includes('admin')) return 'admin';
   if (t === 'hr' || t.includes('human resource') || t.includes('human-resource')) return 'hr';
   return 'user';

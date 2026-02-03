@@ -13,6 +13,7 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from '@/components/ui/chart';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Pie, PieChart, Cell } from 'recharts';
 
 function PolicyStat({ label, value }: { label: string; value: React.ReactNode }) {
@@ -76,6 +77,7 @@ export default function UserAvailableLeavePage() {
   const [data, setData] = useState<AvailableResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<Date | undefined>(new Date()); // default to current month
 
   // Store logged-in user profile (for nice display name)
   const [me, setMe] = useState<{ email?: string; name?: string; Full_name?: string } | null>(null);
@@ -86,7 +88,12 @@ export default function UserAvailableLeavePage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/leaves/available?user_name=${encodeURIComponent(u)}`, { cache: 'no-store' });
+      const monthStr = selectedMonth ? selectedMonth.toISOString().slice(0, 7) : undefined;
+      const qs = new URLSearchParams({
+        user_name: u,
+        ...(monthStr ? { month: monthStr } : {})
+      });
+      const res = await fetch(`/api/leaves/available?${qs.toString()}`, { cache: 'no-store' });
       const body = res.ok ? await res.json().catch(() => null) : null;
       if (!body || !Array.isArray(body?.LeaveApprovalData)) {
         throw new Error(body?.error || 'Failed to load available leaves');
@@ -125,7 +132,7 @@ export default function UserAvailableLeavePage() {
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userFromQuery]);
+  }, [userFromQuery, selectedMonth]);
 
   // Build “Full Name (email)” display
   const display = useMemo(() => {
@@ -332,8 +339,21 @@ export default function UserAvailableLeavePage() {
         {data && (
           <Card className="shadow-lg border-0 bg-white/90 backdrop-blur">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">All My Leaves</CardTitle>
-              <CardDescription>Review every leave request and its approval status.</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">All My Leaves</CardTitle>
+                  <CardDescription>
+                    Showing leaves for {selectedMonth?.toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) || 'All months'}
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <DatePicker
+                    value={selectedMonth}
+                    onChange={setSelectedMonth}
+                    placeholder="Select month"
+                  />
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="w-full overflow-hidden">
@@ -341,11 +361,11 @@ export default function UserAvailableLeavePage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Type</TableHead>
+                        <TableHead>Leave Type</TableHead>
                         <TableHead>Start</TableHead>
                         <TableHead>End</TableHead>
-                        <TableHead>HR</TableHead>
-                        <TableHead>Mgr</TableHead>
+                        <TableHead>HR Approval</TableHead>
+                        <TableHead>Manager Approval</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

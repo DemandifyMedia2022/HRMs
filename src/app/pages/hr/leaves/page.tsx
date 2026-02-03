@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type Leave = {
   l_id: number;
@@ -17,8 +18,10 @@ type Leave = {
   reason: string;
   HRapproval: string;
   HRrejectReason: string | null;
+  hr_approved_by: string | null;
   Managerapproval: string;
   ManagerRejecjetReason: string | null;
+  manager_approved_by: string | null;
   leaveregdate: string;
   added_by_user: string;
 };
@@ -34,8 +37,9 @@ type ApiResponse = {
 };
 
 export default function HRLeavesPage() {
+  const currentMonth = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }).slice(0, 7);
   const [leaveType, setLeaveType] = useState('');
-  const [month, setMonth] = useState(''); // YYYY-MM
+  const [month, setMonth] = useState(currentMonth); // YYYY-MM
   const [userName, setUserName] = useState('');
   const [status, setStatus] = useState('all'); // HRapproval filter; 'all' means no filter
 
@@ -52,6 +56,7 @@ export default function HRLeavesPage() {
   const [decision, setDecision] = useState<'approved' | 'rejected' | ''>('');
   const [rejectReason, setRejectReason] = useState('');
   const [flash, setFlash] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
 
   const qs = useMemo(() => {
     const p = new URLSearchParams();
@@ -68,6 +73,16 @@ export default function HRLeavesPage() {
     setLoading(true);
     setError(null);
     try {
+      // Get current user info
+      const userRes = await fetch('/api/auth/me', { cache: 'no-store' });
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        console.log('HR user data:', userData);
+        setCurrentUser(userData);
+      } else {
+        console.log('HR user auth failed:', userRes.status);
+      }
+
       const res = await fetch(`/api/leaves?${qs}`, { cache: 'no-store' });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -90,9 +105,11 @@ export default function HRLeavesPage() {
   }, [qs]);
 
   async function updateStatus(id: number, approve: boolean) {
+    console.log('HR updateStatus called:', { id, approve, currentUser });
     const payload: any = approve
-      ? { id, HRapproval: 'approved', HRrejectReason: '' }
-      : { id, HRapproval: 'rejected', HRrejectReason: 'Rejected by HR' };
+      ? { id, HRapproval: 'approved', HRrejectReason: '', hr_approved_by: currentUser?.Full_name || currentUser?.name || 'HR Department' }
+      : { id, HRapproval: 'rejected', HRrejectReason: 'Rejected by HR', hr_approved_by: currentUser?.Full_name || currentUser?.name || 'HR Department' };
+    console.log('HR payload:', payload);
     try {
       const res = await fetch(`/api/leaves`, {
         method: 'PATCH',
@@ -134,8 +151,8 @@ export default function HRLeavesPage() {
     if (!selected || !decision) return;
     const payload: any =
       decision === 'approved'
-        ? { id: selected.l_id, HRapproval: 'approved', HRrejectReason: '' }
-        : { id: selected.l_id, HRapproval: 'rejected', HRrejectReason: rejectReason || 'Rejected by HR' };
+        ? { id: selected.l_id, HRapproval: 'approved', HRrejectReason: '', hr_approved_by: currentUser?.Full_name || currentUser?.name || 'HR Department' }
+        : { id: selected.l_id, HRapproval: 'rejected', HRrejectReason: rejectReason || 'Rejected by HR', hr_approved_by: currentUser?.Full_name || currentUser?.name || 'HR Department' };
     try {
       const res = await fetch(`/api/leaves`, {
         method: 'PATCH',
@@ -157,23 +174,26 @@ export default function HRLeavesPage() {
 
   function resetFilters() {
     setLeaveType('');
-    setMonth('');
+    setMonth(currentMonth);
     setUserName('');
     setStatus('all');
     setPage(1);
   }
 
   return (
-    <div className="p-6 space-y-4">
-      {flash ? (
-        <div className="border border-green-200 bg-green-50 text-green-700 rounded px-3 py-2 text-sm">{flash}</div>
-      ) : null}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">All Employees Leaves</h1>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-6 max-w-full">
+        {flash ? (
+          <div className="mb-4 border border-green-200 bg-green-50 text-green-700 rounded-lg px-4 py-3 text-sm">{flash}</div>
+        ) : null}
+        
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">All Employee Leaves</h1>
+          <p className="text-gray-600 mt-1">View and manage leave requests from all employees</p>
+        </div>
 
-      <div className="border rounded p-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 items-end">
           <div className="space-y-1">
             <Label htmlFor="filter-leave-type">Leave Type</Label>
             <Input id="filter-leave-type" value={leaveType} onChange={e => setLeaveType(e.target.value)} />
@@ -200,9 +220,8 @@ export default function HRLeavesPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-end gap-2">
+          <div className="flex gap-2">
             <Button
-              variant="outline"
               onClick={() => {
                 setPage(1);
                 load();
@@ -217,50 +236,64 @@ export default function HRLeavesPage() {
         </div>
       </div>
 
-      <div className="border rounded p-4">
-        <div className="text-sm text-muted-foreground mb-2">Total: {total}</div>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Leave Requests</h3>
+            <span className="text-sm text-gray-500">Total: {total} requests</span>
+          </div>
+        </div>
         <div className="overflow-x-auto">
-          <Table>
+          <div className="min-w-[800px]">
+            <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[60px]">ID</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Start</TableHead>
-                <TableHead>End</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Manager Status</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="w-[60px] font-semibold text-gray-900">ID</TableHead>
+                <TableHead className="min-w-[100px] font-semibold text-gray-900">Type</TableHead>
+                <TableHead className="min-w-[100px] hidden md:table-cell font-semibold text-gray-900">Apply</TableHead>
+                <TableHead className="min-w-[100px] font-semibold text-gray-900">Start</TableHead>
+                <TableHead className="min-w-[100px] font-semibold text-gray-900">End</TableHead>
+                <TableHead className="min-w-[120px] font-semibold text-gray-900">User</TableHead>
+                <TableHead className="min-w-[100px] font-semibold text-gray-900">HR Status</TableHead>
+                <TableHead className="min-w-[120px] font-semibold text-gray-900">Manager Status</TableHead>
+                <TableHead className="min-w-[200px] max-w-[240px] font-semibold text-gray-900">Reason</TableHead>
+                <TableHead className="min-w-[120px] hidden lg:table-cell font-semibold text-gray-900">HR Approved By</TableHead>
+                <TableHead className="min-w-[140px] hidden lg:table-cell font-semibold text-gray-900">Manager Approved By</TableHead>
+                <TableHead className="min-w-[100px] font-semibold text-gray-900">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-4">
+                  <TableCell colSpan={12} className="py-4">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-4">
+                  <TableCell colSpan={12} className="py-4">
                     No records found
                   </TableCell>
                 </TableRow>
               ) : (
-                rows.map(l => (
+                rows.map((l, idx) => (
                   <TableRow key={l.l_id}>
-                    <TableCell>{l.l_id}</TableCell>
+                    <TableCell>{(page - 1) * pageSize + idx + 1}</TableCell>
                     <TableCell>{l.leave_type}</TableCell>
+                    <TableCell className="hidden md:table-cell">{l.leaveregdate ? new Date(l.leaveregdate).toLocaleDateString() : '-'}</TableCell>
                     <TableCell>{new Date(l.start_date).toLocaleDateString()}</TableCell>
                     <TableCell>{new Date(l.end_date).toLocaleDateString()}</TableCell>
                     <TableCell>{l.added_by_user}</TableCell>
+                    <TableCell>{l.HRapproval}</TableCell>
                     <TableCell>{l.Managerapproval}</TableCell>
                     <TableCell className="max-w-[240px] truncate" title={l.reason}>
                       {l.reason}
                     </TableCell>
+                    <TableCell className="hidden lg:table-cell">{l.hr_approved_by || '-'}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{l.manager_approved_by || '-'}</TableCell>
                     <TableCell>
                       <Button size="sm" onClick={() => openReview(l)}>
-                        Approve
+                        ⚡ Take Action
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -268,21 +301,35 @@ export default function HRLeavesPage() {
               )}
             </TableBody>
           </Table>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between mt-4">
-          <div className="text-sm">
-            Page {page} of {totalPages}
-          </div>
-          <div className="space-x-2">
-            <Button variant="outline" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
-              Prev
-            </Button>
-            <Button variant="outline" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
-              Next
-            </Button>
+        <div className="p-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Page {page} of {totalPages}
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                disabled={page <= 1} 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                disabled={page >= totalPages} 
+                onClick={() => setPage(p => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </div>
+      </div>
       </div>
       <Dialog
         open={!!selected}

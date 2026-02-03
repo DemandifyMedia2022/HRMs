@@ -4,7 +4,7 @@ import React, { createContext, useContext, useMemo, useState } from 'react';
 import type { Icon } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
 
-export type UserRole = 'admin' | 'user' | 'hr';
+export type UserRole = 'superadmin' | 'admin' | 'user' | 'hr';
 
 export type NavMainItem = {
   title: string;

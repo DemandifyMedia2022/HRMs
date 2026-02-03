@@ -44,7 +44,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
     }
 
-    const lock = await checkAccountLockout(email);
+    const emailNormalized = String(email).trim().toLowerCase();
+
+    const lock = await checkAccountLockout(emailNormalized);
     if (lock.locked) {
       return NextResponse.json(
         {
@@ -55,20 +57,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await (prisma as any).users.findUnique({ where: { email } });
+    const user = await (async () => {
+      try {
+        // Prefer a case-insensitive match (useful if DB collation is case-sensitive)
+        return await (prisma as any).users.findFirst({
+          where: {
+            email: {
+              equals: emailNormalized,
+              mode: 'insensitive'
+            }
+          }
+        });
+      } catch {
+        // Fallback if `mode: 'insensitive'` isn't supported by the current Prisma/DB
+        return await (prisma as any).users.findUnique({ where: { email: emailNormalized } });
+      }
+    })();
     if (!user) {
-      await recordFailedAttempt(email);
+      await recordFailedAttempt(emailNormalized);
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
     const dbHash: string = user.password || '';
-    const normalizedHash = dbHash.startsWith('$2y$') ? '$2a$' + dbHash.slice(4) : dbHash;
-    const valid = comparePassword(password, normalizedHash);
+    const normalizedHash = dbHash.startsWith('$2y$') ? '$2b$' + dbHash.slice(4) : dbHash;
+    const isBcryptHash = /^\$2[aby]\$/.test(normalizedHash);
+    const valid = isBcryptHash ? comparePassword(password, normalizedHash) : password === normalizedHash;
     if (!valid) {
-      await recordFailedAttempt(email);
+      await recordFailedAttempt(emailNormalized);
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
 
-    await clearFailedAttempts(email);
+    await clearFailedAttempts(emailNormalized);
 
     // Determine role strictly from DB `type` column
     const dept = (user as any).department ?? null;

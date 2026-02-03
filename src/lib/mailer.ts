@@ -7,6 +7,11 @@ export type MailOptions = {
   text?: string;
   from?: string;
   replyTo?: string;
+  attachments?: Array<{
+    filename: string;
+    content: Buffer | string;
+    contentType?: string;
+  }>;
 };
 
 function guessSmtpHost(email: string | undefined) {
@@ -53,7 +58,8 @@ export async function sendMail(opts: MailOptions): Promise<{ ok: boolean; error?
       subject: opts.subject,
       text: opts.text,
       html: opts.html,
-      replyTo: opts.replyTo
+      replyTo: opts.replyTo,
+      attachments: opts.attachments
     });
 
     return { ok: true };

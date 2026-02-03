@@ -32,6 +32,15 @@ function pickHHMM(raw: any): string {
   return 'N/A';
 }
 
+function toISTDateOnly(d: Date): string {
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+}
+
+function parseDateOnlyToUTC(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(n => parseInt(n, 10));
+  return new Date(Date.UTC(y, (m || 1) - 1, d || 1, 0, 0, 0));
+}
+
 // Build events for calendar from npattendance
 export async function GET(req: NextRequest) {
   try {
@@ -45,14 +54,17 @@ export async function GET(req: NextRequest) {
     const startOfYear = new Date(Date.UTC(year, 0, 1, 0, 0, 0));
     const endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59));
 
-
-    // Fetch users for name mapping
+    // Fetch users for name mapping and emp_code -> biometric_id mapping
     const users = await prisma.users.findMany({
-      select: { emp_code: true, Full_name: true },
+      select: { emp_code: true, Full_name: true, Biometric_id: true },
     });
-    const userMap = new Map<string, string>();
+    const biometricToName = new Map<string, string>();
+    const empCodeToBiometric = new Map<string, string>();
     users.forEach((u: any) => {
-      if (u.emp_code) userMap.set(u.emp_code, u.Full_name || 'Unknown');
+      const bio = u.Biometric_id !== null && u.Biometric_id !== undefined ? String(u.Biometric_id).trim() : '';
+      const emp = u.emp_code ? String(u.emp_code).trim() : '';
+      if (bio) biometricToName.set(bio, u.Full_name || 'Unknown');
+      if (emp && bio) empCodeToBiometric.set(emp, bio);
     });
 
     const records = await prisma.npattendance.findMany({
@@ -103,7 +115,8 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      const empName = userMap.get(r.employee_id) || r.emp_name || 'Unknown';
+      const empKey = String(r.employee_id ?? '').trim();
+      const empName = biometricToName.get(empKey) || r.emp_name || 'Unknown';
 
       // Access login_hours safely safely (handle null)
       const loginHoursStr = r.login_hours ? new Date(r.login_hours).toISOString().substr(11, 8) : '00:00:00';
@@ -211,40 +224,60 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      const key = String(r.employee_id);
+      const key = String(r.employee_id ?? '').trim();
       if (!byUser[key]) byUser[key] = [];
       byUser[key].push(event);
     }
 
-    // Fetch approved leaves overlapping the year window
+    // Fetch approved leaves overlapping the year window.
+    // NOTE: leavedata.emp_code is often NULL in existing rows, so we also match via added_by_user.
     const leavesRaw: Array<any> = await prisma.$queryRaw`
       SELECT 
-        l.emp_code    AS empCode,
-        l.leave_type  AS leaveType,
-        l.start_date  AS startDate,
-        l.end_date    AS endDate,
-        u.Full_name   AS fullName
+        l.emp_code       AS empCode,
+        l.added_by_user  AS addedByUser,
+        l.leave_type     AS leaveType,
+        l.start_date     AS startDate,
+        l.end_date       AS endDate,
+        u.Full_name      AS fullName,
+        u.Biometric_id   AS biometricId
       FROM leavedata l
-      JOIN users u ON u.emp_code = l.emp_code
+      JOIN users u ON (
+        (l.emp_code IS NOT NULL AND CONVERT(u.emp_code USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(l.emp_code USING utf8mb4) COLLATE utf8mb4_unicode_ci)
+        OR (
+          l.added_by_user IS NOT NULL AND (
+            CONVERT(u.Full_name USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(l.added_by_user USING utf8mb4) COLLATE utf8mb4_unicode_ci
+            OR CONVERT(u.name USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(l.added_by_user USING utf8mb4) COLLATE utf8mb4_unicode_ci
+            OR CONVERT(u.email USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(l.added_by_user USING utf8mb4) COLLATE utf8mb4_unicode_ci
+          )
+        )
+      )
       WHERE DATE(l.start_date) <= ${endOfYear}
         AND DATE(l.end_date)   >= ${startOfYear}
-        AND l.HRApproval = 'Approved'
-        AND l.ManagerApproval = 'Approved'
+        AND LOWER(COALESCE(l.HRapproval, '')) = 'approved'
+        AND LOWER(COALESCE(l.Managerapproval, '')) = 'approved'
     `;
 
     // Expand leaves to per-day entries within the year window
     const leavesByUser: Record<string, { date: string; leave_type: string; user: string }[]> = {};
     for (const row of leavesRaw) {
-      const emp = String(row.empCode);
-      const start = new Date(row.startDate);
-      const end = new Date(row.endDate);
-      // clamp to year range
+      const bio = row.biometricId !== null && row.biometricId !== undefined ? String(row.biometricId).trim() : '';
+      const empCode = row.empCode ? String(row.empCode).trim() : '';
+      // Attendance calendars are keyed by npattendance.employee_id (biometric id).
+      const emp = bio || (empCodeToBiometric.get(empCode) || empCode);
+      if (!emp) continue;
+
+      // IMPORTANT: Expand by *IST date-only* to avoid off-by-one issues when DB stores midnight IST.
+      const startStr = toISTDateOnly(new Date(row.startDate));
+      const endStr = toISTDateOnly(new Date(row.endDate));
+      const start = parseDateOnlyToUTC(startStr);
+      const end = parseDateOnlyToUTC(endStr);
+
+      // clamp to year range (UTC)
       let cur = new Date(Math.max(start.getTime(), startOfYear.getTime()));
       const endClamp = new Date(Math.min(end.getTime(), endOfYear.getTime()));
+
       while (cur.getTime() <= endClamp.getTime()) {
-        const iso = new Date(Date.UTC(cur.getUTCFullYear(), cur.getUTCMonth(), cur.getUTCDate()))
-          .toISOString()
-          .split('T')[0];
+        const iso = cur.toISOString().split('T')[0];
         if (!leavesByUser[emp]) leavesByUser[emp] = [];
         leavesByUser[emp].push({ date: iso, leave_type: row.leaveType || 'Leave', user: row.fullName || '' });
         cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000);

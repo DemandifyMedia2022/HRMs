@@ -50,6 +50,8 @@ export default function AdminPage() {
   const [leavesToday, setLeavesToday] = useState<{ total: number; items: { type: string; count: number }[] } | null>(
     null
   );
+  const [leavesMonth, setLeavesMonth] = useState<{ total: number; month: string } | null>(null);
+  const [presentEmployees, setPresentEmployees] = useState<{ total: number; present: number } | null>(null);
   const [events, setEvents] = useState<{
     days: number;
     birthdays: { name: string; date: string }[];
@@ -188,7 +190,7 @@ export default function AdminPage() {
         const y = new Date();
         y.setDate(y.getDate() - 1);
         const ymd = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
-        const [hc, gd, br, at, ay, lt, ev, lf, ltr, lr] = await Promise.all([
+        const [hc, gd, br, at, ay, lt, ev, lf, ltr, lr, lm, pe] = await Promise.all([
           fetch(`/api/admin/dashboard/headcount`).then(r => r.json()),
           fetch(`/api/admin/dashboard/gender`).then(r => r.json()),
           fetch(`/api/admin/dashboard/breakdown?by=department`).then(r => r.json()),
@@ -198,7 +200,9 @@ export default function AdminPage() {
           fetch(`/api/admin/dashboard/upcoming-events?days=14`).then(r => r.json()),
           fetch(`/api/admin/dashboard/leaves-future?days=14`).then(r => r.json()),
           fetch(`/api/admin/dashboard/leave-trends?year=${year}`).then(r => r.json()),
-          fetch(`/api/admin/dashboard/leave-requests?status=pending&limit=3`).then(r => r.json())
+          fetch(`/api/admin/dashboard/leave-requests?status=pending&limit=3`).then(r => r.json()),
+          fetch(`/api/admin/dashboard/leaves-month`).then(r => r.json()),
+          fetch(`/api/admin/dashboard/present-employees`).then(r => r.json())
         ]);
         if (ignore) return;
         setHeadcount(hc);
@@ -211,6 +215,8 @@ export default function AdminPage() {
         setLeavesFuture(lf);
         setLeaveTrends(ltr);
         setLeaveRequests(lr);
+        setLeavesMonth(lm);
+        setPresentEmployees(pe);
       } catch (e: any) {
         if (!ignore) setError(e?.message || 'Failed to load dashboard');
       }
@@ -333,20 +339,20 @@ export default function AdminPage() {
               <IconUserCheck className="w-24 h-24 text-emerald-600" />
             </div>
             <CardHeader className="pb-2 relative z-10">
-              <CardDescription>Attendance Today</CardDescription>
-              <CardTitle className="text-3xl">{attToday?.present ?? 0}</CardTitle>
+              <CardDescription>Total Present Employees</CardDescription>
+              <CardTitle className="text-3xl">{presentEmployees?.present ?? attToday?.present ?? 0}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground relative z-10">Present</CardContent>
+            <CardContent className="text-sm text-muted-foreground relative z-10">Present Today</CardContent>
           </Card>
           <Card className="border-red-200/80 bg-red-50/70 relative overflow-hidden">
             <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-15 pointer-events-none">
               <IconUserX className="w-24 h-24 text-red-600" />
             </div>
             <CardHeader className="pb-2 relative z-10">
-              <CardDescription>Attendance Today</CardDescription>
-              <CardTitle className="text-3xl">{attToday?.absent ?? 0}</CardTitle>
+              <CardDescription>Total Leaves of the Month</CardDescription>
+              <CardTitle className="text-3xl">{leavesMonth?.total ?? 0}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground relative z-10">Absent</CardContent>
+            <CardContent className="text-sm text-muted-foreground relative z-10">{leavesMonth?.month || 'This Month'}</CardContent>
           </Card>
           <Card className="border-sky-200/80 bg-sky-50/70 relative overflow-hidden">
             <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-15 pointer-events-none">

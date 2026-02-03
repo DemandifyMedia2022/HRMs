@@ -5,9 +5,9 @@ import { checkRateLimit } from '@/lib/rate-limit';
 
 // Define protected routes and their required roles
 const protectedRoutes: Record<string, readonly string[]> = {
-  '/pages/admin': ['admin'],
-  '/pages/hr': ['hr'],
-  '/pages/user': ['user', 'admin', 'hr']
+  '/pages/admin': ['admin', 'superadmin'],
+  '/pages/hr': ['hr', 'superadmin'],
+  '/pages/user': ['user', 'admin', 'hr', 'superadmin']
 };
 
 // Security headers builder (per-request nonce)
@@ -96,7 +96,7 @@ export function middleware(request: NextRequest) {
       try {
         const user = verifyToken(token);
         const url = request.nextUrl.clone();
-        if (user.role === 'admin') url.pathname = '/pages/admin';
+        if (user.role === 'admin' || user.role === 'superadmin') url.pathname = '/pages/admin';
         else if (user.role === 'hr') url.pathname = '/pages/hr';
         else url.pathname = '/pages/user';
         return NextResponse.redirect(url);

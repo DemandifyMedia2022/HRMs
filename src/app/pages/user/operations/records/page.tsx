@@ -54,7 +54,7 @@ export default function RecordsPage() {
     try {
       setLoading(true);
       console.log('Fetching records from /api/forms...');
-      const response = await fetch('/api/forms', {
+      const response = await fetch('/api/forms?today=1', {
         credentials: 'include'
       });
       
@@ -119,6 +119,7 @@ export default function RecordsPage() {
             
             {!loading && !error && (
               <div className="overflow-x-auto">
+                <div className="text-sm text-gray-600 mb-2">Total Today: {records.length}</div>
                 {records.length === 0 ? (
                   <div className="text-sm text-gray-500">No records found.</div>
                 ) : (
